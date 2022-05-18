@@ -32,6 +32,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
   - Compute cached data if necessary (aync if possible)
   - Throw error if non uniform scale is used
   - Collect all intersecting triangles
+    - Use the geometry with fewest triangles to perform the intersction primarily and avoid unnecessary transforms?
   - Clip triangles and add the right triangles to the appropriate side
   - Use half edge structure to find separated structures on appropriate sides along with count and add them
     - Use block copies to make this fast
@@ -46,6 +47,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 
 ## Demos
 - Interactive level editor (ramps, stairs, etc)
+  - wireframe view for hidden objects.
 - Complex model editor (swiss cheese rabbit, animated, etc)
 - Hierarchical demo
 - Async generation
