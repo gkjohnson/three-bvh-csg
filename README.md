@@ -42,6 +42,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - When recomputing traverse the hierarchy (or track ahead of time?) to find which nodes are dirty and bubble it up the hierarchy.
 - Also find which nodes are touching to determine what needs to be recomputed?
 - Recompute the dirty nodes from the bottom up.
+- Unchanged / non-intersecting geometry can just be propagated up.
 
 ## Demos
 - Interactive level editor (ramps, stairs, etc)
