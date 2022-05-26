@@ -8,6 +8,7 @@ CSG implementation on top of three-mesh-bvh.
 - High performance / interactive types of CSG.
 - Hierarchical CSG operations.
 - Memory compact.
+- support for multi materials (baked to buffer?)
 
 ## API
 
