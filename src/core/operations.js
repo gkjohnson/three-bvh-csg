@@ -1,19 +1,25 @@
-export function add( primary, brushes ) {
+export function add( a, b ) {
 
 }
 
-export function subtract( primary, brushes ) {
+export function subtract( a, b ) {
 
 }
 
-export function intersection( brushes ) {
+export function intersection( a, b ) {
 
 }
 
-export function union( brushes ) {
+export function union( a, b ) {
 
 }
 
-export function performOperation( brushes, operation ) {
+export function performOperation( a, b, operation ) {
+
+}
+
+function collectIntersectingTriangles( a, b ) {
+
+
 
 }

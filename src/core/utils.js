@@ -1,5 +1,5 @@
 export function areSharedArrayBuffersSupported() {
 
-    return typeof SharedArrayBuffer !== 'undefined';
+	return typeof SharedArrayBuffer !== 'undefined';
 
 }

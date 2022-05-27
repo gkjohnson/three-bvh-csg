@@ -2,24 +2,24 @@ import { Mesh } from 'three';
 
 export class Brush extends Mesh {
 
-    prepareGeometry() {
+	prepareGeometry() {
 
-        // convert geometry
-        // - use shared array buffer
-        // - compute material id array?
-        // - half edges
-        // - bvh
+		// convert geometry
+		// - use shared array buffer
+		// - compute material id array?
+		// - half edges
+		// - bvh
 
-        // async?
+		// async?
 
-    }
+	}
 
-    disposeCacheData() {
+	disposeCacheData() {
 
-        // remove material id array
-        // remove half edges
-        // bvh
+		// remove material id array
+		// remove half edges
+		// bvh
 
-    }
+	}
 
 }
