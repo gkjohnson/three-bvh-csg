@@ -52,3 +52,6 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - Complex model editor (swiss cheese rabbit, animated, etc)
 - Hierarchical demo
 - Async generation
+- Switch between interactive demo setups
+- Draw polygons on surfaces and extrude
+- Full level / building (interactive)
