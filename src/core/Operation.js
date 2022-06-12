@@ -7,6 +7,15 @@ export class Operation extends Brush {
 
 		super( null, null );
 		this.operation = PASSTHROUGH;
+		this._previousOperation = null;
+
+		this._geometrySet = [];
+
+	}
+
+	isDirty() {
+
+		return this.operation !== this._previousOperation || super.isDirty();
 
 	}
 
