@@ -22,6 +22,20 @@ Brush will be needed for cached / interactive applications data.
 
 Function for performing CSG operations (Difference, Union, Intersection)
 
+## Phases
+### Phase 1
+- One of CSG
+- Interactive demo that caches nothing, just operates effectively
+- Runs on main thread
+
+### Phase 2
+- Cached data
+- Operational hierarchy
+
+### Phase 3
+- Workers
+- Demo with a meaningful scene
+
 ## Approach
 
 ### One-off
@@ -58,4 +72,4 @@ Function for performing CSG operations (Difference, Union, Intersection)
 
 ## References
 - [Godot CSG](https://github.com/godotengine/godot/blob/master/modules/csg/csg.cpp)
-- RealtimeCSG ([overview](https://www.youtube.com/watch?v=uqaiUMuGlRc), [GCD Presentation](https://www.youtube.com/watch?v=Iqmg4gblreo))
+- RealtimeCSG ([Overview](https://www.youtube.com/watch?v=uqaiUMuGlRc), [GCD Presentation](https://www.youtube.com/watch?v=Iqmg4gblreo))
