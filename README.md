@@ -27,12 +27,16 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - One of CSG
 - Interactive demo that caches nothing, just operates effectively
 - Runs on main thread
+- Rays to cull triangles
 
 ### Phase 2
+- Half edge structure to cull triangles
+
+### Phase 3
 - Cached data
 - Operational hierarchy
 
-### Phase 3
+### Phase 4
 - Workers
 - Demo with a meaningful scene
 
