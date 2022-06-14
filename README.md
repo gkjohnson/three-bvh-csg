@@ -40,6 +40,9 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - Workers
 - Demo with a meaningful scene
 
+### Phase 5
+- Demo with drag to build polygon
+
 ## Approach
 
 ### One-off
