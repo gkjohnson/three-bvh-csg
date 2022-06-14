@@ -55,3 +55,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - Switch between interactive demo setups
 - Draw polygons on surfaces and extrude
 - Full level / building (interactive)
+
+## References
+- [Godot CSG](https://github.com/godotengine/godot/blob/master/modules/csg/csg.cpp)
+- RealtimeCSG ([overview](https://www.youtube.com/watch?v=uqaiUMuGlRc), [GCD Presentation](https://www.youtube.com/watch?v=Iqmg4gblreo))
