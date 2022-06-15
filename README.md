@@ -24,11 +24,13 @@ Function for performing CSG operations (Difference, Union, Intersection)
 
 ## Phases
 ### Phase 1
-- [ ] One-off CSG
 - [x] Interactive demo that caches nothing, just operates effectively
+- [x] Start by skipping clipped triangles
+- [ ] implement clipping logic
+- [ ] One-off CSG
 - [ ] Runs on main thread
 - [ ] Rays to cull triangles
-- [ ] Start by skipping clipped triangles
+- [ ] verify clipping
 
 ### Phase 2
 - Half edge structure to cull triangles
