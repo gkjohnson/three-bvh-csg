@@ -2,19 +2,26 @@ import * as THREE from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { Brush, ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE, performOperation } from '..';
+import { TriangleClipper, TriangleSetHelper } from '..';
 
 const params = {
 
-	operation: SUBTRACTION,
-
 };
 
-let renderer, camera, scene, gui, outputContainer;
+let renderer, camera, scene;
 let controls, transformControls;
-let object1, object2;
-let resultObject;
-let needsUpdate = true;
+let planeObject, planeHelper;
+let clipper, clippedTris;
+let plane = new THREE.Plane();
+let _vec = new THREE.Vector3();
+
+
+const tri = new THREE.Triangle(
+
+	new THREE.Vector3( 1, 0, 0 ),
+	new THREE.Vector3( - 1, 0, 0 ),
+	new THREE.Vector3( 0, 0, 1 ),
+);
 
 init();
 render();
@@ -22,8 +29,6 @@ render();
 function init() {
 
 	const bgColor = 0x111111;
-
-	outputContainer = document.getElementById( 'output' );
 
 	// renderer setup
 	renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -51,36 +56,26 @@ function init() {
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	transformControls = new TransformControls( camera, renderer.domElement );
-
 	transformControls.addEventListener( 'dragging-changed', e => {
 
 		controls.enabled = ! e.value;
 
 	} );
-	transformControls.addEventListener( 'objectChange', () => {
-
-		needsUpdate = true;
-
-	} );
-
 	scene.add( transformControls );
 
-	object1 = new Brush( new THREE.SphereBufferGeometry( 1, 10, 10 ), new THREE.MeshStandardMaterial( { flatShading: true } ) );
-	object2 = new Brush( new THREE.SphereBufferGeometry( 1, 10, 10 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: true } ) );
-	object2.position.set( 1, 1, 0 );
+	planeObject = new THREE.Object3D();
+	transformControls.attach( planeObject );
+	scene.add( planeObject );
+	planeObject.position.z = 0.5;
+	planeObject.rotation.y = Math.PI / 2;
 
-	scene.add( object1, object2 );
-	transformControls.attach( object2 );
+	planeHelper = new THREE.PlaneHelper( plane );
+	scene.add( planeHelper );
 
-	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( { flatShading: true } ) );
-	scene.add( resultObject );
+	clippedTris = new TriangleSetHelper();
+	clipper = new TriangleClipper();
 
-	gui = new GUI();
-	gui.add( params, 'operation', { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
-
-		needsUpdate = true;
-
-	} );
+	scene.add( new TriangleSetHelper( [ tri ] ), clippedTris );
 
 	window.addEventListener( 'resize', function () {
 
@@ -97,24 +92,14 @@ function render() {
 
 	requestAnimationFrame( render );
 
-	object1.prepareGeometry();
-	object2.prepareGeometry();
-	object1.updateMatrixWorld();
-	object2.updateMatrixWorld();
+	_vec.set( 0, 0, 1 ).transformDirection( planeObject.matrixWorld );
+	plane.setFromNormalAndCoplanarPoint( _vec, planeObject.position );
 
-	resultObject.position.y = - 4;
+	clipper.initialize( tri.a, tri.b, tri.c );
+	clipper.clipByPlane( plane );
+	clippedTris.setTriangles( clipper.triangles );
 
-	if ( needsUpdate ) {
-
-		const startTime = window.performance.now();
-		resultObject.geometry.dispose();
-		resultObject.geometry = performOperation( object1, object2, params.operation );
-		const deltaTime = window.performance.now() - startTime;
-
-		outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
-		needsUpdate = false;
-
-	}
+	clippedTris.position.y = - 1;
 
 	renderer.render( scene, camera );
 

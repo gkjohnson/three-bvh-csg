@@ -15,9 +15,6 @@ const _edge = new Line3();
 // TODO: take a target geometry so we don't have to create a new one every time
 export function performOperation( a, b, operation ) {
 
-	a.prepareGeometry();
-	b.prepareGeometry();
-
 	const attributeData = {
 		position: [],
 		uv: [],
