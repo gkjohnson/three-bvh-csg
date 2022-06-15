@@ -27,6 +27,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [x] Interactive demo that caches nothing, just operates effectively
 - [x] Start by skipping clipped triangles
 - [ ] implement clipping logic
+- [ ] Make clipping logic demo
 - [ ] One-off CSG
 - [ ] Runs on main thread
 - [ ] Rays to cull triangles
