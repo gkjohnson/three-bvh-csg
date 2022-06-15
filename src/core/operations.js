@@ -1,16 +1,28 @@
-import { Matrix4, Vector3, Ray, DoubleSide, Line3, BufferGeometry, BufferAttribute } from 'three';
+import { Matrix4, Vector3, Ray, DoubleSide, Line3, BufferGeometry, BufferAttribute, Plane, Triangle } from 'three';
 import { ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION, PASSTHROUGH } from './constants.js';
+import { TriangleClipper } from './TriangleClipper.js';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 
 const _matrix = new Matrix4();
+const _matrix2 = new Matrix4();
 const _v0 = new Vector3();
 const _v1 = new Vector3();
 const _v2 = new Vector3();
 const _vec = new Vector3();
 const _ray = new Ray();
-const _triA = new ExtendedTriangle();
-const _triB = new ExtendedTriangle();
+const _triA = new Triangle();
+const _triB = new Triangle();
+const _tri = new Triangle();
+const _barycoordTri = new Triangle();
 const _edge = new Line3();
+const _plane = new Plane();
+const _clipper = new TriangleClipper();
+
+
+const _teA = new ExtendedTriangle();
+const _teB = new ExtendedTriangle();
+
+
 
 // TODO: take a target geometry so we don't have to create a new one every time
 export function performOperation( a, b, operation ) {
@@ -28,6 +40,8 @@ export function performOperation( a, b, operation ) {
 	accumulateTriangles( b, a, bToA, operation, true, attributeData );
 
 	// TODO: clip and trim triangles
+	clipTriangles( a, b, aToB, operation, false, attributeData );
+	clipTriangles( b, a, bToA, operation, true, attributeData );
 
 	const result = new BufferGeometry();
 	result.setAttribute( 'position', new BufferAttribute( new Float32Array( attributeData.position ), 3 ) );
@@ -38,43 +52,126 @@ export function performOperation( a, b, operation ) {
 
 }
 
-function clipTriangles( a, b, triSets, attributeData ) {
+function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
+
+	_matrix
+		.copy( b.matrixWorld )
+		.invert()
+		.multiply( a.matrixWorld );
+
+
+	const aIndex = a.geometry.index;
+	const aPosition = a.geometry.attributes.position;
 
 	const bBVH = b.geometry.boundsTree;
-	const aPosition = a.geometry.attributes.position;
-	const aIndex = a.geometry.index;
-	const aAttributes = a.geometry.attributes;
+	const bIndex = b.geometry.index;
+	const bPosition = b.geometry.attributes.position;
 
-	// TODO: how do we handle the case of tris clipped by multiple edges?
 	for ( const key in triSets ) {
 
-		const tris = triSets[ key ];
+		const triIndices = triSets[ key ];
 		const ia = parseInt( key );
 		const ia3 = 3 * ia;
 
+		// get the triangle in the geometry B local frame
 		const ia0 = aIndex.getX( ia3 + 0 );
 		const ia1 = aIndex.getX( ia3 + 1 );
 		const ia2 = aIndex.getX( ia3 + 2 );
-		_triA.a.fromBufferAttribute( aPosition, ia0 );
-		_triA.b.fromBufferAttribute( aPosition, ia1 );
-		_triA.c.fromBufferAttribute( aPosition, ia2 );
-		_triA.needsUpdate = true;
+		_triA.a.fromBufferAttribute( aPosition, ia0 ).applyMatrix4( _matrix );
+		_triA.b.fromBufferAttribute( aPosition, ia1 ).applyMatrix4( _matrix );
+		_triA.c.fromBufferAttribute( aPosition, ia2 ).applyMatrix4( _matrix );
 
-		for ( let i = 0, l = tris.length; i < l; i ++ ) {
+		_clipper.initialize( _triA );
 
-			const ib3 = 3 * ib;
-			const ib0 = aIndex.getX( ib3 + 0 );
-			const ib1 = aIndex.getX( ib3 + 1 );
-			const ib2 = aIndex.getX( ib3 + 2 );
-			_triB.a.fromBufferAttribute( aPosition, ib0 );
-			_triB.b.fromBufferAttribute( aPosition, ib1 );
-			_triB.c.fromBufferAttribute( aPosition, ib2 );
-			_triB.needsUpdate = true;
+		for ( let ib = 0, l = triIndices.length; ib < l; ib ++ ) {
 
-			// TODO: handle the coplanar case
-			_triA.intersectsTriangle( _triB, _edge );
+			const ib3 = 3 * triIndices[ ib ];
+			const ib0 = bIndex.getX( ib3 + 0 );
+			const ib1 = bIndex.getX( ib3 + 1 );
+			const ib2 = bIndex.getX( ib3 + 2 );
+			_triB.a.fromBufferAttribute( bPosition, ib0 );
+			_triB.b.fromBufferAttribute( bPosition, ib1 );
+			_triB.c.fromBufferAttribute( bPosition, ib2 );
+			_triB.getPlane( _plane );
+			_clipper.clipByPlane( _plane );
 
 		}
+
+		const triangles = _clipper.triangles;
+		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
+
+			const clippedTri = triangles[ ib ];
+			_ray.origin.copy( clippedTri.a ).add( clippedTri.b ).add( clippedTri.c ).multiplyScalar( 1 / 3 );
+			_ray.direction.set( 0, 0, 1 );
+
+			const hit = bBVH.raycastFirst( _ray, DoubleSide );
+			const hitBackSide = Boolean( hit && hit.face.normal.z > 0 );
+
+			_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
+			_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
+			_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
+
+
+			switch ( operation ) {
+
+				case ADDITION:
+					if ( hitBackSide === false ) {
+
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
+
+					}
+
+					break;
+				case SUBTRACTION:
+					if ( invert ) {
+
+						if ( hitBackSide === true ) {
+
+							// TODO: invert
+							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData, true );
+
+						}
+
+					} else {
+
+						if ( hitBackSide === false ) {
+
+							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
+
+						}
+
+					}
+
+					break;
+				case DIFFERENCE:
+					if ( hitBackSide ) {
+
+						// TODO: invert
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData, true );
+
+					} else {
+
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
+
+					}
+
+					break;
+				case INTERSECTION:
+					if ( hitBackSide === true ) {
+
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
+
+					}
+
+					break;
+				case PASSTHROUGH:
+					appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
+					break;
+
+			}
+
+		}
+
 
 	}
 
@@ -115,7 +212,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 			case ADDITION:
 				if ( hitBackSide === false ) {
 
-					appendTriAttributes( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
 
 				}
 
@@ -125,7 +222,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 
 					if ( hitBackSide === true ) {
 
-						appendTriAttributes( i2, i1, i0, aAttributes, a.matrixWorld, attributeData );
+						appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, attributeData );
 
 					}
 
@@ -133,7 +230,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 
 					if ( hitBackSide === false ) {
 
-						appendTriAttributes( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
+						appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
 
 					}
 
@@ -143,11 +240,11 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 			case DIFFERENCE:
 				if ( hitBackSide ) {
 
-					appendTriAttributes( i2, i1, i0, aAttributes, a.matrixWorld, attributeData );
+					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, attributeData );
 
 				} else {
 
-					appendTriAttributes( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
 
 				}
 
@@ -155,14 +252,14 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 			case INTERSECTION:
 				if ( hitBackSide === true ) {
 
-					appendTriAttributes( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
 
 
 				}
 
 				break;
 			case PASSTHROUGH:
-				appendTriAttributes( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
+				appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
 				break;
 
 		}
@@ -171,15 +268,107 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 
 }
 
-function appendTriAttributes( i0, i1, i2, attributes, matrixWorld, info ) {
+function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, matrixWorld, info, invert ) {
 
-	appendAttributes( i0, attributes, matrixWorld, info );
-	appendAttributes( i1, attributes, matrixWorld, info );
-	appendAttributes( i2, attributes, matrixWorld, info );
+	const attributes = geometry.attributes;
+	const indexAttr = geometry.index;
+	const i3 = triIndex * 3;
+	const i0 = indexAttr.getX( i3 + 0 );
+	let i1 = indexAttr.getX( i3 + 1 );
+	let i2 = indexAttr.getX( i3 + 2 );
+
+	for ( const key in info ) {
+
+		const attr = attributes[ key ];
+		const arr = info[ key ];
+		if ( ! ( key in attributes ) ) {
+
+			throw new Error();
+
+		}
+
+		const itemSize = attr.itemSize;
+		if ( key === 'position' ) {
+
+			_tri.a.fromBufferAttribute( attr, i0 ).applyMatrix4( matrixWorld );
+			_tri.b.fromBufferAttribute( attr, i1 ).applyMatrix4( matrixWorld );
+			_tri.c.fromBufferAttribute( attr, i2 ).applyMatrix4( matrixWorld );
+
+			_vec.set( 0, 0, 0 )
+				.addScaledVector( _tri.a, baryCoordTri.a.x )
+				.addScaledVector( _tri.b, baryCoordTri.a.y )
+				.addScaledVector( _tri.c, baryCoordTri.a.z );
+			arr.push( _vec.x, _vec.y, _vec.z );
+
+			if ( invert ) {
+
+				_vec.set( 0, 0, 0 )
+					.addScaledVector( _tri.a, baryCoordTri.c.x )
+					.addScaledVector( _tri.b, baryCoordTri.c.y )
+					.addScaledVector( _tri.c, baryCoordTri.c.z );
+				arr.push( _vec.x, _vec.y, _vec.z );
+
+
+				_vec.set( 0, 0, 0 )
+					.addScaledVector( _tri.a, baryCoordTri.b.x )
+					.addScaledVector( _tri.b, baryCoordTri.b.y )
+					.addScaledVector( _tri.c, baryCoordTri.b.z );
+				arr.push( _vec.x, _vec.y, _vec.z );
+
+			} else {
+
+
+				_vec.set( 0, 0, 0 )
+					.addScaledVector( _tri.a, baryCoordTri.b.x )
+					.addScaledVector( _tri.b, baryCoordTri.b.y )
+					.addScaledVector( _tri.c, baryCoordTri.b.z );
+				arr.push( _vec.x, _vec.y, _vec.z );
+
+				_vec.set( 0, 0, 0 )
+					.addScaledVector( _tri.a, baryCoordTri.c.x )
+					.addScaledVector( _tri.b, baryCoordTri.c.y )
+					.addScaledVector( _tri.c, baryCoordTri.c.z );
+				arr.push( _vec.x, _vec.y, _vec.z );
+
+			}
+
+			continue;
+
+		} else if ( key === 'normal' ) {
+
+			// TODO
+			// _vec.fromBufferAttribute( attr, index ).transformDirection( matrixWorld	);
+			arr.push( 0, 0, 1 );
+
+		} else {
+
+			// TODO
+			// arr.push( attr.getX( index ) );
+			// if ( itemSize > 1 ) arr.push( attr.getY( index ) );
+			// if ( itemSize > 2 ) arr.push( attr.getZ( index ) );
+			// if ( itemSize > 3 ) arr.push( attr.getW( index ) );
+
+			arr.push( 0 );
+			if ( itemSize > 1 ) arr.push( 0 );
+			if ( itemSize > 2 ) arr.push( 0 );
+			if ( itemSize > 3 ) arr.push( 0 );
+
+
+		}
+
+	}
 
 }
 
-function appendAttributes( index, attributes, matrixWorld, info ) {
+function appendAttributesFromIndices( i0, i1, i2, attributes, matrixWorld, info ) {
+
+	appendAttributeFromIndex( i0, attributes, matrixWorld, info );
+	appendAttributeFromIndex( i1, attributes, matrixWorld, info );
+	appendAttributeFromIndex( i2, attributes, matrixWorld, info );
+
+}
+
+function appendAttributeFromIndex( index, attributes, matrixWorld, info ) {
 
 	for ( const key in info ) {
 
@@ -221,6 +410,11 @@ function collectIntersectingTriangles( a, b ) {
 	const aToB = {};
 	const bToA = {};
 
+	window.TRIS = [];
+
+	window.SET = {};
+
+
 	_matrix
 		.copy( a.matrixWorld )
 		.invert()
@@ -228,18 +422,27 @@ function collectIntersectingTriangles( a, b ) {
 
 	a.geometry.boundsTree.bvhcast( b.geometry.boundsTree, _matrix, {
 
-		intersectsTriangles( triangle1, triangle2, i1, i2 ) {
+		intersectsTriangles( triangle1, triangle2, ia, ib ) {
 
-			if ( triangle1.intersectsTriangle( triangle2, _edge ) ) {
+			if ( triangle1.intersectsTriangle( triangle2 ) ) {
 
-				if ( ! aToB[ i1 ] ) aToB[ i1 ] = [];
-				if ( ! bToA[ i2 ] ) bToA[ i2 ] = [];
+				if ( ! aToB[ ia ] ) aToB[ ia ] = [];
+				if ( ! bToA[ ib ] ) bToA[ ib ] = [];
+				if ( ! window.SET[ ia ] ) window.SET[ ia ] = { tri: triangle1.clone(), intersects: [] };
 
-				aToB[ i1 ].push( i2 );
-				bToA[ i2 ].push( i1 );
+				aToB[ ia ].push( ib );
+				bToA[ ib ].push( ia );
+
+				window.SET[ ia ].intersects.push( triangle2.clone() );
+
+				window.TRIS.push( triangle1.clone(), triangle2.clone() );
+
+
 
 
 			}
+
+			return false;
 
 		}
 

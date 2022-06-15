@@ -95,7 +95,7 @@ function render() {
 	_vec.set( 0, 0, 1 ).transformDirection( planeObject.matrixWorld );
 	plane.setFromNormalAndCoplanarPoint( _vec, planeObject.position );
 
-	clipper.initialize( tri.a, tri.b, tri.c );
+	clipper.initialize( tri );
 	clipper.clipByPlane( plane );
 	clippedTris.setTriangles( clipper.triangles );
 

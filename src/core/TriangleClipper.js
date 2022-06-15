@@ -51,17 +51,14 @@ export class TriangleClipper {
 
 	}
 
-	initialize( v1, v2, v3 ) {
+	initialize( tri ) {
 
 		const { triangles, trianglePool } = this;
-		const tri = trianglePool.getTriangle();
+		const poolTri = trianglePool.getTriangle();
 		triangles.length = 0;
 
-		tri.a.copy( v1 );
-		tri.b.copy( v2 );
-		tri.c.copy( v3 );
-
-		triangles.push( tri );
+		poolTri.copy( tri );
+		triangles.push( poolTri );
 
 	}
 
@@ -153,17 +150,29 @@ export class TriangleClipper {
 
 					} );
 
-					// TODO: fix when on negative side of plane
+					if ( singleVert === 0 ) {
+
+						let tmp = _foundEdge.start;
+						_foundEdge.start = _foundEdge.end;
+						_foundEdge.end = tmp;
+
+					} else if ( singleVert === - 1 ) {
+
+						continue;
+
+					}
+
 					const nextVert1 = ( singleVert + 1 ) % 3;
 					const nextVert2 = ( singleVert + 2 ) % 3;
 
 					const nextTri1 = trianglePool.getTriangle();
+					const nextTri2 = trianglePool.getTriangle();
+
 					nextTri1.a.copy( arr[ nextVert1 ] );
 					nextTri1.b.copy( _foundEdge.start );
 					nextTri1.c.copy( _foundEdge.end );
 					triangles.push( nextTri1 );
 
-					const nextTri2 = trianglePool.getTriangle();
 					nextTri2.a.copy( arr[ nextVert1 ] );
 					nextTri2.b.copy( arr[ nextVert2 ] );
 					nextTri2.c.copy( _foundEdge.start );
