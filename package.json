@@ -4,10 +4,12 @@
   "description": "CSG implementation on top of three-mesh-bvh",
   "main": "src/index.js",
   "module": "src/index.js",
-  "type":"module",
+  "type": "module",
   "sideEffects": false,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "cd examples && parcel serve ./*.html --dist-dir ./dev-bundle/ --no-cache --no-hmr",
+    "lint": "eslint \"./src/**/*.js\" \"./examples/*.js\"",
+		"test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
     "src/*",
@@ -44,9 +46,9 @@
   "devDependencies": {
     "eslint": "^8.16.0",
     "eslint-config-mdcs": "^5.0.0",
+    "parcel": "^2.6.0",
+    "rollup": "^2.58.0",
     "three": "^0.141.0",
-    "three-mesh-bvh": "^0.5.11",
-    "parcel": "^2.0.0",
-    "rollup": "^2.58.0"
+    "three-mesh-bvh": "^0.5.11"
   }
 }

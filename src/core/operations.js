@@ -13,6 +13,9 @@ const _edge = new Line3();
 
 export function performOperation( a, b, operation ) {
 
+	a.prepareGeometry();
+	b.prepareGeometry();
+
 	const attributeData = {
 		position: [],
 		uv: [],
@@ -83,7 +86,7 @@ function accumulateTriangles( a, b, triSet, operation, invert, attributeData ) {
 	const aPosition = a.geometry.attributes.position;
 	const aIndex = a.geometry.index;
 	const aAttributes = a.geometry.attributes;
-	for ( let i = 0, l = aIndex.count / 3; i < l; i ++) {
+	for ( let i = 0, l = aIndex.count / 3; i < l; i ++ ) {
 
 		if ( a in triSet ) continue;
 
@@ -102,7 +105,7 @@ function accumulateTriangles( a, b, triSet, operation, invert, attributeData ) {
 		const hit = bBVH.raycastFirst( _ray, DoubleSide );
 		if ( hit !== null ) {
 
-			const hitBackSide = hit.normal.z < 0;
+			const hitBackSide = hit.face.normal.z < 0;
 			let doAdd = 0;
 			switch ( operation ) {
 
@@ -112,6 +115,7 @@ function accumulateTriangles( a, b, triSet, operation, invert, attributeData ) {
 						appendTriAttributes( i0, i1, i2, aAttributes, attributeData );
 
 					}
+
 					break;
 				case SUBTRACTION:
 					if ( invert ) {
@@ -131,6 +135,7 @@ function accumulateTriangles( a, b, triSet, operation, invert, attributeData ) {
 						}
 
 					}
+
 					break;
 				case DIFFERENCE:
 					if ( hitBackSide !== invert ) {
@@ -152,6 +157,7 @@ function accumulateTriangles( a, b, triSet, operation, invert, attributeData ) {
 
 
 					}
+
 					break;
 				case PASSTHROUGH:
 					appendTriAttributes( i0, i1, i2, aAttributes, attributeData );
@@ -209,10 +215,10 @@ function collectIntersectingTriangles( a, b ) {
 
 		intersectsTriangles( triangle1, triangle2, i1, i2 ) {
 
-			if ( triangle1.intersectsTriangle( triangle2, edge ) ) {
+			if ( triangle1.intersectsTriangle( triangle2, _edge ) ) {
 
 				if ( ! aToB[ i1 ] ) aToB[ i1 ] = [];
-				if ( ! bToA[ i2 ] ) aToB[ i2 ] = [];
+				if ( ! bToA[ i2 ] ) bToA[ i2 ] = [];
 
 				aToB[ i1 ].push( i2 );
 				bToA[ i2 ].push( i1 );
