@@ -13,6 +13,21 @@ import {
 	DIFFERENCE,
 } from '..';
 
+
+window.triToDefinition = function triToDefinition( t ) {
+
+	return /*js*/`
+		const tri = new THREE.Triangle(
+			new THREE.Vector3(${ t.a.toArray().map( n => n.toFixed( 50 ) ).join() }),
+			new THREE.Vector3(${ t.b.toArray().map( n => n.toFixed( 50 ) ).join() }),
+			new THREE.Vector3(${ t.c.toArray().map( n => n.toFixed( 50 ) ).join() }),
+		);
+	`;
+
+}
+
+
+
 const params = {
 
 	operation: SUBTRACTION,
@@ -43,6 +58,8 @@ function init() {
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.setClearColor( bgColor, 1 );
+	renderer.shadowMap.enabled = true;
+	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 	renderer.outputEncoding = THREE.sRGBEncoding;
 	document.body.appendChild( renderer.domElement );
 
@@ -52,7 +69,19 @@ function init() {
 
 	const light = new THREE.DirectionalLight( 0xffffff, 1 );
 	light.position.set( - 1, 2, 3 );
-	scene.add( light );
+	light.castShadow = true;
+	light.shadow.mapSize.setScalar( 2048 );
+	light.shadow.bias = 1e-5;
+	light.shadow.normalBias = 1e-2;
+	light.position.y -= 2;
+	light.target.position.y -= 2;
+	
+	const shadowCam = light.shadow.camera;
+	shadowCam.left = shadowCam.bottom = - 2.5;
+	shadowCam.right = shadowCam.top = 2.5;
+	shadowCam.updateProjectionMatrix();
+	
+	scene.add( light, light.target );
 	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
 
 	// camera setup
@@ -64,7 +93,7 @@ function init() {
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	transformControls = new TransformControls( camera, renderer.domElement );
-
+	transformControls.setSize( 0.75 );
 	transformControls.addEventListener( 'dragging-changed', e => {
 
 		controls.enabled = ! e.value;
@@ -78,16 +107,25 @@ function init() {
 
 	scene.add( transformControls );
 
-	// object1 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { flatShading: true } ) );
+	object1 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { flatShading: true } ) );
 	// object2 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: true } ) );
-	object1 = new Brush( new THREE.SphereBufferGeometry( 1, 7, 7 ), new THREE.MeshStandardMaterial( { flatShading: false } ) );
-	object2 = new Brush( new THREE.SphereBufferGeometry( 1, 7, 7 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: false } ) )
-	// PROBLEM CASE 1:
-	object2.position.set( - 0.5416063456346885, 0.3047192957468528, 0 );
-	
-	// PROBLEM CASE 2:
-	object2.position.set( - 0.32483306917221366, 0.5664372419058846, 0.681338353197529 );
+	// object1 = new Brush( new THREE.SphereBufferGeometry( 1, 17, 17 ), new THREE.MeshStandardMaterial( { flatShading: false } ) );
+	object2 = new Brush( new THREE.SphereBufferGeometry( 0.75, 17, 17 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: false } ) );
 
+	// PROBLEM CASE 1: ray between tris
+	object2.position.set( - 0.5416063456346885, 0.3047192957468528, 0 );
+
+	// PROBLEM CASE 2:
+	// object2.position.set( - 0.32483306917221366, 0.5664372419058846, 0.681338353197529 );
+	// window.VERT = 79;
+
+	// PROBLEM CASE 3:
+	// check with object 1 === box
+
+	object1.castShadow = true;
+	object1.receiveShadow = true;
+	object2.castShadow = true;
+	object2.receiveShadow = true;
 
 	scene.add( object1, object2 );
 	transformControls.attach( object2 );
@@ -99,11 +137,13 @@ function init() {
 		polygonOffsetFactor: 1,
 
 	} ) );
+	resultObject.castShadow = true;
+	resultObject.receiveShadow = true;
 	scene.add( resultObject );
 
 	wireframeResult = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshBasicMaterial( {
 		wireframe: true,
-		color: 0xff3300,
+		color: 0,
 		opacity: 0.15,
 		transparent: true,
 	} ) );
@@ -147,8 +187,8 @@ function render() {
 	object1.updateMatrixWorld();
 	object2.updateMatrixWorld();
 
-	resultObject.position.y = - 4;
-	wireframeResult.position.y = - 4;
+	resultObject.position.y = - 2.5;
+	wireframeResult.position.y = - 2.5;
 
 	if ( needsUpdate ) {
 
@@ -166,12 +206,13 @@ function render() {
 	}
 
 	edgesHelper.setEdges( window.EDGES );
-	edgesHelper.position.y = - 4;
+	edgesHelper.position.y = - 2.5;
 	edgesHelper.visible = params.edgeHelper;
 
 	triHelper.setTriangles( window.TRIS );
-	// triHelper.setTriangles( [ window.SET[ 4 ].tri, ...window.SET[ 4 ].intersects ] );
-	triHelper.position.y = - 4;
+
+	// if ( window.VERT !== undefined ) triHelper.setTriangles( [ window.SET[ window.VERT ].tri, ...window.SET[ window.VERT ].intersects ] );
+	triHelper.position.y = - 2.5;
 	triHelper.visible = params.triHelper;
 
 	wireframeResult.visible = params.wireframe;
@@ -179,19 +220,6 @@ function render() {
 	renderer.render( scene, camera );
 
 }
-
-function triToDefinition( t ) {
-
-	return /*js*/`
-		const tri = new THREE.Triangle(
-			new THREE.Vector3(${ t.a.toArray().join() }),
-			new THREE.Vector3(${ t.b.toArray().join() }),
-			new THREE.Vector3(${ t.c.toArray().join() }),
-		);
-	`;
-
-}
-
 
 
 
