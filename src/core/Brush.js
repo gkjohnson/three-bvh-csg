@@ -57,7 +57,7 @@ export class Brush extends Mesh {
 		}
 
 		// generate bounds tree
-		geometry.boundsTree = new MeshBVH( geometry );
+		geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3 } );
 
 	}
 

@@ -1,14 +1,17 @@
-import { Matrix4, Vector3, Ray, DoubleSide, Line3, BufferGeometry, BufferAttribute, Plane, Triangle } from 'three';
+import { Matrix4, Vector3, Vector4, Ray, DoubleSide, Line3, BufferGeometry, BufferAttribute, Plane, Triangle } from 'three';
 import { ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION, PASSTHROUGH } from './constants.js';
 import { TriangleClipper } from './TriangleClipper.js';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 
 const _matrix = new Matrix4();
-const _matrix2 = new Matrix4();
 const _v0 = new Vector3();
 const _v1 = new Vector3();
 const _v2 = new Vector3();
 const _vec = new Vector3();
+const _vec4 = new Vector4();
+const _vec4a = new Vector4();
+const _vec4b = new Vector4();
+const _vec4c = new Vector4();
 const _ray = new Ray();
 const _triA = new Triangle();
 const _triB = new Triangle();
@@ -17,12 +20,6 @@ const _barycoordTri = new Triangle();
 const _edge = new Line3();
 const _plane = new Plane();
 const _clipper = new TriangleClipper();
-
-
-const _teA = new ExtendedTriangle();
-const _teB = new ExtendedTriangle();
-
-
 
 // TODO: take a target geometry so we don't have to create a new one every time
 export function performOperation( a, b, operation ) {
@@ -102,15 +99,14 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 
 			const clippedTri = triangles[ ib ];
 			_ray.origin.copy( clippedTri.a ).add( clippedTri.b ).add( clippedTri.c ).multiplyScalar( 1 / 3 );
-			_ray.direction.set( 0, 0, 1 );
+			_triA.getNormal( _ray.direction );
 
 			const hit = bBVH.raycastFirst( _ray, DoubleSide );
-			const hitBackSide = Boolean( hit && hit.face.normal.z > 0 );
+			const hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
 
 			_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
 			_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
 			_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
-
 
 			switch ( operation ) {
 
@@ -202,10 +198,13 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 		_v2.fromBufferAttribute( aPosition, i2 );
 
 		_ray.origin.copy( _v0 ).add( _v1 ).add( _v2 ).multiplyScalar( 1 / 3 ).applyMatrix4( _matrix );
-		_ray.direction.set( 0, 0, 1 );
+		_tri.a.copy( _v0 );
+		_tri.b.copy( _v1 );
+		_tri.c.copy( _v2 );
+		_tri.getNormal( _ray.direction );
 
 		const hit = bBVH.raycastFirst( _ray, DoubleSide );
-		const hitBackSide = Boolean( hit && hit.face.normal.z > 0 );
+		const hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
 
 		switch ( operation ) {
 
@@ -274,8 +273,8 @@ function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, matrixWo
 	const indexAttr = geometry.index;
 	const i3 = triIndex * 3;
 	const i0 = indexAttr.getX( i3 + 0 );
-	let i1 = indexAttr.getX( i3 + 1 );
-	let i2 = indexAttr.getX( i3 + 2 );
+	const i1 = indexAttr.getX( i3 + 1 );
+	const i2 = indexAttr.getX( i3 + 2 );
 
 	for ( const key in info ) {
 
@@ -294,69 +293,78 @@ function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, matrixWo
 			_tri.b.fromBufferAttribute( attr, i1 ).applyMatrix4( matrixWorld );
 			_tri.c.fromBufferAttribute( attr, i2 ).applyMatrix4( matrixWorld );
 
-			_vec.set( 0, 0, 0 )
-				.addScaledVector( _tri.a, baryCoordTri.a.x )
-				.addScaledVector( _tri.b, baryCoordTri.a.y )
-				.addScaledVector( _tri.c, baryCoordTri.a.z );
-			arr.push( _vec.x, _vec.y, _vec.z );
-
-			if ( invert ) {
-
-				_vec.set( 0, 0, 0 )
-					.addScaledVector( _tri.a, baryCoordTri.c.x )
-					.addScaledVector( _tri.b, baryCoordTri.c.y )
-					.addScaledVector( _tri.c, baryCoordTri.c.z );
-				arr.push( _vec.x, _vec.y, _vec.z );
-
-
-				_vec.set( 0, 0, 0 )
-					.addScaledVector( _tri.a, baryCoordTri.b.x )
-					.addScaledVector( _tri.b, baryCoordTri.b.y )
-					.addScaledVector( _tri.c, baryCoordTri.b.z );
-				arr.push( _vec.x, _vec.y, _vec.z );
-
-			} else {
-
-
-				_vec.set( 0, 0, 0 )
-					.addScaledVector( _tri.a, baryCoordTri.b.x )
-					.addScaledVector( _tri.b, baryCoordTri.b.y )
-					.addScaledVector( _tri.c, baryCoordTri.b.z );
-				arr.push( _vec.x, _vec.y, _vec.z );
-
-				_vec.set( 0, 0, 0 )
-					.addScaledVector( _tri.a, baryCoordTri.c.x )
-					.addScaledVector( _tri.b, baryCoordTri.c.y )
-					.addScaledVector( _tri.c, baryCoordTri.c.z );
-				arr.push( _vec.x, _vec.y, _vec.z );
-
-			}
-
-			continue;
+			pushBarycoordValues( _tri.a, _tri.b, _tri.c, baryCoordTri, 3, invert, arr );
 
 		} else if ( key === 'normal' ) {
 
-			// TODO
-			// _vec.fromBufferAttribute( attr, index ).transformDirection( matrixWorld	);
-			arr.push( 0, 0, 1 );
+			_tri.a.fromBufferAttribute( attr, i0 ).transformDirection( matrixWorld );
+			_tri.b.fromBufferAttribute( attr, i1 ).transformDirection( matrixWorld );
+			_tri.c.fromBufferAttribute( attr, i2 ).transformDirection( matrixWorld );
+
+			pushBarycoordValues( _tri.a, _tri.b, _tri.c, baryCoordTri, 3, invert, arr );
 
 		} else {
 
-			// TODO
-			// arr.push( attr.getX( index ) );
-			// if ( itemSize > 1 ) arr.push( attr.getY( index ) );
-			// if ( itemSize > 2 ) arr.push( attr.getZ( index ) );
-			// if ( itemSize > 3 ) arr.push( attr.getW( index ) );
+			_vec4a.fromBufferAttribute( attr, i0 );
+			_vec4b.fromBufferAttribute( attr, i1 );
+			_vec4c.fromBufferAttribute( attr, i2 );
 
-			arr.push( 0 );
-			if ( itemSize > 1 ) arr.push( 0 );
-			if ( itemSize > 2 ) arr.push( 0 );
-			if ( itemSize > 3 ) arr.push( 0 );
-
+			pushBarycoordValues( _vec4a, _vec4b, _vec4c, baryCoordTri, itemSize, invert, arr );
 
 		}
 
 	}
+
+}
+
+function pushBarycoordValues( a, b, c, baryCoordTri, count, invert, arr ) {
+
+	const addValues = v => {
+
+		arr.push( v.x );
+		if ( count > 1 ) arr.push( v.y );
+		if ( count > 2 ) arr.push( v.z );
+		if ( count > 3 ) arr.push( v.w );
+
+	};
+
+	_vec4.set( 0, 0, 0, 0 )
+		.addScaledVector( a, baryCoordTri.a.x )
+		.addScaledVector( b, baryCoordTri.a.y )
+		.addScaledVector( c, baryCoordTri.a.z );
+	addValues( _vec4 );
+
+	if ( invert ) {
+
+		_vec4.set( 0, 0, 0, 0 )
+			.addScaledVector( a, baryCoordTri.c.x )
+			.addScaledVector( b, baryCoordTri.c.y )
+			.addScaledVector( c, baryCoordTri.c.z );
+		arr.push( _vec4.x, _vec4.y, _vec4.z );
+
+
+		_vec4.set( 0, 0, 0, 0 )
+			.addScaledVector( a, baryCoordTri.b.x )
+			.addScaledVector( b, baryCoordTri.b.y )
+			.addScaledVector( c, baryCoordTri.b.z );
+		arr.push( _vec4.x, _vec4.y, _vec4.z );
+
+	} else {
+
+		_vec4.set( 0, 0, 0, 0 )
+			.addScaledVector( a, baryCoordTri.b.x )
+			.addScaledVector( b, baryCoordTri.b.y )
+			.addScaledVector( c, baryCoordTri.b.z );
+		arr.push( _vec4.x, _vec4.y, _vec4.z );
+
+		_vec4.set( 0, 0, 0, 0 )
+			.addScaledVector( a, baryCoordTri.c.x )
+			.addScaledVector( b, baryCoordTri.c.y )
+			.addScaledVector( c, baryCoordTri.c.z );
+		arr.push( _vec4.x, _vec4.y, _vec4.z );
+
+	}
+
 
 }
 
@@ -414,6 +422,7 @@ function collectIntersectingTriangles( a, b ) {
 
 	window.SET = {};
 
+	window.EDGES = [];
 
 	_matrix
 		.copy( a.matrixWorld )
@@ -424,7 +433,7 @@ function collectIntersectingTriangles( a, b ) {
 
 		intersectsTriangles( triangle1, triangle2, ia, ib ) {
 
-			if ( triangle1.intersectsTriangle( triangle2 ) ) {
+			if ( triangle1.intersectsTriangle( triangle2, _edge ) ) {
 
 				if ( ! aToB[ ia ] ) aToB[ ia ] = [];
 				if ( ! bToA[ ib ] ) bToA[ ib ] = [];
@@ -437,8 +446,7 @@ function collectIntersectingTriangles( a, b ) {
 
 				window.TRIS.push( triangle1.clone(), triangle2.clone() );
 
-
-
+				window.EDGES.push( _edge.clone() );
 
 			}
 

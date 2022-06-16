@@ -2,11 +2,13 @@ import * as THREE from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { Brush, ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE, performOperation } from '..';
+import { Brush, EdgesHelper, TriangleSetHelper, ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE, performOperation } from '..';
 
 const params = {
 
 	operation: SUBTRACTION,
+	triHelper: true,
+	edgeHelper: true,
 
 };
 
@@ -14,6 +16,7 @@ let renderer, camera, scene, gui, outputContainer;
 let controls, transformControls;
 let object1, object2;
 let resultObject;
+let edgesHelper, triHelper;
 let needsUpdate = true;
 
 init();
@@ -65,9 +68,12 @@ function init() {
 
 	scene.add( transformControls );
 
-	object1 = new Brush( new THREE.SphereBufferGeometry( 1, 10, 10 ), new THREE.MeshStandardMaterial( { flatShading: true } ) );
-	object2 = new Brush( new THREE.SphereBufferGeometry( 1, 10, 10 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: true } ) );
-	object2.position.set( 1, 1, 0 );
+	object1 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { flatShading: true } ) );
+	object2 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: true } ) );
+
+	object1.geometry.clearGroups()
+	object2.geometry.clearGroups()
+	object2.position.set( 0.28418117189178715, 0.31608825629673476, - 0.0804028657467819 );
 
 	scene.add( object1, object2 );
 	transformControls.attach( object2 );
@@ -75,12 +81,22 @@ function init() {
 	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( { flatShading: true } ) );
 	scene.add( resultObject );
 
+	edgesHelper = new EdgesHelper();
+	edgesHelper.color.set( 0xff0000 );
+	scene.add( edgesHelper );
+
+	triHelper = new TriangleSetHelper();
+	triHelper.color.set( 0x0000ff );
+	scene.add( triHelper );
+
 	gui = new GUI();
 	gui.add( params, 'operation', { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
 
 		needsUpdate = true;
 
 	} );
+	gui.add( params, 'triHelper' );
+	gui.add( params, 'edgeHelper' );
 
 	window.addEventListener( 'resize', function () {
 
@@ -115,6 +131,14 @@ function render() {
 		needsUpdate = false;
 
 	}
+
+	edgesHelper.setEdges( window.EDGES );
+	edgesHelper.position.y = - 4;
+	edgesHelper.visible = params.edgeHelper;
+
+	triHelper.setTriangles( [ window.SET[ 4 ].tri, ...window.SET[ 4 ].intersects ] );
+	triHelper.position.y = - 4;
+	triHelper.visible = params.triHelper;
 
 	renderer.render( scene, camera );
 

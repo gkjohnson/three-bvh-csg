@@ -7,3 +7,4 @@ export * from './core/operations.js';
 export * from './core/constants.js';
 
 export * from './objects/TriangleSetHelper.js';
+export * from './objects/EdgesHelper.js';
