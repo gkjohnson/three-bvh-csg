@@ -38,8 +38,8 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [x] One-off CSG
 - [x] Runs on main thread
 - [x] Rays to cull triangles
-- [ ] barycoord the results
-- [ ] address missing triangles
+- [x] barycoord the results
+- [ ] address missing triangles (maybe wait until polygon clipping?)
 - [ ] fix unclipped triangles
 - [ ] verify clipping
 
