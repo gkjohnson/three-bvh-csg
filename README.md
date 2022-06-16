@@ -39,7 +39,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [x] Runs on main thread
 - [x] Rays to cull triangles
 - [x] barycoord the results
-- [ ] clip only necessarily (intersected) triangles
+- [ ] split only necessary (intersected) triangles
 - [ ] address missing triangles
 - [ ] fix unclipped triangles
 
