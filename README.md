@@ -47,17 +47,20 @@ Function for performing CSG operations (Difference, Union, Intersection)
 ### Phase 2
 - add support for groups
   - can treat index as an "indirect" buffer and store groups pointing to the position buffer
-- add nice visual shader
-- polygon clipping
-- Half edge structure to cull triangles
+- add nice visual shader (uv texture)
 
 ### Phase 3
+- Half edge structure to cull triangles
 - Cached data
 - Operational hierarchy
 
 ### Phase 4
 - Workers
 - Demo with a meaningful scene
+
+### Later
+- polygon clipping
+
 
 ### Phase 5
 - Demo with drag to build polygon
