@@ -99,7 +99,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
 			const clippedTri = triangles[ ib ];
-			const hitSide = getHitSide( clippedTri, bBVH, invert );
+			const hitSide = getHitSide( clippedTri, bBVH );
 
 			_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
 			_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
@@ -148,7 +148,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 
 					break;
 				case INTERSECTION:
-					if ( hitSide === BACK_SIDE ) {
+					if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR ) === invert ) {
 
 						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
 
@@ -197,7 +197,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 		_tri.b.copy( _v1 ).applyMatrix4( _matrix );
 		_tri.c.copy( _v2 ).applyMatrix4( _matrix );
 
-		const hitSide = getHitSide( _tri, bBVH, invert );
+		const hitSide = getHitSide( _tri, bBVH );
 		switch ( operation ) {
 
 			case ADDITION:
@@ -477,8 +477,9 @@ function getHitSide( tri, bvh ) {
 
 	}
 
-	tri.getNormal( _ray.direction );
 	_ray.origin.copy( tri.a ).add( tri.b ).add( tri.c ).multiplyScalar( 1 / 3 );
+	tri.getNormal( _ray.direction );
+	_ray.direction.set( 0, 0, 1 );
 
 	const total = 3;
 	let count = 0;

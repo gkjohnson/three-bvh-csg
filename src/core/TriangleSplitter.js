@@ -233,6 +233,7 @@ export class TriangleSplitter {
 
 					}
 
+					// TODO: split along a shortest edge here to optimize for larger triangles
 					const nextVert1 = ( singleVert + 1 ) % 3;
 					const nextVert2 = ( singleVert + 2 ) % 3;
 

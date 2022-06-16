@@ -8,6 +8,13 @@ export class EdgesHelper extends LineSegments {
 
 	}
 
+	constructor( edges = [] ) {
+
+		super();
+		this.setEdges( edges );
+
+	}
+
 	setEdges( edges ) {
 
 		const { geometry } = this;
