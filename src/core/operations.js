@@ -108,7 +108,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 			switch ( operation ) {
 
 				case ADDITION:
-					if ( hitSide === FRONT_SIDE || ( hitSide === COPLANAR ) === invert ) {
+					if ( hitSide === FRONT_SIDE || ( hitSide === COPLANAR && invert ) ) {
 
 						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
 
@@ -148,7 +148,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 
 					break;
 				case INTERSECTION:
-					if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR ) === invert ) {
+					if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR && invert ) ) {
 
 						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
 
