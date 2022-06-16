@@ -1,9 +1,12 @@
-import { Triangle, Line3, Vector3 } from 'three';
+import { Triangle, Line3, Vector3, Plane } from 'three';
+import { ExtendedTriangle } from 'three-mesh-bvh';
 
-const EPSILON = 1e-15;
+const EPSILON = 1e-14;
 const _edge = new Line3();
+const _plane = new Plane();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
+const _triangle = new ExtendedTriangle();
 
 // TODO: this could operate on polygons instead to limit the number of
 // objects and edges to check, then triangulate at the end
@@ -63,14 +66,37 @@ export class TriangleSplitter {
 
 	}
 
-	clipByPlane( plane ) {
+	splitByPlane( triangleOrPlane ) {
 
 		const { triangles, trianglePool } = this;
+
+		let plane;
+		let splittingTriangle = null;
+		if ( triangleOrPlane.isPlane ) {
+
+			plane = triangleOrPlane;
+
+		} else {
+
+			splittingTriangle = _triangle;
+			splittingTriangle.copy( triangleOrPlane );
+			splittingTriangle.needsUpdate = true;
+
+			splittingTriangle.getPlane( _plane );
+			plane = _plane;
+
+		}
 
 		for ( let i = 0, l = triangles.length; i < l; i ++ ) {
 
 			const tri = triangles[ i ];
 			const { a, b, c } = tri;
+
+			if ( splittingTriangle && ! splittingTriangle.intersectsTriangle( tri ) ) {
+
+				continue;
+
+			}
 
 			let intersects = 0;
 			let vertexSplitEnd = - 1;

@@ -17,7 +17,6 @@ const _triB = new Triangle();
 const _tri = new Triangle();
 const _barycoordTri = new Triangle();
 const _edge = new Line3();
-const _plane = new Plane();
 const _splitter = new TriangleSplitter();
 
 // TODO: take a target geometry so we don't have to create a new one every time
@@ -88,8 +87,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 			_triB.a.fromBufferAttribute( bPosition, ib0 );
 			_triB.b.fromBufferAttribute( bPosition, ib1 );
 			_triB.c.fromBufferAttribute( bPosition, ib2 );
-			_triB.getPlane( _plane );
-			_splitter.clipByPlane( _plane );
+			_splitter.splitByPlane( _triB );
 
 		}
 
@@ -97,11 +95,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
 			const clippedTri = triangles[ ib ];
-			_ray.origin.copy( clippedTri.a ).add( clippedTri.b ).add( clippedTri.c ).multiplyScalar( 1 / 3 );
-			_triA.getNormal( _ray.direction );
-
-			const hit = bBVH.raycastFirst( _ray, DoubleSide );
-			const hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
+			const hitBackSide = isTriangleInside( clippedTri, bBVH );
 
 			_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
 			_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
@@ -195,14 +189,11 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 		_v2.fromBufferAttribute( aPosition, i2 );
 
 		_ray.origin.copy( _v0 ).add( _v1 ).add( _v2 ).multiplyScalar( 1 / 3 ).applyMatrix4( _matrix );
-		_tri.a.copy( _v0 );
-		_tri.b.copy( _v1 );
-		_tri.c.copy( _v2 );
-		_tri.getNormal( _ray.direction );
+		_tri.a.copy( _v0 ).applyMatrix4( _matrix );
+		_tri.b.copy( _v1 ).applyMatrix4( _matrix );
+		_tri.c.copy( _v2 ).applyMatrix4( _matrix );
 
-		const hit = bBVH.raycastFirst( _ray, DoubleSide );
-		const hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
-
+		const hitBackSide = isTriangleInside( _tri, bBVH, _matrix );
 		switch ( operation ) {
 
 			case ADDITION:
@@ -471,5 +462,38 @@ function collectIntersectingTriangles( a, b ) {
 	} );
 
 	return { aToB, bToA };
+
+}
+
+function isTriangleInside( tri, bvh ) {
+
+	function rand() {
+
+		return Math.random() - 0.5;
+
+	}
+
+	_ray.origin.copy( tri.a ).add( tri.b ).add( tri.c ).multiplyScalar( 1 / 3 );
+	tri.getNormal( _ray.direction );
+
+	const total = 3;
+	let count = 0;
+	for ( let i = 0; i < total; i ++ ) {
+
+		_ray.direction.x += rand() * 1e-4;
+		_ray.direction.y += rand() * 1e-4;
+		_ray.direction.z += rand() * 1e-4;
+
+		const hit = bvh.raycastFirst( _ray, DoubleSide );
+		const hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
+		if ( hitBackSide ) {
+
+			count ++;
+
+		}
+
+	}
+
+	return count / total > 0.5;
 
 }
