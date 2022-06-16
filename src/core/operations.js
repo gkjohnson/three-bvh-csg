@@ -123,7 +123,6 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 
 						if ( hitBackSide === true ) {
 
-							// TODO: invert
 							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData, true );
 
 						}
@@ -142,7 +141,6 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 				case DIFFERENCE:
 					if ( hitBackSide ) {
 
-						// TODO: invert
 						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData, true );
 
 					} else {
@@ -221,7 +219,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 
 					if ( hitBackSide === true ) {
 
-						appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, attributeData );
+						appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, attributeData, invert );
 
 					}
 
@@ -239,7 +237,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 			case DIFFERENCE:
 				if ( hitBackSide ) {
 
-					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, attributeData );
+					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, attributeData, invert );
 
 				} else {
 
@@ -300,6 +298,14 @@ function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, matrixWo
 			_tri.a.fromBufferAttribute( attr, i0 ).transformDirection( matrixWorld );
 			_tri.b.fromBufferAttribute( attr, i1 ).transformDirection( matrixWorld );
 			_tri.c.fromBufferAttribute( attr, i2 ).transformDirection( matrixWorld );
+
+			if ( invert ) {
+
+				_tri.a.multiplyScalar( - 1 );
+				_tri.b.multiplyScalar( - 1 );
+				_tri.c.multiplyScalar( - 1 );
+
+			}
 
 			pushBarycoordValues( _tri.a, _tri.b, _tri.c, baryCoordTri, 3, invert, arr );
 
@@ -368,15 +374,15 @@ function pushBarycoordValues( a, b, c, baryCoordTri, count, invert, arr ) {
 
 }
 
-function appendAttributesFromIndices( i0, i1, i2, attributes, matrixWorld, info ) {
+function appendAttributesFromIndices( i0, i1, i2, attributes, matrixWorld, info, invert = false ) {
 
-	appendAttributeFromIndex( i0, attributes, matrixWorld, info );
-	appendAttributeFromIndex( i1, attributes, matrixWorld, info );
-	appendAttributeFromIndex( i2, attributes, matrixWorld, info );
+	appendAttributeFromIndex( i0, attributes, matrixWorld, info, invert );
+	appendAttributeFromIndex( i1, attributes, matrixWorld, info, invert );
+	appendAttributeFromIndex( i2, attributes, matrixWorld, info, invert );
 
 }
 
-function appendAttributeFromIndex( index, attributes, matrixWorld, info ) {
+function appendAttributeFromIndex( index, attributes, matrixWorld, info, invert ) {
 
 	for ( const key in info ) {
 
@@ -398,6 +404,12 @@ function appendAttributeFromIndex( index, attributes, matrixWorld, info ) {
 		} else if ( key === 'normal' ) {
 
 			_vec.fromBufferAttribute( attr, index ).transformDirection( matrixWorld	);
+			if ( invert ) {
+
+				_vec.multiplyScalar( - 1 );
+
+			}
+
 			arr.push( _vec.x, _vec.y, _vec.z );
 
 		} else {

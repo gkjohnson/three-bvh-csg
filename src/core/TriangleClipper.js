@@ -74,6 +74,7 @@ export class TriangleClipper {
 			let intersects = 0;
 			let vertexSplitEnd = - 1;
 			let positiveSide = 0;
+			let onPlane = 0;
 			const arr = [ a, b, c ];
 			for ( let t = 0; t < 3; t ++ ) {
 
@@ -81,9 +82,14 @@ export class TriangleClipper {
 				_edge.start.copy( arr[ t ] );
 				_edge.end.copy( arr[ tn ] );
 
-				if ( plane.distanceToPoint( _edge.start ) > 0 ) {
+				const distance = plane.distanceToPoint( _edge.start );
+				if ( distance > 0 ) {
 
 					positiveSide ++;
+
+				} else if ( Math.abs( distance ) < 1e-10 ) {
+
+					onPlane ++;
 
 				}
 
@@ -111,9 +117,11 @@ export class TriangleClipper {
 
 			}
 
-			if ( intersects === 2 ) {
+			if ( onPlane < 2 && intersects === 2 ) {
 
 				if ( vertexSplitEnd !== - 1 ) {
+
+					vertexSplitEnd = ( vertexSplitEnd + 1 ) % 3;
 
 					// we're splitting along a vertex
 					let otherVert1 = 0;
@@ -124,8 +132,8 @@ export class TriangleClipper {
 
 					const nextTri = trianglePool.getTriangle();
 					nextTri.a.copy( arr[ otherVert2 ] );
-					nextTri.b.copy( _foundEdge.start );
-					nextTri.c.copy( _foundEdge.end );
+					nextTri.b.copy( _foundEdge.end );
+					nextTri.c.copy( _foundEdge.start );
 
 					triangles.push( nextTri );
 
@@ -184,7 +192,7 @@ export class TriangleClipper {
 
 				}
 
-			} else {
+			} else if ( intersects === 3 ) {
 
 				// console.warn( 'TriangleClipper: Coplanar clip not handled' );
 

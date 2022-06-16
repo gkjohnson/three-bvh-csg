@@ -68,17 +68,16 @@ function init() {
 
 	scene.add( transformControls );
 
-	object1 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { flatShading: true } ) );
-	object2 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: true } ) );
-
-	object1.geometry.clearGroups()
-	object2.geometry.clearGroups()
+	// object1 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { flatShading: true } ) );
+	// object2 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: true } ) );
+	object1 = new Brush( new THREE.SphereBufferGeometry( 1, 10, 10 ), new THREE.MeshStandardMaterial( { flatShading: false } ) );
+	object2 = new Brush( new THREE.SphereBufferGeometry( 1, 10, 10 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: false } ) )
 	object2.position.set( 0.28418117189178715, 0.31608825629673476, - 0.0804028657467819 );
 
 	scene.add( object1, object2 );
 	transformControls.attach( object2 );
 
-	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( { flatShading: true } ) );
+	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( { flatShading: false } ) );
 	scene.add( resultObject );
 
 	edgesHelper = new EdgesHelper();
@@ -136,10 +135,27 @@ function render() {
 	edgesHelper.position.y = - 4;
 	edgesHelper.visible = params.edgeHelper;
 
-	triHelper.setTriangles( [ window.SET[ 4 ].tri, ...window.SET[ 4 ].intersects ] );
+	triHelper.setTriangles( window.TRIS );
+	// triHelper.setTriangles( [ window.SET[ 4 ].tri, ...window.SET[ 4 ].intersects ] );
 	triHelper.position.y = - 4;
 	triHelper.visible = params.triHelper;
 
 	renderer.render( scene, camera );
 
 }
+
+function triToDefinition( t ) {
+
+	return /*js*/`
+		const tri = new THREE.Triangle(
+			new THREE.Vector3(${ t.a.toArray().join() }),
+			new THREE.Vector3(${ t.b.toArray().join() }),
+			new THREE.Vector3(${ t.c.toArray().join() }),
+		);
+	`;
+
+}
+
+
+
+
