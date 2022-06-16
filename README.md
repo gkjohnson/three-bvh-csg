@@ -58,12 +58,11 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - Workers
 - Demo with a meaningful scene
 
-### Later
-- polygon clipping
-
-
 ### Phase 5
 - Demo with drag to build polygon
+
+### Later
+- polygon clipping
 
 ## Approach
 
