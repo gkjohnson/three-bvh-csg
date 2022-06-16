@@ -57,6 +57,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 ### Phase 4
 - Workers
 - Demo with a meaningful scene
+- Docs
 
 ### Phase 5
 - Demo with drag to build polygon
