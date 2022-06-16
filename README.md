@@ -24,7 +24,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 
 ## Issues
 
-- intersctions along the edges of triangles
+- intersctions along the edges of triangles (three-mesh-bvh issue)
 - missing triangles on clip
 - ray passing through triangle edges?
 - planar triangles don't work as expected
