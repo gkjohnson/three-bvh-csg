@@ -25,9 +25,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 ## Issues
 
 - intersctions along the edges of triangles (three-mesh-bvh issue)
-- missing triangles on clip
-- ray passing through triangle edges?
-- planar triangles don't work as expected
+- coplanar triangles don't work as expected
 
 ## Phases
 ### Phase 1
@@ -39,11 +37,12 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [x] Runs on main thread
 - [x] Rays to cull triangles
 - [x] barycoord the results
+- [x] address missing triangles
+- [x] fix unclipped triangles
 - [ ] split only necessary (intersected) triangles
-- [ ] address missing triangles
-- [ ] fix unclipped triangles
-- [ ] fix coplanar triangles
+- [ ] fix coplanar triangles (check aligned-boxes)
 - [ ] clean it up
+- [ ] profile "expensive" code portions
 
 ### Phase 2
 - add support for groups
