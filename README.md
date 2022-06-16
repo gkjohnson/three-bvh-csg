@@ -42,6 +42,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [ ] split only necessary (intersected) triangles
 - [ ] fix coplanar triangles (check aligned-boxes)
 - [ ] clean it up
+- [ ] profile "expensive" code portions
 
 ### Phase 2
 - add support for groups
