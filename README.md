@@ -27,6 +27,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - intersctions along the edges of triangles
 - missing triangles on clip
 - ray passing through triangle edges?
+- planar triangles don't work as expected
 
 ## Phases
 ### Phase 1
