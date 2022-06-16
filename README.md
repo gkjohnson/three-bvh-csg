@@ -28,6 +28,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - missing triangles on clip
 - ray passing through triangle edges?
   - randomly sample multiple points?
+  - improve cast function
 - planar triangles don't work as expected
 
 ## Phases
