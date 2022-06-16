@@ -9,7 +9,7 @@
   "scripts": {
     "start": "cd examples && parcel serve ./*.html --dist-dir ./dev-bundle/ --no-cache --no-hmr",
     "lint": "eslint \"./src/**/*.js\" \"./examples/*.js\"",
-		"test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
     "src/*",
