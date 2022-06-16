@@ -43,6 +43,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [ ] address missing triangles
 - [ ] fix unclipped triangles
 - [ ] fix coplanar triangles
+- [ ] clean it up
 
 ### Phase 2
 - add support for groups
