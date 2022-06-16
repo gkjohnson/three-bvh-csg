@@ -22,6 +22,11 @@ Brush will be needed for cached / interactive applications data.
 
 Function for performing CSG operations (Difference, Union, Intersection)
 
+## Issues
+
+- intersctions along the edges of triangles
+- missing triangles on clip
+
 ## Phases
 ### Phase 1
 - [x] Interactive demo that caches nothing, just operates effectively
