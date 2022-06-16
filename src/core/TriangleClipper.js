@@ -83,13 +83,13 @@ export class TriangleClipper {
 				_edge.end.copy( arr[ tn ] );
 
 				const distance = plane.distanceToPoint( _edge.start );
-				if ( distance > 0 ) {
-
-					positiveSide ++;
-
-				} else if ( Math.abs( distance ) < 1e-10 ) {
+				if ( Math.abs( distance ) < 1e-10 ) {
 
 					onPlane ++;
+
+				} else if ( distance > 0 ) {
+
+					positiveSide ++;
 
 				}
 
@@ -117,7 +117,7 @@ export class TriangleClipper {
 
 			}
 
-			if ( onPlane < 2 && intersects === 2 ) {
+			if ( onPlane < 2 && intersects === 2 && _foundEdge.distance() > 1e-10 ) {
 
 				if ( vertexSplitEnd !== - 1 ) {
 

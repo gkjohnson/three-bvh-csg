@@ -2,13 +2,23 @@ import * as THREE from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { Brush, EdgesHelper, TriangleSetHelper, ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE, performOperation } from '..';
+import {
+	Brush,
+	EdgesHelper,
+	TriangleSetHelper,
+	performOperation,
+	GridPhongMaterial,
+	ADDITION,
+	SUBTRACTION,
+	INTERSECTION,
+	DIFFERENCE,
+} from '..';
 
 const params = {
 
 	operation: SUBTRACTION,
-	triHelper: true,
-	edgeHelper: true,
+	triHelper: false,
+	edgeHelper: false,
 
 };
 

@@ -433,6 +433,7 @@ function collectIntersectingTriangles( a, b ) {
 	window.TRIS = [];
 
 	window.SET = {};
+	window.SET2 = {};
 
 	window.EDGES = [];
 
@@ -450,11 +451,13 @@ function collectIntersectingTriangles( a, b ) {
 				if ( ! aToB[ ia ] ) aToB[ ia ] = [];
 				if ( ! bToA[ ib ] ) bToA[ ib ] = [];
 				if ( ! window.SET[ ia ] ) window.SET[ ia ] = { tri: triangle1.clone(), intersects: [] };
+				if ( ! window.SET2[ ib ] ) window.SET2[ ib ] = { tri: triangle2.clone(), intersects: [] };
 
 				aToB[ ia ].push( ib );
 				bToA[ ib ].push( ia );
 
 				window.SET[ ia ].intersects.push( triangle2.clone() );
+				window.SET2[ ib ].intersects.push( triangle1.clone() );
 
 				window.TRIS.push( triangle1.clone(), triangle2.clone() );
 
