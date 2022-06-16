@@ -1,4 +1,4 @@
-import { Matrix4, Vector3, Vector4, Ray, DoubleSide, Line3, BufferGeometry, BufferAttribute, Plane, Triangle } from 'three';
+import { Matrix4, Vector3, Vector4, Ray, DoubleSide, Line3, BufferGeometry, BufferAttribute, Triangle } from 'three';
 import { ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION, PASSTHROUGH } from './constants.js';
 import { TriangleSplitter } from './TriangleSplitter.js';
 
@@ -87,7 +87,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 			_triB.a.fromBufferAttribute( bPosition, ib0 );
 			_triB.b.fromBufferAttribute( bPosition, ib1 );
 			_triB.c.fromBufferAttribute( bPosition, ib2 );
-			_splitter.splitByPlane( _triB );
+			_splitter.splitByTriangle( _triB );
 
 		}
 
@@ -95,7 +95,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
 			const clippedTri = triangles[ ib ];
-			const hitBackSide = isTriangleInside( clippedTri, bBVH );
+			const hitBackSide = isTriangleInside( clippedTri, bBVH, invert );
 
 			_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
 			_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
@@ -193,7 +193,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 		_tri.b.copy( _v1 ).applyMatrix4( _matrix );
 		_tri.c.copy( _v2 ).applyMatrix4( _matrix );
 
-		const hitBackSide = isTriangleInside( _tri, bBVH, _matrix );
+		const hitBackSide = isTriangleInside( _tri, bBVH, invert );
 		switch ( operation ) {
 
 			case ADDITION:
@@ -465,7 +465,7 @@ function collectIntersectingTriangles( a, b ) {
 
 }
 
-function isTriangleInside( tri, bvh ) {
+function isTriangleInside( tri, bvh, invert ) {
 
 	function rand() {
 
@@ -473,8 +473,8 @@ function isTriangleInside( tri, bvh ) {
 
 	}
 
-	_ray.origin.copy( tri.a ).add( tri.b ).add( tri.c ).multiplyScalar( 1 / 3 );
 	tri.getNormal( _ray.direction );
+	_ray.origin.copy( tri.a ).add( tri.b ).add( tri.c ).multiplyScalar( 1 / 3 );
 
 	const total = 3;
 	let count = 0;
@@ -485,7 +485,13 @@ function isTriangleInside( tri, bvh ) {
 		_ray.direction.z += rand() * 1e-4;
 
 		const hit = bvh.raycastFirst( _ray, DoubleSide );
-		const hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
+		let hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
+		if ( invert && hit !== null ) {
+
+			hitBackSide = hitBackSide && hit.distance > 0;
+
+		}
+
 		if ( hitBackSide ) {
 
 			count ++;

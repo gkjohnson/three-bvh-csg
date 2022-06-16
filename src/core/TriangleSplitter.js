@@ -3,9 +3,10 @@ import { ExtendedTriangle } from 'three-mesh-bvh';
 
 const EPSILON = 1e-14;
 const _edge = new Line3();
-const _plane = new Plane();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
+const _planeNormal = new Vector3();
+const _plane = new Plane();
 const _triangle = new ExtendedTriangle();
 
 // TODO: this could operate on polygons instead to limit the number of
@@ -52,38 +53,73 @@ export class TriangleSplitter {
 
 		this.trianglePool = new TrianglePool();
 		this.triangles = [];
+		this.normal = new Vector3();
 
 	}
 
 	initialize( tri ) {
 
-		const { triangles, trianglePool } = this;
+		const { triangles, trianglePool, normal } = this;
 		const poolTri = trianglePool.getTriangle();
 		triangles.length = 0;
 
+		tri.getNormal( normal );
 		poolTri.copy( tri );
 		triangles.push( poolTri );
 
 	}
 
-	splitByPlane( triangleOrPlane ) {
+	splitByTriangle( triangle ) {
 
-		const { triangles, trianglePool } = this;
+		const { normal } = this;
+		triangle.getPlane( _plane );
 
-		let plane;
-		let splittingTriangle = null;
-		if ( triangleOrPlane.isPlane ) {
 
-			plane = triangleOrPlane;
+		if ( Math.abs( 1.0 - Math.abs( _plane.normal.dot( normal ) ) ) < 1e-7 ) {
+
+			if ( triangle === null ) {
+
+				console.warn( 'TriangleSplitter: cannot split using a coplanar plane and no triangle.' );
+
+			} else {
+
+				// TODO: fix this
+				const arr = [ triangle.a, triangle.b, triangle.c ];
+				for ( let i = 0; i < 3; i ++ ) {
+
+					const nexti = ( i + 1 ) % 3;
+
+					const v0 = arr[ i ];
+					const v1 = arr[ nexti ];
+
+					_vec.subVectors( v1, v0 ).normalize();
+					_planeNormal.crossVectors( normal, _vec );
+					_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
+
+					this.splitByPlane( _plane, triangle );
+
+				}
+
+			}
 
 		} else {
 
-			splittingTriangle = _triangle;
-			splittingTriangle.copy( triangleOrPlane );
-			splittingTriangle.needsUpdate = true;
+			this.splitByPlane( _plane, triangle );
 
-			splittingTriangle.getPlane( _plane );
-			plane = _plane;
+		}
+
+	}
+
+	splitByPlane( plane, triangle = null ) {
+
+		const { triangles, trianglePool } = this;
+
+		let splittingTriangle = null;
+		if ( triangle !== null ) {
+
+			splittingTriangle = _triangle;
+			splittingTriangle.copy( triangle );
+			splittingTriangle.needsUpdate = true;
 
 		}
 

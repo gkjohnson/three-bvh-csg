@@ -24,9 +24,7 @@ window.triToDefinition = function triToDefinition( t ) {
 		);
 	`;
 
-}
-
-
+};
 
 const params = {
 
@@ -75,12 +73,12 @@ function init() {
 	light.shadow.normalBias = 1e-2;
 	light.position.y -= 2;
 	light.target.position.y -= 2;
-	
+
 	const shadowCam = light.shadow.camera;
 	shadowCam.left = shadowCam.bottom = - 2.5;
 	shadowCam.right = shadowCam.top = 2.5;
 	shadowCam.updateProjectionMatrix();
-	
+
 	scene.add( light, light.target );
 	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
 
@@ -175,6 +173,24 @@ function init() {
 		renderer.setSize( window.innerWidth, window.innerHeight );
 
 	}, false );
+
+	window.addEventListener( 'keydown', function ( e ) {
+
+		switch ( e.code ) {
+
+			case 'KeyW':
+				transformControls.setMode( 'translate' );
+				break;
+			case 'KeyE':
+				transformControls.setMode( 'rotate' );
+				break;
+			case 'KeyR':
+				transformControls.setMode( 'scale' );
+				break;
+
+		}
+
+	} );
 
 }
 
