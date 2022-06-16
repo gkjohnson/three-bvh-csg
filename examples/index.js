@@ -7,7 +7,6 @@ import {
 	EdgesHelper,
 	TriangleSetHelper,
 	performOperation,
-	GridPhongMaterial,
 	ADDITION,
 	SUBTRACTION,
 	INTERSECTION,
@@ -80,9 +79,14 @@ function init() {
 
 	// object1 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { flatShading: true } ) );
 	// object2 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: true } ) );
-	object1 = new Brush( new THREE.SphereBufferGeometry( 1, 10, 10 ), new THREE.MeshStandardMaterial( { flatShading: false } ) );
-	object2 = new Brush( new THREE.SphereBufferGeometry( 1, 10, 10 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: false } ) )
-	object2.position.set( 0.28418117189178715, 0.31608825629673476, - 0.0804028657467819 );
+	object1 = new Brush( new THREE.SphereBufferGeometry( 1, 7, 7 ), new THREE.MeshStandardMaterial( { flatShading: false } ) );
+	object2 = new Brush( new THREE.SphereBufferGeometry( 1, 7, 7 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: false } ) )
+	// PROBLEM CASE 1:
+	object2.position.set( - 0.5416063456346885, 0.3047192957468528, 0 );
+	
+	// PROBLEM CASE 2:
+	object2.position.set( - 0.32483306917221366, 0.5664372419058846, 0.681338353197529 );
+
 
 	scene.add( object1, object2 );
 	transformControls.attach( object2 );

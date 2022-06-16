@@ -1,5 +1,6 @@
 import { Triangle, Line3, Vector3 } from 'three';
 
+const EPSILON = 1e-15;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
@@ -83,7 +84,7 @@ export class TriangleClipper {
 				_edge.end.copy( arr[ tn ] );
 
 				const distance = plane.distanceToPoint( _edge.start );
-				if ( Math.abs( distance ) < 1e-10 ) {
+				if ( Math.abs( distance ) < EPSILON ) {
 
 					onPlane ++;
 
@@ -117,7 +118,7 @@ export class TriangleClipper {
 
 			}
 
-			if ( onPlane < 2 && intersects === 2 && _foundEdge.distance() > 1e-10 ) {
+			if ( onPlane < 2 && intersects === 2 && _foundEdge.distance() > EPSILON ) {
 
 				if ( vertexSplitEnd !== - 1 ) {
 
