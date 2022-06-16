@@ -27,6 +27,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - intersctions along the edges of triangles (three-mesh-bvh issue)
 - missing triangles on clip
 - ray passing through triangle edges?
+  - randomly sample multiple points?
 - planar triangles don't work as expected
 
 ## Phases
