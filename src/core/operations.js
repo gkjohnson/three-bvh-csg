@@ -2,6 +2,10 @@ import { Matrix4, Vector3, Vector4, Ray, DoubleSide, Line3, BufferGeometry, Buff
 import { ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION, PASSTHROUGH } from './constants.js';
 import { TriangleSplitter } from './TriangleSplitter.js';
 
+const COPLANAR = 0;
+const BACK_SIDE = - 1;
+const FRONT_SIDE = 1;
+
 const _matrix = new Matrix4();
 const _v0 = new Vector3();
 const _v1 = new Vector3();
@@ -95,7 +99,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
 			const clippedTri = triangles[ ib ];
-			const hitBackSide = isTriangleInside( clippedTri, bBVH, invert );
+			const hitSide = getHitSide( clippedTri, bBVH, invert );
 
 			_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
 			_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
@@ -104,7 +108,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 			switch ( operation ) {
 
 				case ADDITION:
-					if ( hitBackSide === false ) {
+					if ( hitSide === FRONT_SIDE || ( hitSide === COPLANAR ) === invert ) {
 
 						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
 
@@ -114,7 +118,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 				case SUBTRACTION:
 					if ( invert ) {
 
-						if ( hitBackSide === true ) {
+						if ( hitSide === BACK_SIDE ) {
 
 							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData, true );
 
@@ -122,7 +126,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 
 					} else {
 
-						if ( hitBackSide === false ) {
+						if ( hitSide === FRONT_SIDE ) {
 
 							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
 
@@ -132,11 +136,11 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 
 					break;
 				case DIFFERENCE:
-					if ( hitBackSide ) {
+					if ( hitSide === BACK_SIDE ) {
 
 						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData, true );
 
-					} else {
+					} else if ( hitSide === FRONT_SIDE ) {
 
 						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
 
@@ -144,7 +148,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 
 					break;
 				case INTERSECTION:
-					if ( hitBackSide === true ) {
+					if ( hitSide === BACK_SIDE ) {
 
 						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeData );
 
@@ -193,11 +197,11 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 		_tri.b.copy( _v1 ).applyMatrix4( _matrix );
 		_tri.c.copy( _v2 ).applyMatrix4( _matrix );
 
-		const hitBackSide = isTriangleInside( _tri, bBVH, invert );
+		const hitSide = getHitSide( _tri, bBVH, invert );
 		switch ( operation ) {
 
 			case ADDITION:
-				if ( hitBackSide === false ) {
+				if ( hitSide === FRONT_SIDE ) {
 
 					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
 
@@ -207,7 +211,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 			case SUBTRACTION:
 				if ( invert ) {
 
-					if ( hitBackSide === true ) {
+					if ( hitSide === BACK_SIDE ) {
 
 						appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, attributeData, invert );
 
@@ -215,7 +219,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 
 				} else {
 
-					if ( hitBackSide === false ) {
+					if ( hitSide === FRONT_SIDE ) {
 
 						appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
 
@@ -225,7 +229,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 
 				break;
 			case DIFFERENCE:
-				if ( hitBackSide ) {
+				if ( hitSide === BACK_SIDE ) {
 
 					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, attributeData, invert );
 
@@ -237,7 +241,7 @@ function accumulateTriangles( a, b, skipTriSet, operation, invert, attributeData
 
 				break;
 			case INTERSECTION:
-				if ( hitBackSide === true ) {
+				if ( hitSide === BACK_SIDE ) {
 
 					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeData );
 
@@ -465,7 +469,7 @@ function collectIntersectingTriangles( a, b ) {
 
 }
 
-function isTriangleInside( tri, bvh, invert ) {
+function getHitSide( tri, bvh ) {
 
 	function rand() {
 
@@ -478,6 +482,7 @@ function isTriangleInside( tri, bvh, invert ) {
 
 	const total = 3;
 	let count = 0;
+	let minDistance = Infinity;
 	for ( let i = 0; i < total; i ++ ) {
 
 		_ray.direction.x += rand() * 1e-4;
@@ -486,9 +491,9 @@ function isTriangleInside( tri, bvh, invert ) {
 
 		const hit = bvh.raycastFirst( _ray, DoubleSide );
 		let hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
-		if ( invert && hit !== null ) {
+		if ( hit !== null ) {
 
-			hitBackSide = hitBackSide && hit.distance > 0;
+			minDistance = Math.min( minDistance, hit.distance );
 
 		}
 
@@ -500,6 +505,15 @@ function isTriangleInside( tri, bvh, invert ) {
 
 	}
 
-	return count / total > 0.5;
+	if ( minDistance === 0 ) {
+
+		return COPLANAR;
+
+	} else {
+
+		return count / total > 0.5 ? BACK_SIDE : FRONT_SIDE;
+
+	}
+
 
 }
