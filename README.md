@@ -22,6 +22,13 @@ Brush will be needed for cached / interactive applications data.
 
 Function for performing CSG operations (Difference, Union, Intersection)
 
+## Issues
+
+- intersctions along the edges of triangles
+- missing triangles on clip
+- ray passing through triangle edges?
+- planar triangles don't work as expected
+
 ## Phases
 ### Phase 1
 - [x] Interactive demo that caches nothing, just operates effectively
@@ -31,8 +38,8 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [x] One-off CSG
 - [x] Runs on main thread
 - [x] Rays to cull triangles
-- [ ] barycoord the results
-- [ ] address missing triangles
+- [x] barycoord the results
+- [ ] address missing triangles (maybe wait until polygon clipping?)
 - [ ] fix unclipped triangles
 - [ ] verify clipping
 
