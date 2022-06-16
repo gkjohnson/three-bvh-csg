@@ -39,7 +39,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [x] barycoord the results
 - [x] address missing triangles
 - [x] fix unclipped triangles
-- [ ] split only necessary (intersected) triangles
+- [x] split only necessary (intersected) triangles
 - [ ] fix coplanar triangles (check aligned-boxes)
 - [ ] clean it up
 - [ ] profile "expensive" code portions
