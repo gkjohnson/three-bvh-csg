@@ -26,14 +26,21 @@ Function for performing CSG operations (Difference, Union, Intersection)
 ### Phase 1
 - [x] Interactive demo that caches nothing, just operates effectively
 - [x] Start by skipping clipped triangles
-- [ ] implement clipping logic
-- [ ] Make clipping logic demo
-- [ ] One-off CSG
-- [ ] Runs on main thread
-- [ ] Rays to cull triangles
+- [x] implement clipping logic
+- [x] Make clipping logic demo
+- [x] One-off CSG
+- [x] Runs on main thread
+- [x] Rays to cull triangles
+- [ ] barycoord the results
+- [ ] address missing triangles
+- [ ] fix unclipped triangles
 - [ ] verify clipping
 
 ### Phase 2
+- add support for groups
+  - can treat index as an "indirect" buffer and store groups pointing to the position buffer
+- add nice visual shader
+- polygon clipping
 - Half edge structure to cull triangles
 
 ### Phase 3
