@@ -42,7 +42,6 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [ ] clip only necessarily (intersected) triangles
 - [ ] address missing triangles
 - [ ] fix unclipped triangles
-- [ ] verify clipping
 
 ### Phase 2
 - add support for groups
