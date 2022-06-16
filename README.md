@@ -50,7 +50,6 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - add nice visual shader (uv texture)
 
 ### Phase 3
-- Half edge structure to cull triangles
 - Cached data
 - Operational hierarchy
 
@@ -63,6 +62,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - Demo with drag to build polygon
 
 ### Later
+- Half edge structure to cull triangles
 - polygon clipping
 
 ## Approach
