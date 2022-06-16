@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { TriangleClipper, TriangleSetHelper } from '..';
+import { TriangleSplitter, TriangleSetHelper } from '..';
 
 let renderer, camera, scene;
 let controls, transformControls;
 let planeObject, planeHelper;
-let clipper, clippedTris;
+let splitter, clippedTris;
 let plane = new THREE.Plane();
 let _vec = new THREE.Vector3();
 
@@ -91,7 +91,7 @@ function init() {
 	// scene.add( planeHelper );
 
 	clippedTris = new TriangleSetHelper();
-	clipper = new TriangleClipper();
+	splitter = new TriangleSplitter();
 
 	scene.add( new TriangleSetHelper( [ tri, ...tris ] ), clippedTris );
 

@@ -43,7 +43,7 @@ class TrianglePool {
 
 }
 
-export class TriangleClipper {
+export class TriangleSplitter {
 
 	constructor() {
 

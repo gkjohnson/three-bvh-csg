@@ -1,7 +1,6 @@
 import { Matrix4, Vector3, Vector4, Ray, DoubleSide, Line3, BufferGeometry, BufferAttribute, Plane, Triangle } from 'three';
 import { ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION, PASSTHROUGH } from './constants.js';
-import { TriangleClipper } from './TriangleClipper.js';
-import { ExtendedTriangle } from 'three-mesh-bvh';
+import { TriangleSplitter } from './TriangleSplitter.js';
 
 const _matrix = new Matrix4();
 const _v0 = new Vector3();
@@ -19,7 +18,7 @@ const _tri = new Triangle();
 const _barycoordTri = new Triangle();
 const _edge = new Line3();
 const _plane = new Plane();
-const _clipper = new TriangleClipper();
+const _splitter = new TriangleSplitter();
 
 // TODO: take a target geometry so we don't have to create a new one every time
 export function performOperation( a, b, operation ) {
@@ -78,7 +77,7 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 		_triA.b.fromBufferAttribute( aPosition, ia1 ).applyMatrix4( _matrix );
 		_triA.c.fromBufferAttribute( aPosition, ia2 ).applyMatrix4( _matrix );
 
-		_clipper.initialize( _triA );
+		_splitter.initialize( _triA );
 
 		for ( let ib = 0, l = triIndices.length; ib < l; ib ++ ) {
 
@@ -90,11 +89,11 @@ function clipTriangles( a, b, triSets, operation, invert, attributeData ) {
 			_triB.b.fromBufferAttribute( bPosition, ib1 );
 			_triB.c.fromBufferAttribute( bPosition, ib2 );
 			_triB.getPlane( _plane );
-			_clipper.clipByPlane( _plane );
+			_splitter.clipByPlane( _plane );
 
 		}
 
-		const triangles = _clipper.triangles;
+		const triangles = _splitter.triangles;
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
 			const clippedTri = triangles[ ib ];

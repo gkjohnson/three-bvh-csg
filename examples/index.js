@@ -18,13 +18,14 @@ const params = {
 	operation: SUBTRACTION,
 	triHelper: false,
 	edgeHelper: false,
+	wireframe: false,
 
 };
 
 let renderer, camera, scene, gui, outputContainer;
 let controls, transformControls;
 let object1, object2;
-let resultObject;
+let resultObject, wireframeResult;
 let edgesHelper, triHelper;
 let needsUpdate = true;
 
@@ -91,8 +92,22 @@ function init() {
 	scene.add( object1, object2 );
 	transformControls.attach( object2 );
 
-	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( { flatShading: false } ) );
+	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( {
+		flatShading: false,
+		polygonOffset: true,
+		polygonOffsetUnits: 1,
+		polygonOffsetFactor: 1,
+
+	} ) );
 	scene.add( resultObject );
+
+	wireframeResult = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshBasicMaterial( {
+		wireframe: true,
+		color: 0xff3300,
+		opacity: 0.15,
+		transparent: true,
+	} ) );
+	scene.add( wireframeResult );
 
 	edgesHelper = new EdgesHelper();
 	edgesHelper.color.set( 0xff0000 );
@@ -110,6 +125,7 @@ function init() {
 	} );
 	gui.add( params, 'triHelper' );
 	gui.add( params, 'edgeHelper' );
+	gui.add( params, 'wireframe' );
 
 	window.addEventListener( 'resize', function () {
 
@@ -132,6 +148,7 @@ function render() {
 	object2.updateMatrixWorld();
 
 	resultObject.position.y = - 4;
+	wireframeResult.position.y = - 4;
 
 	if ( needsUpdate ) {
 
@@ -139,6 +156,9 @@ function render() {
 		resultObject.geometry.dispose();
 		resultObject.geometry = performOperation( object1, object2, params.operation );
 		const deltaTime = window.performance.now() - startTime;
+
+		wireframeResult.geometry.dispose();
+		wireframeResult.geometry = resultObject.geometry;
 
 		outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
 		needsUpdate = false;
@@ -153,6 +173,8 @@ function render() {
 	// triHelper.setTriangles( [ window.SET[ 4 ].tri, ...window.SET[ 4 ].intersects ] );
 	triHelper.position.y = - 4;
 	triHelper.visible = params.triHelper;
+
+	wireframeResult.visible = params.wireframe;
 
 	renderer.render( scene, camera );
 
