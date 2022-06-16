@@ -42,6 +42,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [ ] split only necessary (intersected) triangles
 - [ ] address missing triangles
 - [ ] fix unclipped triangles
+- [ ] fix coplanar triangles
 
 ### Phase 2
 - add support for groups
