@@ -42,6 +42,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [x] fix coplanar triangles (check aligned-boxes)
 - [x] clean up / comments
 - [x] profile "expensive" code portions
+  - looks like the big time sink is the raycasting
   - in order of performance intensity:
   	1. performSplitTriangleOperations
   	2. performWholeTriangleOperations
@@ -49,13 +50,14 @@ Function for performing CSG operations (Difference, Union, Intersection)
 
 ### Phase 2
 - [x] migrate to an "evaluator" class for performing operations
+- [x] configurable attributes
 - [ ] add support for groups
   - can treat index as an "indirect" buffer and store groups pointing to the position buffer
 - [ ] add nice visual shader (uv texture)
 - [ ] improve performance
-  - avoid creating new attribute data every frame
+  - ~avoid creating new attribute data every frame~
   - avoid creating new geometry every frame
-- [ ] configurable attributes
+  - see long term approach for simplifying the raycasting (half edge traversal)
 
 ### Phase 3
 - Cached data
@@ -68,11 +70,6 @@ Function for performing CSG operations (Difference, Union, Intersection)
 
 ### Phase 5
 - Demo with drag to build polygon
-
-### Later
-- Half edge structure to cull triangles
-- polygon clipping
-- vertex colors demo
 
 ## Approach
 
