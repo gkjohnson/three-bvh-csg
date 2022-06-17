@@ -2,13 +2,13 @@
 
 An _in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of three-mesh-bvh.
 
-## Examples
+# Examples
 
 TODO
 
-## API
+# API
 
-### Constants
+## Constants
 
 ```
 ADDITION
@@ -17,25 +17,43 @@ DIFFERENCE
 INTERSECTION
 ```
 
-### Brush
+## Brush
+
+_extends THREE.Mesh_
 
 TODO
 
-### Operation
+## Operation
+
+_extends Brush_
 
 TODO
 
-### Evaluator
+## Evaluator
+
+### .evaluate
 
 TODO
 
-### EvaluatorWorker
+### .evaluateHierarchy
 
 TODO
 
-## Gotchas
+## EvaluatorWorker
+
+_extends Evaluator_
+
+### .evaluate
+
+TODO
+
+### .evaluateHierarchy
+
+TODO
+
+# Gotchas
 - All geometry is expected to have all attributes to be interpolated using the same type of array.
 
-## References
+# References
 - [Godot CSG](https://github.com/godotengine/godot/blob/master/modules/csg/csg.cpp)
 - RealtimeCSG ([Overview](https://www.youtube.com/watch?v=uqaiUMuGlRc), [GCD Presentation](https://www.youtube.com/watch?v=Iqmg4gblreo))
