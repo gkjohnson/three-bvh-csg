@@ -1,11 +1,15 @@
+import { areSharedArrayBuffersSupported } from './utils.js';
+
 // Make a new array wrapper class that more easily affords expansion when reaching it's max capacity
 export class TypeBackedArray {
 
 	constructor( type, initialSize = 500 ) {
 
+		const bufferType = areSharedArrayBuffersSupported() ? SharedArrayBuffer : ArrayBuffer;
+
 		this.expansionFactor = 1.5;
 		this.type = type;
-		this.array = new type( initialSize );
+		this.array = new type( new bufferType( initialSize * type.BYTES_PER_ELEMENT ) );
 		this.length = 0;
 
 	}

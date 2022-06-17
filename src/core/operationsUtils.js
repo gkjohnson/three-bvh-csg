@@ -1,4 +1,4 @@
-import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle } from 'three';
+import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle, Line3 } from 'three';
 import { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE, PASSTHROUGH } from './constants.js';
 
 const _ray = new Ray();
@@ -11,6 +11,7 @@ const _vec4c = new Vector4();
 const _vec4_0 = new Vector4();
 const _vec4_1 = new Vector4();
 const _vec4_2 = new Vector4();
+const _edge = new Line3();
 const JITTER_EPSILON = 1e-8;
 
 export const COPLANAR = 0;
@@ -20,6 +21,13 @@ export const FRONT_SIDE = 1;
 export const INVERT_TRI = 0;
 export const ADD_TRI = 1;
 export const SKIP_TRI = 2;
+
+let _debugContext = null;
+export function setDebugContext( debugData ) {
+
+	_debugContext = debugData;
+
+}
 
 export function getHitSide( tri, bvh ) {
 
@@ -88,15 +96,22 @@ export function collectIntersectingTriangles( a, b ) {
 
 	a.geometry.boundsTree.bvhcast( b.geometry.boundsTree, _matrix, {
 
-		intersectsTriangles( triangle1, triangle2, ia, ib ) {
+		intersectsTriangles( triangleA, triangleB, ia, ib ) {
 
-			if ( triangle1.intersectsTriangle( triangle2 ) ) {
+			if ( triangleA.intersectsTriangle( triangleB, _debugContext ? _edge : undefined ) ) {
 
 				if ( ! aToB[ ia ] ) aToB[ ia ] = [];
 				if ( ! bToA[ ib ] ) bToA[ ib ] = [];
 
 				aToB[ ia ].push( ib );
 				bToA[ ib ].push( ia );
+
+				if ( _debugContext ) {
+
+					_debugContext.addEdge( _edge );
+					_debugContext.addIntersectingTriangles( ia, triangleA, ib, triangleB );
+
+				}
 
 			}
 
@@ -127,7 +142,7 @@ export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, m
 		const arr = attributeInfo[ key ];
 		if ( ! ( key in attributes ) ) {
 
-			throw new Error();
+			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );
 
 		}
 
@@ -301,7 +316,7 @@ function appendAttributeFromIndex( index, attributes, matrixWorld, normalMatrix,
 		const arr = info[ key ];
 		if ( ! ( key in attributes ) ) {
 
-			throw new Error();
+			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );
 
 		}
 
@@ -315,7 +330,7 @@ function appendAttributeFromIndex( index, attributes, matrixWorld, normalMatrix,
 
 		} else if ( key === 'normal' ) {
 
-			_vec3.fromBufferAttribute( attr, index ).applyNormalMatrix( normalMatrix	);
+			_vec3.fromBufferAttribute( attr, index ).applyNormalMatrix( normalMatrix );
 			if ( invert ) {
 
 				_vec3.multiplyScalar( - 1 );

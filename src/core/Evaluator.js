@@ -1,12 +1,19 @@
 import { BufferGeometry, BufferAttribute } from 'three';
 import { TriangleSplitter } from './TriangleSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
+import { OperationDebugData } from './OperationDebugData.js';
 import { performOperation } from './operations.js';
+import { setDebugContext } from './operationsUtils.js';
 
+// applies the given set of attribute data to the provided geometry. If the attributes are
+// not large enough to hold the new set of data then new attributes will be created. Otherwise
+// the existing attributes will be used and draw range updated to accommodate the new size.
 function applyToGeometry( geometry, referenceGeometry, attributeData ) {
 
 	let needsDisposal = false;
 	let drawRange = - 1;
+
+	// set the data
 	const attributes = geometry.attributes;
 	for ( const key in attributeData ) {
 
@@ -16,17 +23,20 @@ function applyToGeometry( geometry, referenceGeometry, attributeData ) {
 		let attr = attributes[ key ];
 		if ( ! attr ) {
 
+			// create the attribute if it doesn't exist yet
 			const refAttr = referenceGeometry.attributes[ key ];
 			attr = new BufferAttribute( trimmedArray.slice(), refAttr.itemSize, refAttr.normalized );
 			geometry.setAttribute( key, attr );
 
 		} else if ( attr.array.length < length ) {
 
+			// set the new array if it's larger
 			needsDisposal = true;
 			attr.array = trimmedArray.slice();
 
 		} else {
 
+			// set the new array data
 			attr.array.set( trimmedArray, 0 );
 
 		}
@@ -36,14 +46,16 @@ function applyToGeometry( geometry, referenceGeometry, attributeData ) {
 
 	}
 
+	// update the draw range
 	geometry.setDrawRange( 0, drawRange );
 
+	// remove or update the index appropriately
 	if ( geometry.index ) {
 
 		const indexArray = geometry.index.array;
 		if ( indexArray.length < drawRange ) {
 
-			geometry.toNonIndexed();
+			geometry.index = null;
 			needsDisposal = true;
 
 		} else {
@@ -58,6 +70,7 @@ function applyToGeometry( geometry, referenceGeometry, attributeData ) {
 
 	}
 
+	// remove the bounds tree if it exists because its now out of date
 	geometry.boundsTree = null;
 
 	if ( needsDisposal ) {
@@ -70,6 +83,7 @@ function applyToGeometry( geometry, referenceGeometry, attributeData ) {
 
 }
 
+// Utility class for performing CSG operations
 export class Evaluator {
 
 	constructor() {
@@ -77,15 +91,17 @@ export class Evaluator {
 		this.triangleSplitter = new TriangleSplitter();
 		this.attributeData = new TypedAttributeData();
 		this.attributes = [ 'position', 'uv', 'normal' ];
+		this.debugData = new OperationDebugData();
+		this.debug = false;
 
 	}
 
-	evaluate( a, b, operation ) {
+	evaluate( a, b, operation, targetGeometry = new BufferGeometry() ) {
 
 		a.prepareGeometry();
 		b.prepareGeometry();
 
-		const { triangleSplitter, attributeData, attributes } = this;
+		const { triangleSplitter, attributeData, attributes, debugData, debug } = this;
 		const aAttributes = a.geometry.attributes;
 		for ( let i = 0, l = attributes.length; i < l; i ++ ) {
 
@@ -97,8 +113,22 @@ export class Evaluator {
 
 		attributeData.clear();
 
+		if ( debug ) {
+
+			debugData.reset();
+			setDebugContext( debugData );
+
+		}
+
 		performOperation( a, b, operation, triangleSplitter, attributeData );
-		return applyToGeometry( new BufferGeometry(), a.geometry, attributeData.attributes );
+
+		if ( debug ) {
+
+			setDebugContext( null );
+
+		}
+
+		return applyToGeometry( targetGeometry, a.geometry, attributeData.attributes );
 
 	}
 
