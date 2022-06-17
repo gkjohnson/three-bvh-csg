@@ -107,7 +107,7 @@ export function collectIntersectingTriangles( a, b ) {
 }
 
 // Add the barycentric interpolated values fro the triangle into the new attribute data
-export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, matrixWorld, attributeInfo, invert ) {
+export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, matrixWorld, normalMatrix, attributeInfo, invert ) {
 
 	const attributes = geometry.attributes;
 	const indexAttr = geometry.index;
@@ -140,10 +140,9 @@ export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, m
 
 		} else if ( key === 'normal' ) {
 
-			// TODO: apply normal matrix here, not direction
-			_tri.a.fromBufferAttribute( attr, i0 ).transformDirection( matrixWorld );
-			_tri.b.fromBufferAttribute( attr, i1 ).transformDirection( matrixWorld );
-			_tri.c.fromBufferAttribute( attr, i2 ).transformDirection( matrixWorld );
+			_tri.a.fromBufferAttribute( attr, i0 ).applyNormalMatrix( normalMatrix );
+			_tri.b.fromBufferAttribute( attr, i1 ).applyNormalMatrix( normalMatrix );
+			_tri.c.fromBufferAttribute( attr, i2 ).applyNormalMatrix( normalMatrix );
 
 			if ( invert ) {
 
@@ -170,11 +169,11 @@ export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, m
 }
 
 // Append all the values of the attributes for the triangle onto the new attribute arrays
-export function appendAttributesFromIndices( i0, i1, i2, attributes, matrixWorld, attributeInfo, invert = false ) {
+export function appendAttributesFromIndices( i0, i1, i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert = false ) {
 
-	appendAttributeFromIndex( i0, attributes, matrixWorld, attributeInfo, invert );
-	appendAttributeFromIndex( i1, attributes, matrixWorld, attributeInfo, invert );
-	appendAttributeFromIndex( i2, attributes, matrixWorld, attributeInfo, invert );
+	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
+	appendAttributeFromIndex( i1, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
+	appendAttributeFromIndex( i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
 
 }
 
@@ -226,7 +225,7 @@ function pushBarycoordInterpolatedValues( v0, v1, v2, baryCoordTri, itemSize, at
 }
 
 // Adds the values for the given vertex index onto the new attribute arrays
-function appendAttributeFromIndex( index, attributes, matrixWorld, info, invert = false ) {
+function appendAttributeFromIndex( index, attributes, matrixWorld, normalMatrix, info, invert = false ) {
 
 	for ( const key in info ) {
 
@@ -249,8 +248,7 @@ function appendAttributeFromIndex( index, attributes, matrixWorld, info, invert 
 
 		} else if ( key === 'normal' ) {
 
-			// TODO: apply normal matrix here, not direction
-			_vec.fromBufferAttribute( attr, index ).transformDirection( matrixWorld	);
+			_vec.fromBufferAttribute( attr, index ).applyNormalMatrix( normalMatrix	);
 			if ( invert ) {
 
 				_vec.multiplyScalar( - 1 );

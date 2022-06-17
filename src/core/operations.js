@@ -1,4 +1,4 @@
-import { Matrix4, BufferGeometry, BufferAttribute, Triangle } from 'three';
+import { Matrix4, Matrix3, BufferGeometry, BufferAttribute, Triangle } from 'three';
 import { ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION, PASSTHROUGH } from './constants.js';
 import { TriangleSplitter } from './TriangleSplitter.js';
 import {
@@ -10,6 +10,7 @@ import {
 } from './operationsUtils.js';
 
 const _matrix = new Matrix4();
+const _normalMatrix = new Matrix3();
 const _triA = new Triangle();
 const _triB = new Triangle();
 const _tri = new Triangle();
@@ -26,18 +27,26 @@ export function performOperation( a, b, operation ) {
 		normal: [],
 	};
 
+	console.time('COLLECT')
 	const { aToB, bToA } = collectIntersectingTriangles( a, b );
+	console.timeEnd('COLLECT')
 
+	console.time('WHOLE')
 	performWholeTriangleOperations( a, b, aToB, operation, false, attributeData );
 	performWholeTriangleOperations( b, a, bToA, operation, true, attributeData );
+	console.timeEnd('WHOLE')
 
+	console.time('SPLIT')
 	performSplitTriangleOperations( a, b, aToB, operation, false, attributeData );
 	performSplitTriangleOperations( b, a, bToA, operation, true, attributeData );
+	console.timeEnd('SPLIT')
 
+	console.time('TEST')
 	const result = new BufferGeometry();
 	result.setAttribute( 'position', new BufferAttribute( new Float32Array( attributeData.position ), 3 ) );
 	result.setAttribute( 'normal', new BufferAttribute( new Float32Array( attributeData.normal ), 3 ) );
 	result.setAttribute( 'uv', new BufferAttribute( new Float32Array( attributeData.uv ), 2 ) );
+	console.timeEnd('TEST')
 
 	return result;
 
@@ -51,6 +60,8 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, attri
 		.copy( b.matrixWorld )
 		.invert()
 		.multiply( a.matrixWorld );
+
+	_normalMatrix.getNormalMatrix( a.matrixWorld );
 
 	const aIndex = a.geometry.index;
 	const aPosition = a.geometry.attributes.position;
@@ -109,7 +120,7 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, attri
 				case ADDITION:
 					if ( hitSide === FRONT_SIDE || ( hitSide === COPLANAR && invert ) ) {
 
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeInfo );
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
 
 					}
 
@@ -119,7 +130,7 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, attri
 
 						if ( hitSide === BACK_SIDE ) {
 
-							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeInfo, true );
+							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo, true );
 
 						}
 
@@ -127,7 +138,7 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, attri
 
 						if ( hitSide === FRONT_SIDE ) {
 
-							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeInfo );
+							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
 
 						}
 
@@ -137,11 +148,11 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, attri
 				case DIFFERENCE:
 					if ( hitSide === BACK_SIDE ) {
 
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeInfo, true );
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo, true );
 
 					} else if ( hitSide === FRONT_SIDE ) {
 
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeInfo );
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
 
 					}
 
@@ -149,13 +160,13 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, attri
 				case INTERSECTION:
 					if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR && invert ) ) {
 
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeInfo );
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
 
 					}
 
 					break;
 				case PASSTHROUGH:
-					appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, attributeInfo );
+					appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
 					break;
 
 			}
@@ -175,6 +186,9 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 		.copy( b.matrixWorld )
 		.invert()
 		.multiply( a.matrixWorld );
+
+	_normalMatrix.getNormalMatrix( a.matrixWorld );
+
 
 	const bBVH = b.geometry.boundsTree;
 	const aIndex = a.geometry.index;
@@ -209,7 +223,7 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 			case ADDITION:
 				if ( hitSide === FRONT_SIDE ) {
 
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeInfo );
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
 
 				}
 
@@ -219,7 +233,7 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 
 					if ( hitSide === BACK_SIDE ) {
 
-						appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, attributeInfo, invert );
+						appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, invert );
 
 					}
 
@@ -227,7 +241,7 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 
 					if ( hitSide === FRONT_SIDE ) {
 
-						appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeInfo );
+						appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
 
 					}
 
@@ -237,11 +251,11 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 			case DIFFERENCE:
 				if ( hitSide === BACK_SIDE ) {
 
-					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, attributeInfo, invert );
+					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, invert );
 
 				} else {
 
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeInfo );
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
 
 				}
 
@@ -249,14 +263,14 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 			case INTERSECTION:
 				if ( hitSide === BACK_SIDE ) {
 
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeInfo );
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
 
 
 				}
 
 				break;
 			case PASSTHROUGH:
-				appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, attributeInfo );
+				appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
 				break;
 
 		}
