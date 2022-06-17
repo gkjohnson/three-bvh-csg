@@ -40,7 +40,7 @@ export class TypedAttributeData {
 		const { attributes } = this;
 		for ( const key in attributes ) {
 
-			attributes[ key ].reset();
+			attributes[ key ].clear();
 
 		}
 

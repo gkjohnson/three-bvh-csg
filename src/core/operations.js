@@ -1,6 +1,5 @@
 import { Matrix4, Matrix3, BufferGeometry, BufferAttribute, Triangle } from 'three';
 import { ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION, PASSTHROUGH } from './constants.js';
-import { TriangleSplitter } from './TriangleSplitter.js';
 import {
 	getHitSide,
 	collectIntersectingTriangles,
@@ -17,26 +16,21 @@ const _tri = new Triangle();
 const _barycoordTri = new Triangle();
 
 // TODO: take a target geometry so we don't have to create a new one every time
-export function performOperation( a, b, operation, splitter ) {
+export function performOperation( a, b, operation, splitter, typedAttributeData ) {
 
-	// TODO: make this list configurable - support tangents, vertex colors
-	const attributeData = {
-		position: [],
-		uv: [],
-		normal: [],
-	};
-
+	const attributeInfo = typedAttributeData.attributes;
 	const { aToB, bToA } = collectIntersectingTriangles( a, b );
-	performWholeTriangleOperations( a, b, aToB, operation, false, attributeData );
-	performWholeTriangleOperations( b, a, bToA, operation, true, attributeData );
+	performWholeTriangleOperations( a, b, aToB, operation, false, attributeInfo );
+	performWholeTriangleOperations( b, a, bToA, operation, true, attributeInfo );
 
-	performSplitTriangleOperations( a, b, aToB, operation, false, splitter, attributeData );
-	performSplitTriangleOperations( b, a, bToA, operation, true, splitter, attributeData );
+	performSplitTriangleOperations( a, b, aToB, operation, false, splitter, attributeInfo );
+	performSplitTriangleOperations( b, a, bToA, operation, true, splitter, attributeInfo );
 
 	const result = new BufferGeometry();
-	result.setAttribute( 'position', new BufferAttribute( new Float32Array( attributeData.position ), 3 ) );
-	result.setAttribute( 'normal', new BufferAttribute( new Float32Array( attributeData.normal ), 3 ) );
-	result.setAttribute( 'uv', new BufferAttribute( new Float32Array( attributeData.uv ), 2 ) );
+	const { position, normal, uv } = attributeInfo;
+	result.setAttribute( 'position', new BufferAttribute( position.array.slice( 0, position.length ), 3 ) );
+	result.setAttribute( 'normal', new BufferAttribute( normal.array.slice( 0, normal.length ), 3 ) );
+	result.setAttribute( 'uv', new BufferAttribute( uv.array.slice( 0, uv.length ), 2 ) );
 
 	return result;
 

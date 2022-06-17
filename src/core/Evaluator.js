@@ -27,6 +27,8 @@ export class Evaluator {
 
 		}
 
+		attributeData.clear();
+
 		return performOperation( a, b, operation, triangleSplitter, attributeData );
 
 	}

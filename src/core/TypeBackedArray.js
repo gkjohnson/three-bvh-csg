@@ -3,7 +3,7 @@ export class TypeBackedArray {
 
 	constructor( type, initialSize = 500 ) {
 
-		this.expansionFactor = 1.25;
+		this.expansionFactor = 1.5;
 		this.type = type;
 		this.array = new type( initialSize );
 		this.length = 0;
@@ -16,7 +16,7 @@ export class TypeBackedArray {
 
 		if ( size === null ) {
 
-			size = array.length * expansionFactor;
+			size = ~ ~ ( array.length * expansionFactor );
 
 		}
 
