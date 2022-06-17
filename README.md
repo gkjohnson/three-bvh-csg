@@ -57,7 +57,6 @@ Function for performing CSG operations (Difference, Union, Intersection)
   - see long term approach for simplifying the raycasting (half edge traversal)
 - [ ] add support for groups / materials
   - can treat index as an "indirect" buffer and store groups pointing to the position buffer
-- [ ] add nice visual shader (uv texture)
 
 ### Phase 3
 - Operational hierarchy
