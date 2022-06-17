@@ -21,6 +21,7 @@ export class OperationDebugData {
 
 	constructor() {
 
+		this.enabled = false;
 		this.triangleIntersectsA = {};
 		this.triangleIntersectsB = {};
 		this.intersectionEdges = [];

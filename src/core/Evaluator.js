@@ -91,8 +91,7 @@ export class Evaluator {
 		this.triangleSplitter = new TriangleSplitter();
 		this.attributeData = new TypedAttributeData();
 		this.attributes = [ 'position', 'uv', 'normal' ];
-		this.debugData = new OperationDebugData();
-		this.debug = false;
+		this.debug = new OperationDebugData();
 
 	}
 
@@ -101,7 +100,7 @@ export class Evaluator {
 		a.prepareGeometry();
 		b.prepareGeometry();
 
-		const { triangleSplitter, attributeData, attributes, debugData, debug } = this;
+		const { triangleSplitter, attributeData, attributes, debug } = this;
 		const aAttributes = a.geometry.attributes;
 		for ( let i = 0, l = attributes.length; i < l; i ++ ) {
 
@@ -113,16 +112,16 @@ export class Evaluator {
 
 		attributeData.clear();
 
-		if ( debug ) {
+		if ( debug.enabled ) {
 
-			debugData.reset();
-			setDebugContext( debugData );
+			debug.reset();
+			setDebugContext( debug );
 
 		}
 
 		performOperation( a, b, operation, triangleSplitter, attributeData );
 
-		if ( debug ) {
+		if ( debug.enabled ) {
 
 			setDebugContext( null );
 
