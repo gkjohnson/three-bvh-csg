@@ -2,16 +2,14 @@ import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle } from 'three';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
-const _vec = new Vector3();
-const _vec4 = new Vector4();
+const _tri = new Triangle();
+const _vec3 = new Vector3();
 const _vec4a = new Vector4();
 const _vec4b = new Vector4();
 const _vec4c = new Vector4();
-
 const _vec4_0 = new Vector4();
 const _vec4_1 = new Vector4();
 const _vec4_2 = new Vector4();
-const _tri = new Triangle();
 
 export const COPLANAR = 0;
 export const BACK_SIDE = - 1;
@@ -243,19 +241,19 @@ function appendAttributeFromIndex( index, attributes, matrixWorld, normalMatrix,
 		const itemSize = attr.itemSize;
 		if ( key === 'position' ) {
 
-			_vec.fromBufferAttribute( attr, index ).applyMatrix4( matrixWorld );
-			arr.push( _vec.x, _vec.y, _vec.z );
+			_vec3.fromBufferAttribute( attr, index ).applyMatrix4( matrixWorld );
+			arr.push( _vec3.x, _vec3.y, _vec3.z );
 
 		} else if ( key === 'normal' ) {
 
-			_vec.fromBufferAttribute( attr, index ).applyNormalMatrix( normalMatrix	);
+			_vec3.fromBufferAttribute( attr, index ).applyNormalMatrix( normalMatrix	);
 			if ( invert ) {
 
-				_vec.multiplyScalar( - 1 );
+				_vec3.multiplyScalar( - 1 );
 
 			}
 
-			arr.push( _vec.x, _vec.y, _vec.z );
+			arr.push( _vec3.x, _vec3.y, _vec3.z );
 
 		} else {
 
