@@ -54,7 +54,8 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [ ] improve performance
   - avoid creating new attribute data every frame
   - avoid creating new geometry every frame
-- [ ] fix TODOs
+- [ ] configurable attributes
+- [ ] migrate to an "evaluator" class for performing operations
 
 ### Phase 3
 - Cached data
@@ -71,6 +72,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 ### Later
 - Half edge structure to cull triangles
 - polygon clipping
+- vertex colors demo
 
 ## Approach
 
