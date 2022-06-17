@@ -25,7 +25,6 @@ Function for performing CSG operations (Difference, Union, Intersection)
 ## Issues
 
 - intersctions along the edges of triangles (three-mesh-bvh issue)
-- coplanar triangles don't work as expected
 
 ## Phases
 ### Phase 1
@@ -42,12 +41,20 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - [x] split only necessary (intersected) triangles
 - [x] fix coplanar triangles (check aligned-boxes)
 - [x] clean up / comments
-- [ ] profile "expensive" code portions
+- [x] profile "expensive" code portions
+  - in order of performance intensity:
+  	1. performSplitTriangleOperations
+  	2. performWholeTriangleOperations
+  	3. collectIntersectingTriangles
 
 ### Phase 2
-- add support for groups
+- [ ] add support for groups
   - can treat index as an "indirect" buffer and store groups pointing to the position buffer
-- add nice visual shader (uv texture)
+- [ ] add nice visual shader (uv texture)
+- [ ] improve performance
+  - avoid creating new attribute data every frame
+  - avoid creating new geometry every frame
+- [ ] fix TODOs
 
 ### Phase 3
 - Cached data
