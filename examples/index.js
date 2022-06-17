@@ -5,6 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
 	Brush,
 	Evaluator,
+	EdgesHelper,
 	ADDITION,
 	SUBTRACTION,
 	INTERSECTION,
@@ -25,12 +26,15 @@ const params = {
 	displayControls: true,
 	shadows: true,
 
+	displayIntersection: false,
+
 };
 
 let renderer, camera, scene, gui, outputContainer;
 let controls, transformControls;
 let brush1, brush2;
 let resultObject, wireframeResult, light;
+let edgesHelper;
 let needsUpdate = true;
 let csgEvaluator = new Evaluator();
 
@@ -117,6 +121,7 @@ function init() {
 	brush1.material.polygonOffset = true;
 	brush1.material.polygonOffsetFactor = 2;
 	brush1.material.polygonOffsetUnits = 2;
+	brush1.material.side = THREE.DoubleSide;
 
 	brush2.material.opacity = 0.15;
 	brush2.material.transparent = true;
@@ -124,6 +129,7 @@ function init() {
 	brush2.material.polygonOffset = true;
 	brush2.material.polygonOffsetFactor = 2;
 	brush2.material.polygonOffsetUnits = 2;
+	brush2.material.side = THREE.DoubleSide;
 
 	brush1.receiveShadow = true;
 	brush2.receiveShadow = true;
@@ -152,6 +158,12 @@ function init() {
 	} ) );
 	scene.add( wireframeResult );
 
+	// helpers
+	edgesHelper = new EdgesHelper();
+	edgesHelper.color.set( 0xff0000 );
+	scene.add( edgesHelper );
+
+	// gui
 	gui = new GUI();
 	gui.add( params, 'operation', { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
 
@@ -160,7 +172,6 @@ function init() {
 	} );
 	gui.add( params, 'displayBrushes' );
 	gui.add( params, 'displayControls' );
-	gui.add( params, 'wireframe' );
 	gui.add( params, 'shadows' );
 
 	const brush1Folder = gui.addFolder( 'brush 1' );
@@ -186,6 +197,10 @@ function init() {
 		updateBrush( brush2, params.brush2Shape, v );
 
 	} );
+
+	const debugFolder = gui.addFolder( 'debug' );
+	debugFolder.add( params, 'wireframe' );
+	debugFolder.add( params, 'displayIntersection' );
 
 	window.addEventListener( 'resize', function () {
 
@@ -269,6 +284,7 @@ function render() {
 
 		const startTime = window.performance.now();
 		resultObject.geometry.dispose();
+		csgEvaluator.debug.enabled = true;
 		resultObject.geometry = csgEvaluator.evaluate( brush1, brush2, params.operation );
 
 		wireframeResult.geometry.dispose();
@@ -276,6 +292,8 @@ function render() {
 
 		const deltaTime = window.performance.now() - startTime;
 		outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
+
+		edgesHelper.setEdges( csgEvaluator.debug.intersectionEdges );
 
 	}
 
@@ -287,6 +305,8 @@ function render() {
 
 	transformControls.enabled = params.displayControls;
 	transformControls.visible = params.displayControls;
+
+	edgesHelper.visible = params.displayIntersection;
 
 	renderer.render( scene, camera );
 
