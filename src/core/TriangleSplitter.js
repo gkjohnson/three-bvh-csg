@@ -83,7 +83,6 @@ export class TriangleSplitter {
 
 			} else {
 
-				// TODO: fix this
 				const arr = [ triangle.a, triangle.b, triangle.c ];
 				for ( let i = 0; i < 3; i ++ ) {
 

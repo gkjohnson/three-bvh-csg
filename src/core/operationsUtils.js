@@ -10,6 +10,7 @@ const _vec4c = new Vector4();
 const _vec4_0 = new Vector4();
 const _vec4_1 = new Vector4();
 const _vec4_2 = new Vector4();
+const JITTER_EPSILON = 1e-8;
 
 export const COPLANAR = 0;
 export const BACK_SIDE = - 1;
@@ -34,9 +35,9 @@ export function getHitSide( tri, bvh ) {
 	for ( let i = 0; i < total; i ++ ) {
 
 		// jitter the ray slightly
-		_ray.direction.x += rand() * 1e-8;
-		_ray.direction.y += rand() * 1e-8;
-		_ray.direction.z += rand() * 1e-8;
+		_ray.direction.x += rand() * JITTER_EPSILON;
+		_ray.direction.y += rand() * JITTER_EPSILON;
+		_ray.direction.z += rand() * JITTER_EPSILON;
 
 		// check if the ray hit the backside
 		const hit = bvh.raycastFirst( _ray, DoubleSide );
