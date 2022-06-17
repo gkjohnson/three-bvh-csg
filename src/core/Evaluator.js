@@ -9,9 +9,15 @@ export class Evaluator {
 
 	}
 
-	performOperation( a, b, operation ) {
+	evaluate( a, b, operation ) {
 
 		return performOperation( a, b, operation, this.triangleSplitter );
+
+	}
+
+	evaluateHierarchy( root ) {
+
+		// TODO
 
 	}
 
