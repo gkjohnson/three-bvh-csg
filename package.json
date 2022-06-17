@@ -1,15 +1,18 @@
 {
   "name": "three-bvh-csg",
   "version": "0.0.1",
-  "description": "CSG implementation on top of three-mesh-bvh",
+  "description": "A fast, flexible, dynamic CSG implementation on top of three-mesh-bvh",
   "main": "src/index.js",
   "module": "src/index.js",
   "type": "module",
   "sideEffects": false,
   "scripts": {
     "start": "cd examples && parcel serve ./*.html --dist-dir ./dev-bundle/ --no-cache --no-hmr",
+    "build-examples": "cd examples && parcel build ./*.html --dist-dir ./bundle/ --public-url . --no-cache --no-content-hash",
+    "build": "rollup -c",
     "lint": "eslint \"./src/**/*.js\" \"./examples/*.js\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run build"
   },
   "files": [
     "src/*",
@@ -47,7 +50,7 @@
     "eslint": "^8.16.0",
     "eslint-config-mdcs": "^5.0.0",
     "parcel": "^2.6.0",
-    "rollup": "^2.58.0",
+    "rollup": "^2.70.0",
     "three": "^0.141.0",
     "three-mesh-bvh": "^0.5.11"
   }

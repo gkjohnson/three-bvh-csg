@@ -16,7 +16,7 @@ import {
 
 const params = {
 
-	brush1Shape: 'torus',
+	brush1Shape: 'box',
 	brush1Complexity: 1,
 
 	brush2Shape: 'sphere',
