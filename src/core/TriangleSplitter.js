@@ -160,8 +160,18 @@ export class TriangleSplitter {
 
 				}
 
+				// double check the end point since the "intersectLine" function sometimes does not
+				// return it as an intersection (see issue #28)
+				let didIntersect = plane.intersectLine( _edge, _vec );
+				if ( ! didIntersect && plane.distanceToPoint( _edge.end ) === 0 ) {
+
+					_vec.copy( _edge.end );
+					didIntersect = true;
+
+				}
+
 				// check if we intersect the plane (ignoring the start point so we don't double count)
-				if ( plane.intersectLine( _edge, _vec ) && ! _vec.equals( _edge.start ) ) {
+				if ( didIntersect && ! _vec.equals( _edge.start ) ) {
 
 					// if we intersect at the end point then we track that point as one that we
 					// have to split down the middle
