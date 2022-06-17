@@ -20,7 +20,7 @@ const _splitter = new TriangleSplitter();
 // TODO: take a target geometry so we don't have to create a new one every time
 export function performOperation( a, b, operation ) {
 
-	// TODO: make this list configurable
+	// TODO: make this list configurable - support tangents, vertex colors
 	const attributeData = {
 		position: [],
 		uv: [],
