@@ -2,6 +2,10 @@
 
 An _in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of three-mesh-bvh.
 
+## Examples
+
+TODO
+
 ## API
 
 ### Constants
@@ -15,15 +19,17 @@ INTERSECTION
 
 ### Brush
 
-Instance of Mesh that affords disposing of cached data. Or just a function to dispose so a mesh can be used?
-
-Brush will be needed for cached / interactive applications data.
+TODO
 
 ### Operation
 
 TODO
 
 ### Evaluator
+
+TODO
+
+### EvaluatorWorker
 
 TODO
 
