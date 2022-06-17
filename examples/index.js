@@ -4,8 +4,6 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
 	Brush,
-	EdgesHelper,
-	TriangleSetHelper,
 	performOperation,
 	ADDITION,
 	SUBTRACTION,
@@ -13,33 +11,22 @@ import {
 	DIFFERENCE,
 } from '..';
 
-
-window.triToDefinition = function triToDefinition( t ) {
-
-	return /*js*/`
-		const tri = new THREE.Triangle(
-			new THREE.Vector3(${ t.a.toArray().map( n => n.toFixed( 50 ) ).join() }),
-			new THREE.Vector3(${ t.b.toArray().map( n => n.toFixed( 50 ) ).join() }),
-			new THREE.Vector3(${ t.c.toArray().map( n => n.toFixed( 50 ) ).join() }),
-		);
-	`;
-
-};
-
 const params = {
 
+	brush1Shape: 'box',
+	brush2Shape: 'sphere',
 	operation: SUBTRACTION,
-	triHelper: false,
-	edgeHelper: false,
 	wireframe: false,
+	displayBrushes: true,
+	displayControls: true,
+	shadows: true,
 
 };
 
 let renderer, camera, scene, gui, outputContainer;
 let controls, transformControls;
-let object1, object2;
-let resultObject, wireframeResult;
-let edgesHelper, triHelper;
+let brush1, brush2;
+let resultObject, wireframeResult, light;
 let needsUpdate = true;
 
 init();
@@ -65,22 +52,22 @@ function init() {
 	scene = new THREE.Scene();
 	scene.fog = new THREE.Fog( 0xffca28, 20, 60 );
 
-	const light = new THREE.DirectionalLight( 0xffffff, 1 );
+	// lights
+	light = new THREE.DirectionalLight( 0xffffff, 1 );
 	light.position.set( - 1, 2, 3 );
+	scene.add( light, light.target );
+	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
+
+	// shadows
+	const shadowCam = light.shadow.camera;
 	light.castShadow = true;
-	light.shadow.mapSize.setScalar( 2048 );
+	light.shadow.mapSize.setScalar( 4096 );
 	light.shadow.bias = 1e-5;
 	light.shadow.normalBias = 1e-2;
-	light.position.y -= 2;
-	light.target.position.y -= 2;
 
-	const shadowCam = light.shadow.camera;
 	shadowCam.left = shadowCam.bottom = - 2.5;
 	shadowCam.right = shadowCam.top = 2.5;
 	shadowCam.updateProjectionMatrix();
-
-	scene.add( light, light.target );
-	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
 
 	// camera setup
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
@@ -88,6 +75,7 @@ function init() {
 	camera.far = 100;
 	camera.updateProjectionMatrix();
 
+	// controls
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	transformControls = new TransformControls( camera, renderer.domElement );
@@ -102,32 +90,39 @@ function init() {
 		needsUpdate = true;
 
 	} );
-
 	scene.add( transformControls );
 
-	object1 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { flatShading: true } ) );
-	// object2 = new Brush( new THREE.BoxBufferGeometry( 1, 1, 1 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: true } ) );
-	// object1 = new Brush( new THREE.SphereBufferGeometry( 1, 17, 17 ), new THREE.MeshStandardMaterial( { flatShading: false } ) );
-	object2 = new Brush( new THREE.SphereBufferGeometry( 0.75, 17, 17 ), new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: false } ) );
+	// initialize brushes
+	brush1 = new Brush( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial() );
+	brush2 = new Brush( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial( { color: 0xff0000 } ) );
+	brush2.position.set( - 0.75, 0.75, 0 );
+	brush2.scale.setScalar( 0.75 );
 
-	// PROBLEM CASE 1: ray between tris
-	object2.position.set( - 0.5416063456346885, 0.3047192957468528, 0 );
+	updateBrush( brush1, params.brush1Shape );
+	updateBrush( brush2, params.brush2Shape );
 
-	// PROBLEM CASE 2:
-	// object2.position.set( - 0.32483306917221366, 0.5664372419058846, 0.681338353197529 );
-	// window.VERT = 79;
+	// initialize materials
+	brush1.material.opacity = 0.15;
+	brush1.material.transparent = true;
+	brush1.material.depthWrite = false;
+	brush1.material.polygonOffset = true;
+	brush1.material.polygonOffsetFactor = 2;
+	brush1.material.polygonOffsetUnits = 2;
 
-	// PROBLEM CASE 3:
-	// check with object 1 === box
+	brush2.material.opacity = 0.15;
+	brush2.material.transparent = true;
+	brush2.material.depthWrite = false;
+	brush2.material.polygonOffset = true;
+	brush2.material.polygonOffsetFactor = 2;
+	brush2.material.polygonOffsetUnits = 2;
 
-	object1.castShadow = true;
-	object1.receiveShadow = true;
-	object2.castShadow = true;
-	object2.receiveShadow = true;
+	brush1.receiveShadow = true;
+	brush2.receiveShadow = true;
+	transformControls.attach( brush2 );
 
-	scene.add( object1, object2 );
-	transformControls.attach( object2 );
+	scene.add( brush1, brush2 );
 
+	// add object displaying the result
 	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( {
 		flatShading: false,
 		polygonOffset: true,
@@ -139,6 +134,7 @@ function init() {
 	resultObject.receiveShadow = true;
 	scene.add( resultObject );
 
+	// add wireframe representation
 	wireframeResult = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshBasicMaterial( {
 		wireframe: true,
 		color: 0,
@@ -147,23 +143,27 @@ function init() {
 	} ) );
 	scene.add( wireframeResult );
 
-	edgesHelper = new EdgesHelper();
-	edgesHelper.color.set( 0xff0000 );
-	scene.add( edgesHelper );
-
-	triHelper = new TriangleSetHelper();
-	triHelper.color.set( 0x0000ff );
-	scene.add( triHelper );
-
 	gui = new GUI();
+	gui.add( params, 'brush1Shape', [ 'sphere', 'box', 'torus', 'torus knot' ] ).onChange( v => {
+
+		console.log( v );
+		updateBrush( brush1, v );
+
+	} );
+	gui.add( params, 'brush2Shape', [ 'sphere', 'box', 'torus', 'torus knot' ] ).onChange( v => {
+
+		updateBrush( brush2, v );
+
+	} );
 	gui.add( params, 'operation', { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
 
 		needsUpdate = true;
 
 	} );
-	gui.add( params, 'triHelper' );
-	gui.add( params, 'edgeHelper' );
+	gui.add( params, 'displayBrushes' );
+	gui.add( params, 'displayControls' );
 	gui.add( params, 'wireframe' );
+	gui.add( params, 'shadows' );
 
 	window.addEventListener( 'resize', function () {
 
@@ -194,23 +194,44 @@ function init() {
 
 }
 
+function updateBrush( brush, type ) {
+
+	brush.geometry.dispose();
+	switch ( type ) {
+
+		case 'sphere':
+			brush.geometry = new THREE.SphereBufferGeometry();
+			break;
+		case 'box':
+			brush.geometry = new THREE.BoxBufferGeometry();
+			break;
+		case 'torus':
+			brush.geometry = new THREE.TorusBufferGeometry( 0.6, 0.2, 16, 30 );
+			break;
+		case 'torus knot':
+			brush.geometry = new THREE.TorusKnotBufferGeometry( 0.6, 0.2, 64, 16 );
+			break;
+
+	}
+
+	needsUpdate = true;
+
+}
+
 function render() {
 
 	requestAnimationFrame( render );
 
-	object1.prepareGeometry();
-	object2.prepareGeometry();
-	object1.updateMatrixWorld();
-	object2.updateMatrixWorld();
-
-	resultObject.position.y = - 2.5;
-	wireframeResult.position.y = - 2.5;
+	brush1.prepareGeometry();
+	brush2.prepareGeometry();
+	brush1.updateMatrixWorld();
+	brush2.updateMatrixWorld();
 
 	if ( needsUpdate ) {
 
 		const startTime = window.performance.now();
 		resultObject.geometry.dispose();
-		resultObject.geometry = performOperation( object1, object2, params.operation );
+		resultObject.geometry = performOperation( brush1, brush2, params.operation );
 		const deltaTime = window.performance.now() - startTime;
 
 		wireframeResult.geometry.dispose();
@@ -221,17 +242,14 @@ function render() {
 
 	}
 
-	edgesHelper.setEdges( window.EDGES );
-	edgesHelper.position.y = - 2.5;
-	edgesHelper.visible = params.edgeHelper;
-
-	triHelper.setTriangles( window.TRIS );
-
-	// if ( window.VERT !== undefined ) triHelper.setTriangles( [ window.SET[ window.VERT ].tri, ...window.SET[ window.VERT ].intersects ] );
-	triHelper.position.y = - 2.5;
-	triHelper.visible = params.triHelper;
-
 	wireframeResult.visible = params.wireframe;
+	brush1.visible = params.displayBrushes;
+	brush2.visible = params.displayBrushes;
+
+	light.castShadow = params.shadows;
+
+	transformControls.enabled = params.displayControls;
+	transformControls.visible = params.displayControls;
 
 	renderer.render( scene, camera );
 
