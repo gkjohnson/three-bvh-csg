@@ -2,10 +2,12 @@ import * as THREE from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { MeshBVHVisualizer } from 'three-mesh-bvh';
 import {
 	Brush,
 	Evaluator,
 	EdgesHelper,
+	TriangleSetHelper,
 	ADDITION,
 	SUBTRACTION,
 	INTERSECTION,
@@ -14,7 +16,7 @@ import {
 
 const params = {
 
-	brush1Shape: 'box',
+	brush1Shape: 'torus',
 	brush1Complexity: 1,
 
 	brush2Shape: 'sphere',
@@ -26,7 +28,10 @@ const params = {
 	displayControls: true,
 	shadows: true,
 
-	displayIntersection: false,
+	displayIntersectionEdges: false,
+	displayTriangleIntersections: false,
+	displayBrush1BVH: false,
+	displayBrush2BVH: false,
 
 };
 
@@ -34,7 +39,8 @@ let renderer, camera, scene, gui, outputContainer;
 let controls, transformControls;
 let brush1, brush2;
 let resultObject, wireframeResult, light;
-let edgesHelper;
+let edgesHelper, trisHelper;
+let bvhHelper1, bvhHelper2;
 let needsUpdate = true;
 let csgEvaluator = new Evaluator();
 
@@ -103,7 +109,7 @@ function init() {
 
 	// initialize brushes
 	brush1 = new Brush( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial() );
-	brush2 = new Brush( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial( { color: 0xff0000 } ) );
+	brush2 = new Brush( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial() );
 	brush2.position.set( - 0.75, 0.75, 0 );
 	brush2.scale.setScalar( 0.75 );
 
@@ -122,6 +128,7 @@ function init() {
 	brush1.material.polygonOffsetFactor = 2;
 	brush1.material.polygonOffsetUnits = 2;
 	brush1.material.side = THREE.DoubleSide;
+	brush1.material.premultipliedAlpha = true;
 
 	brush2.material.opacity = 0.15;
 	brush2.material.transparent = true;
@@ -130,6 +137,9 @@ function init() {
 	brush2.material.polygonOffsetFactor = 2;
 	brush2.material.polygonOffsetUnits = 2;
 	brush2.material.side = THREE.DoubleSide;
+	brush2.material.premultipliedAlpha = true;
+	brush2.material.roughness = 0.25;
+	brush2.material.color.set( 0xE91E63 ).convertSRGBToLinear();
 
 	brush1.receiveShadow = true;
 	brush2.receiveShadow = true;
@@ -160,8 +170,16 @@ function init() {
 
 	// helpers
 	edgesHelper = new EdgesHelper();
-	edgesHelper.color.set( 0xff0000 );
+	edgesHelper.color.set( 0xE91E63 ).convertSRGBToLinear();
 	scene.add( edgesHelper );
+
+	trisHelper = new TriangleSetHelper();
+	trisHelper.color.set( 0x00BCD4 ).convertSRGBToLinear();
+	scene.add( trisHelper );
+
+	bvhHelper1 = new MeshBVHVisualizer( brush1, 20 );
+	bvhHelper2 = new MeshBVHVisualizer( brush2, 20 );
+	scene.add( bvhHelper1, bvhHelper2 );
 
 	// gui
 	gui = new GUI();
@@ -200,7 +218,11 @@ function init() {
 
 	const debugFolder = gui.addFolder( 'debug' );
 	debugFolder.add( params, 'wireframe' );
-	debugFolder.add( params, 'displayIntersection' );
+	debugFolder.add( params, 'displayIntersectionEdges' );
+	debugFolder.add( params, 'displayTriangleIntersections' );
+	debugFolder.add( params, 'displayBrush2Intersections' );
+	debugFolder.add( params, 'displayBrush1BVH' );
+	debugFolder.add( params, 'displayBrush2BVH' );
 
 	window.addEventListener( 'resize', function () {
 
@@ -273,14 +295,18 @@ function render() {
 
 	requestAnimationFrame( render );
 
-	brush1.prepareGeometry();
-	brush2.prepareGeometry();
-	brush1.updateMatrixWorld();
-	brush2.updateMatrixWorld();
-
 	if ( needsUpdate ) {
 
 		needsUpdate = false;
+
+		brush1.prepareGeometry();
+		brush2.prepareGeometry();
+
+		brush1.updateMatrixWorld();
+		brush2.updateMatrixWorld();
+
+		bvhHelper1.update();
+		bvhHelper2.update();
 
 		const startTime = window.performance.now();
 		resultObject.geometry.dispose();
@@ -295,6 +321,11 @@ function render() {
 
 		edgesHelper.setEdges( csgEvaluator.debug.intersectionEdges );
 
+		trisHelper.setTriangles( [
+			...csgEvaluator.debug.triangleIntersectsA.getTrianglesAsArray(),
+			...csgEvaluator.debug.triangleIntersectsA.getIntersectionTrianglesAsArray()
+		] );
+
 	}
 
 	wireframeResult.visible = params.wireframe;
@@ -306,7 +337,11 @@ function render() {
 	transformControls.enabled = params.displayControls;
 	transformControls.visible = params.displayControls;
 
-	edgesHelper.visible = params.displayIntersection;
+	edgesHelper.visible = params.displayIntersectionEdges;
+	trisHelper.visible = params.displayTriangleIntersections;
+
+	bvhHelper1.visible = params.displayBrush1BVH;
+	bvhHelper2.visible = params.displayBrush2BVH;
 
 	renderer.render( scene, camera );
 
