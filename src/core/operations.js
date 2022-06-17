@@ -1,11 +1,11 @@
 import { Matrix4, Matrix3, BufferGeometry, BufferAttribute, Triangle } from 'three';
-import { ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION, PASSTHROUGH } from './constants.js';
 import {
 	getHitSide,
 	collectIntersectingTriangles,
 	appendAttributeFromTriangle,
 	appendAttributesFromIndices,
-	COPLANAR, BACK_SIDE, FRONT_SIDE,
+	getOperationAction,
+	SKIP_TRI, ADD_TRI, INVERT_TRI,
 } from './operationsUtils.js';
 
 const _matrix = new Matrix4();
@@ -92,66 +92,25 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, split
 
 			// get the barycentric coordinates of the clipped triangle to add
 			const clippedTri = triangles[ ib ];
-			_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
-			_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
-			_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
 
-			// TODO: consolidate this operations logic into a helper function that returns whether to append,
-			// invert, or skip. Then we can avoid performing barycentric interpolation when it's unneeded
 			const hitSide = getHitSide( clippedTri, bBVH );
-			switch ( operation ) {
+			const action = getOperationAction( operation, hitSide, invert );
+			if ( action !== SKIP_TRI ) {
 
-				case ADDITION:
-					if ( hitSide === FRONT_SIDE || ( hitSide === COPLANAR && invert ) ) {
+				_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
+				_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
+				_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
+				switch ( action ) {
 
+					case ADD_TRI:
 						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
+						break;
 
-					}
-
-					break;
-				case SUBTRACTION:
-					if ( invert ) {
-
-						if ( hitSide === BACK_SIDE ) {
-
-							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo, true );
-
-						}
-
-					} else {
-
-						if ( hitSide === FRONT_SIDE ) {
-
-							appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
-
-						}
-
-					}
-
-					break;
-				case DIFFERENCE:
-					if ( hitSide === BACK_SIDE ) {
-
+					case INVERT_TRI:
 						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo, true );
+						break;
 
-					} else if ( hitSide === FRONT_SIDE ) {
-
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
-
-					}
-
-					break;
-				case INTERSECTION:
-					if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR && invert ) ) {
-
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
-
-					}
-
-					break;
-				case PASSTHROUGH:
-					appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
-					break;
+				}
 
 			}
 
@@ -202,59 +161,15 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 
 		// get the side and decide if we need to cull the triangle based on the operation
 		const hitSide = getHitSide( _tri, bBVH );
-		switch ( operation ) {
+		const action = getOperationAction( operation, hitSide, invert );
+		switch ( action ) {
 
-			case ADDITION:
-				if ( hitSide === FRONT_SIDE ) {
-
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
-
-				}
-
-				break;
-			case SUBTRACTION:
-				if ( invert ) {
-
-					if ( hitSide === BACK_SIDE ) {
-
-						appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, invert );
-
-					}
-
-				} else {
-
-					if ( hitSide === FRONT_SIDE ) {
-
-						appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
-
-					}
-
-				}
-
-				break;
-			case DIFFERENCE:
-				if ( hitSide === BACK_SIDE ) {
-
-					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, invert );
-
-				} else {
-
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
-
-				}
-
-				break;
-			case INTERSECTION:
-				if ( hitSide === BACK_SIDE ) {
-
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
-
-
-				}
-
-				break;
-			case PASSTHROUGH:
+			case ADD_TRI:
 				appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
+				break;
+
+			case INVERT_TRI:
+				appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, invert );
 				break;
 
 		}

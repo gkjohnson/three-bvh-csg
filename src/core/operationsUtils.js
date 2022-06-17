@@ -1,4 +1,5 @@
 import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle } from 'three';
+import { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE, PASSTHROUGH } from './constants.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
@@ -15,6 +16,10 @@ const JITTER_EPSILON = 1e-8;
 export const COPLANAR = 0;
 export const BACK_SIDE = - 1;
 export const FRONT_SIDE = 1;
+
+export const INVERT_TRI = 0;
+export const ADD_TRI = 1;
+export const SKIP_TRI = 2;
 
 export function getHitSide( tri, bvh ) {
 
@@ -173,6 +178,70 @@ export function appendAttributesFromIndices( i0, i1, i2, attributes, matrixWorld
 	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
 	appendAttributeFromIndex( i1, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
 	appendAttributeFromIndex( i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
+
+}
+
+// Returns the triangle to add when performing an operation
+export function getOperationAction( operation, hitSide, invert = false ) {
+
+	switch ( operation ) {
+
+		case ADDITION:
+			if ( hitSide === FRONT_SIDE || ( hitSide === COPLANAR && invert ) ) {
+
+				return ADD_TRI;
+
+			}
+
+			break;
+		case SUBTRACTION:
+
+			if ( invert ) {
+
+				if ( hitSide === BACK_SIDE ) {
+
+					return INVERT_TRI;
+
+				}
+
+			} else {
+
+				if ( hitSide === FRONT_SIDE ) {
+
+					return ADD_TRI;
+
+				}
+
+			}
+
+			break;
+		case DIFFERENCE:
+			if ( hitSide === BACK_SIDE ) {
+
+				return INVERT_TRI;
+
+			} else if ( hitSide === FRONT_SIDE ) {
+
+				return ADD_TRI;
+
+			}
+			break;
+
+		case INTERSECTION:
+			if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR && invert ) ) {
+
+				return ADD_TRI;
+
+
+			}
+
+			break;
+		case PASSTHROUGH:
+			return ADD_TRI;
+
+	}
+
+	return SKIP_TRI;
 
 }
 
