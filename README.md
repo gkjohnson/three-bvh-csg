@@ -24,7 +24,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 
 ## Issues
 
-- intersctions along the edges of triangles (three-mesh-bvh issue)
+- intersctions along the edges of triangles (three-mesh-bvh issue) (see edges along exactly aligned boxes)
 
 ## Phases
 ### Phase 1
@@ -51,16 +51,14 @@ Function for performing CSG operations (Difference, Union, Intersection)
 ### Phase 2
 - [x] migrate to an "evaluator" class for performing operations
 - [x] configurable attributes
-- [ ] add support for groups
-  - can treat index as an "indirect" buffer and store groups pointing to the position buffer
-- [ ] add nice visual shader (uv texture)
-- [ ] improve performance
+- [x] improve performance
   - ~avoid creating new attribute data every frame~
   - avoid creating new geometry every frame
   - see long term approach for simplifying the raycasting (half edge traversal)
+- [ ] add support for groups / materials
+  - can treat index as an "indirect" buffer and store groups pointing to the position buffer
 
 ### Phase 3
-- Cached data
 - Operational hierarchy
 
 ### Phase 4
@@ -80,7 +78,6 @@ Function for performing CSG operations (Difference, Union, Intersection)
   - Half edge connectivity (future)
 - Pass two items into CSG function with operation
   - Compute cached data if necessary (aync if possible)
-  - Throw error if non uniform scale is used
   - Collect all intersecting triangles
     - Use the geometry with fewest triangles to perform the intersction primarily and avoid unnecessary transforms?
   - Clip triangles and add the right triangles to the appropriate side
@@ -95,15 +92,8 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - Recompute the dirty nodes from the bottom up.
 - Unchanged / non-intersecting geometry can just be propagated up.
 
-## Demos
-- Interactive level editor (ramps, stairs, etc)
-  - wireframe view for hidden objects.
-- Complex model editor (swiss cheese rabbit, animated, etc)
-- Hierarchical demo
-- Async generation
-- Switch between interactive demo setups
-- Draw polygons on surfaces and extrude
-- Full level / building (interactive)
+## Gotchas
+- All geometry is expected to have all attributes to be interpolated using the same type of array.
 
 ## References
 - [Godot CSG](https://github.com/godotengine/godot/blob/master/modules/csg/csg.cpp)
