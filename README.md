@@ -51,16 +51,15 @@ Function for performing CSG operations (Difference, Union, Intersection)
 ### Phase 2
 - [x] migrate to an "evaluator" class for performing operations
 - [x] configurable attributes
-- [ ] add support for groups
-  - can treat index as an "indirect" buffer and store groups pointing to the position buffer
-- [ ] add nice visual shader (uv texture)
-- [ ] improve performance
+- [x] improve performance
   - ~avoid creating new attribute data every frame~
   - avoid creating new geometry every frame
   - see long term approach for simplifying the raycasting (half edge traversal)
+- [ ] add support for groups
+  - can treat index as an "indirect" buffer and store groups pointing to the position buffer
+- [ ] add nice visual shader (uv texture)
 
 ### Phase 3
-- Cached data
 - Operational hierarchy
 
 ### Phase 4
