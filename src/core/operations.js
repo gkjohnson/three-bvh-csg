@@ -1,4 +1,4 @@
-import { Matrix4, Matrix3, BufferGeometry, BufferAttribute, Triangle } from 'three';
+import { Matrix4, Matrix3, Triangle } from 'three';
 import {
 	getHitSide,
 	collectIntersectingTriangles,
@@ -15,7 +15,8 @@ const _triB = new Triangle();
 const _tri = new Triangle();
 const _barycoordTri = new Triangle();
 
-// TODO: take a target geometry so we don't have to create a new one every time
+// runs the given operation against a and b using the splitter and appending data to the
+// typedAttributeData object.
 export function performOperation( a, b, operation, splitter, typedAttributeData ) {
 
 	const attributeInfo = typedAttributeData.attributes;
@@ -25,14 +26,6 @@ export function performOperation( a, b, operation, splitter, typedAttributeData 
 
 	performSplitTriangleOperations( a, b, aToB, operation, false, splitter, attributeInfo );
 	performSplitTriangleOperations( b, a, bToA, operation, true, splitter, attributeInfo );
-
-	const result = new BufferGeometry();
-	const { position, normal, uv } = attributeInfo;
-	result.setAttribute( 'position', new BufferAttribute( position.array.slice( 0, position.length ), 3 ) );
-	result.setAttribute( 'normal', new BufferAttribute( normal.array.slice( 0, normal.length ), 3 ) );
-	result.setAttribute( 'uv', new BufferAttribute( uv.array.slice( 0, uv.length ), 2 ) );
-
-	return result;
 
 }
 

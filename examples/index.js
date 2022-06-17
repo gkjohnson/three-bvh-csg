@@ -99,6 +99,10 @@ function init() {
 	brush2.position.set( - 0.75, 0.75, 0 );
 	brush2.scale.setScalar( 0.75 );
 
+	// PROBLEM CASE:
+	// brush2.position.set( - 0.27300968690619787, 0.5329319712626078, 0 );
+	// brush2.scale.setScalar( 1 );
+
 	updateBrush( brush1, params.brush1Shape );
 	updateBrush( brush2, params.brush2Shape );
 
@@ -147,7 +151,6 @@ function init() {
 	gui = new GUI();
 	gui.add( params, 'brush1Shape', [ 'sphere', 'box', 'torus', 'torus knot' ] ).onChange( v => {
 
-		console.log( v );
 		updateBrush( brush1, v );
 
 	} );
