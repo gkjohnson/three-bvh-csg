@@ -71,11 +71,6 @@ Function for performing CSG operations (Difference, Union, Intersection)
 ### Phase 5
 - Demo with drag to build polygon
 
-### Later
-- Half edge structure to cull triangles
-- polygon clipping
-- vertex colors demo
-
 ## Approach
 
 ### One-off
