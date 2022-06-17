@@ -6,6 +6,10 @@ An _in progress_, flexible, memory compact, fast and dynamic CSG implementation 
 
 TODO
 
+# Use
+
+TODO
+
 # API
 
 ## Constants
