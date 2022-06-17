@@ -48,13 +48,14 @@ Function for performing CSG operations (Difference, Union, Intersection)
   	3. collectIntersectingTriangles
 
 ### Phase 2
+- [x] migrate to an "evaluator" class for performing operations
 - [ ] add support for groups
   - can treat index as an "indirect" buffer and store groups pointing to the position buffer
 - [ ] add nice visual shader (uv texture)
 - [ ] improve performance
   - avoid creating new attribute data every frame
   - avoid creating new geometry every frame
-- [ ] fix TODOs
+- [ ] configurable attributes
 
 ### Phase 3
 - Cached data
@@ -71,6 +72,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 ### Later
 - Half edge structure to cull triangles
 - polygon clipping
+- vertex colors demo
 
 ## Approach
 
