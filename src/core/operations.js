@@ -15,10 +15,9 @@ const _triA = new Triangle();
 const _triB = new Triangle();
 const _tri = new Triangle();
 const _barycoordTri = new Triangle();
-const _splitter = new TriangleSplitter();
 
 // TODO: take a target geometry so we don't have to create a new one every time
-export function performOperation( a, b, operation ) {
+export function performOperation( a, b, operation, splitter ) {
 
 	// TODO: make this list configurable - support tangents, vertex colors
 	const attributeData = {
@@ -27,33 +26,24 @@ export function performOperation( a, b, operation ) {
 		normal: [],
 	};
 
-	console.time('COLLECT')
 	const { aToB, bToA } = collectIntersectingTriangles( a, b );
-	console.timeEnd('COLLECT')
-
-	console.time('WHOLE')
 	performWholeTriangleOperations( a, b, aToB, operation, false, attributeData );
 	performWholeTriangleOperations( b, a, bToA, operation, true, attributeData );
-	console.timeEnd('WHOLE')
 
-	console.time('SPLIT')
-	performSplitTriangleOperations( a, b, aToB, operation, false, attributeData );
-	performSplitTriangleOperations( b, a, bToA, operation, true, attributeData );
-	console.timeEnd('SPLIT')
+	performSplitTriangleOperations( a, b, aToB, operation, false, splitter, attributeData );
+	performSplitTriangleOperations( b, a, bToA, operation, true, splitter, attributeData );
 
-	console.time('TEST')
 	const result = new BufferGeometry();
 	result.setAttribute( 'position', new BufferAttribute( new Float32Array( attributeData.position ), 3 ) );
 	result.setAttribute( 'normal', new BufferAttribute( new Float32Array( attributeData.normal ), 3 ) );
 	result.setAttribute( 'uv', new BufferAttribute( new Float32Array( attributeData.uv ), 2 ) );
-	console.timeEnd('TEST')
 
 	return result;
 
 }
 
 // perform triangle splitting and CSG operations on the set of split triangles
-function performSplitTriangleOperations( a, b, triSets, operation, invert, attributeInfo ) {
+function performSplitTriangleOperations( a, b, triSets, operation, invert, splitter, attributeInfo ) {
 
 	// transforms into the local frame of matrix b
 	_matrix
@@ -86,7 +76,7 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, attri
 		_triA.c.fromBufferAttribute( aPosition, ia2 ).applyMatrix4( _matrix );
 
 		// initialize the splitter with the triangle from geometry A
-		_splitter.initialize( _triA );
+		splitter.initialize( _triA );
 
 		// split the triangle with the intersecting triangles from B
 		for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
@@ -98,12 +88,12 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, attri
 			_triB.a.fromBufferAttribute( bPosition, ib0 );
 			_triB.b.fromBufferAttribute( bPosition, ib1 );
 			_triB.c.fromBufferAttribute( bPosition, ib2 );
-			_splitter.splitByTriangle( _triB );
+			splitter.splitByTriangle( _triB );
 
 		}
 
 		// for all triangles in the split result
-		const triangles = _splitter.triangles;
+		const triangles = splitter.triangles;
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
 			// get the barycentric coordinates of the clipped triangle to add

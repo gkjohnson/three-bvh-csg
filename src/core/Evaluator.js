@@ -1,11 +1,23 @@
+import { TriangleSplitter } from './TriangleSplitter.js';
+import { performOperation } from './operations.js';
+
 export class Evaluator {
 
-	evaluate( root ) {
+	constructor() {
 
-		// TODO: optimize "pass through" case to not create a new geometry and
-		// avoid operating on geometry that are not intersecting and resolve to a pass
-		// through case
+		this.triangleSplitter = new TriangleSplitter();
 
+	}
+
+	performOperation( a, b, operation ) {
+
+		return performOperation( a, b, operation, this.triangleSplitter );
+
+	}
+
+	reset() {
+
+		this.triangleSplitter.reset();
 
 	}
 

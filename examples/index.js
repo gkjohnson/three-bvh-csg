@@ -4,7 +4,7 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
 	Brush,
-	performOperation,
+	Evaluator,
 	ADDITION,
 	SUBTRACTION,
 	INTERSECTION,
@@ -28,6 +28,7 @@ let controls, transformControls;
 let brush1, brush2;
 let resultObject, wireframeResult, light;
 let needsUpdate = true;
+let csgEvaluator = new Evaluator();
 
 init();
 render();
@@ -231,7 +232,7 @@ function render() {
 
 		const startTime = window.performance.now();
 		resultObject.geometry.dispose();
-		resultObject.geometry = performOperation( brush1, brush2, params.operation );
+		resultObject.geometry = csgEvaluator.performOperation( brush1, brush2, params.operation );
 		const deltaTime = window.performance.now() - startTime;
 
 		wireframeResult.geometry.dispose();
