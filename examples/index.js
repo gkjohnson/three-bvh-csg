@@ -230,16 +230,17 @@ function render() {
 
 	if ( needsUpdate ) {
 
+		needsUpdate = false;
+
 		const startTime = window.performance.now();
 		resultObject.geometry.dispose();
-		resultObject.geometry = csgEvaluator.performOperation( brush1, brush2, params.operation );
-		const deltaTime = window.performance.now() - startTime;
+		resultObject.geometry = csgEvaluator.evaluate( brush1, brush2, params.operation );
 
 		wireframeResult.geometry.dispose();
 		wireframeResult.geometry = resultObject.geometry;
 
+		const deltaTime = window.performance.now() - startTime;
 		outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
-		needsUpdate = false;
 
 	}
 
