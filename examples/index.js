@@ -14,7 +14,11 @@ import {
 const params = {
 
 	brush1Shape: 'box',
+	brush1Complexity: 1,
+
 	brush2Shape: 'sphere',
+	brush2Complexity: 1,
+
 	operation: SUBTRACTION,
 	wireframe: false,
 	displayBrushes: true,
@@ -103,8 +107,8 @@ function init() {
 	// brush2.position.set( - 0.27300968690619787, 0.5329319712626078, 0 );
 	// brush2.scale.setScalar( 1 );
 
-	updateBrush( brush1, params.brush1Shape );
-	updateBrush( brush2, params.brush2Shape );
+	updateBrush( brush1, params.brush1Shape, params.brush1Complexity );
+	updateBrush( brush2, params.brush2Shape, params.brush2Complexity );
 
 	// initialize materials
 	brush1.material.opacity = 0.15;
@@ -149,16 +153,6 @@ function init() {
 	scene.add( wireframeResult );
 
 	gui = new GUI();
-	gui.add( params, 'brush1Shape', [ 'sphere', 'box', 'torus', 'torus knot' ] ).onChange( v => {
-
-		updateBrush( brush1, v );
-
-	} );
-	gui.add( params, 'brush2Shape', [ 'sphere', 'box', 'torus', 'torus knot' ] ).onChange( v => {
-
-		updateBrush( brush2, v );
-
-	} );
 	gui.add( params, 'operation', { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
 
 		needsUpdate = true;
@@ -168,6 +162,30 @@ function init() {
 	gui.add( params, 'displayControls' );
 	gui.add( params, 'wireframe' );
 	gui.add( params, 'shadows' );
+
+	const brush1Folder = gui.addFolder( 'brush 1' );
+	brush1Folder.add( params, 'brush1Shape', [ 'sphere', 'box', 'torus', 'torus knot' ] ).name( 'shape' ).onChange( v => {
+
+		updateBrush( brush1, v, params.brush1Complexity );
+
+	} );
+	brush1Folder.add( params, 'brush1Complexity', 0, 2 ).name( 'complexity' ).onChange( v => {
+
+		updateBrush( brush1, params.brush1Shape, v );
+
+	} );
+
+	const brush2Folder = gui.addFolder( 'brush 2' );
+	brush2Folder.add( params, 'brush2Shape', [ 'sphere', 'box', 'torus', 'torus knot' ] ).name( 'shape' ).onChange( v => {
+
+		updateBrush( brush2, v, params.brush2Complexity );
+
+	} );
+	brush2Folder.add( params, 'brush2Complexity', 0, 2 ).name( 'complexity' ).onChange( v => {
+
+		updateBrush( brush2, params.brush2Shape, v );
+
+	} );
 
 	window.addEventListener( 'resize', function () {
 
@@ -198,22 +216,36 @@ function init() {
 
 }
 
-function updateBrush( brush, type ) {
+function updateBrush( brush, type, complexity ) {
 
 	brush.geometry.dispose();
 	switch ( type ) {
 
 		case 'sphere':
-			brush.geometry = new THREE.SphereBufferGeometry();
+			brush.geometry = new THREE.SphereBufferGeometry(
+				1,
+				Math.round( THREE.MathUtils.lerp( 5, 32, complexity ) ),
+				Math.round( THREE.MathUtils.lerp( 5, 16, complexity ) )
+			);
 			break;
 		case 'box':
-			brush.geometry = new THREE.BoxBufferGeometry();
+			brush.geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 			break;
 		case 'torus':
-			brush.geometry = new THREE.TorusBufferGeometry( 0.6, 0.2, 16, 30 );
+			brush.geometry = new THREE.TorusBufferGeometry(
+				0.6,
+				0.2,
+				Math.round( THREE.MathUtils.lerp( 4, 16, complexity ) ),
+				Math.round( THREE.MathUtils.lerp( 6, 30, complexity ) )
+			);
 			break;
 		case 'torus knot':
-			brush.geometry = new THREE.TorusKnotBufferGeometry( 0.6, 0.2, 64, 16 );
+			brush.geometry = new THREE.TorusKnotBufferGeometry(
+				0.6,
+				0.2,
+				Math.round( THREE.MathUtils.lerp( 16, 64, complexity ) ),
+				Math.round( THREE.MathUtils.lerp( 4, 16, complexity ) ),
+			);
 			break;
 
 	}
