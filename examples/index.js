@@ -220,7 +220,6 @@ function init() {
 	debugFolder.add( params, 'wireframe' );
 	debugFolder.add( params, 'displayIntersectionEdges' );
 	debugFolder.add( params, 'displayTriangleIntersections' );
-	debugFolder.add( params, 'displayBrush2Intersections' );
 	debugFolder.add( params, 'displayBrush1BVH' );
 	debugFolder.add( params, 'displayBrush2BVH' );
 
