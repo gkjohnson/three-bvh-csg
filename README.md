@@ -93,6 +93,9 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - Recompute the dirty nodes from the bottom up.
 - Unchanged / non-intersecting geometry can just be propagated up.
 
+## Gotchas
+- All geometry is expected to have all attributes to be interpolated using the same type of array.
+
 ## References
 - [Godot CSG](https://github.com/godotengine/godot/blob/master/modules/csg/csg.cpp)
 - RealtimeCSG ([Overview](https://www.youtube.com/watch?v=uqaiUMuGlRc), [GCD Presentation](https://www.youtube.com/watch?v=Iqmg4gblreo))
