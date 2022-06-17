@@ -11,6 +11,7 @@ export class EdgesHelper extends LineSegments {
 	constructor( edges = [] ) {
 
 		super();
+		this.frustumCulled = false;
 		this.setEdges( edges );
 
 	}

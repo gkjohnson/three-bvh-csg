@@ -35,6 +35,9 @@ export class TriangleSetHelper extends Group {
 		this._lines = new LineSegments( lineGeom, new LineBasicMaterial() );
 		this._mesh.material.color = this._lines.material.color;
 
+		this._lines.frustumCulled = false;
+		this._mesh.frustumCulled = false;
+
 		this.add( this._lines, this._mesh );
 
 		this.setTriangles( triangles );

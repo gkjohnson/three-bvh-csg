@@ -5,6 +5,7 @@ export * from './core/TriangleSplitter.js';
 export * from './core/Evaluator.js';
 
 export * from './core/constants.js';
+export * from './core/debugUtils.js';
 
 export * from './objects/TriangleSetHelper.js';
 export * from './objects/EdgesHelper.js';
