@@ -8,11 +8,14 @@ import {
 	Evaluator,
 	EdgesHelper,
 	TriangleSetHelper,
+	logTriangleDefinitions,
 	ADDITION,
 	SUBTRACTION,
 	INTERSECTION,
 	DIFFERENCE,
 } from '..';
+
+window.logTriangleDefinitions = logTriangleDefinitions;
 
 const params = {
 
@@ -328,7 +331,7 @@ function render() {
 
 			trisHelper.setTriangles( [
 				...csgEvaluator.debug.triangleIntersectsA.getTrianglesAsArray(),
-				...csgEvaluator.debug.triangleIntersectsA.getIntersectionTrianglesAsArray()
+				...csgEvaluator.debug.triangleIntersectsA.getIntersectionsAsArray()
 			] );
 
 		}

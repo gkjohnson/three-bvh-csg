@@ -52,13 +52,26 @@ class TriangleIntersectionSets {
 
 	}
 
-	getTrianglesAsArray() {
+	getTrianglesAsArray( id = null ) {
 
 		const { data } = this;
 		const arr = [];
-		for ( const key in data ) {
 
-			arr.push( data[ key ].triangle );
+		if ( id !== null ) {
+
+			if ( id in data ) {
+
+				arr.push( data[ id ].triangle );
+
+			}
+
+		} else {
+
+			for ( const key in data ) {
+
+				arr.push( data[ key ].triangle );
+
+			}
 
 		}
 
@@ -66,22 +79,73 @@ class TriangleIntersectionSets {
 
 	}
 
-	getIntersectionTrianglesAsArray() {
+	getTriangleIndices() {
+
+		return Object.keys( this.data ).map( i => parseInt( i ) );
+
+	}
+
+	getIntersectionIndices( id ) {
+
+		const { data } = this;
+		if ( ! data[ id ] ) {
+
+			return [];
+
+		} else {
+
+			return Object.keys( data[ id ].intersects ).map( i => parseInt( i ) );
+
+
+		}
+
+	}
+
+	getIntersectionsAsArray( id = null, id2 = null ) {
 
 		const { data } = this;
 		const triSet = new Set();
 		const arr = [];
-		for ( const key in data ) {
 
-			const intersects = data[ key ].intersects;
-			for ( const key2 in intersects ) {
+		const addTriangles = key => {
 
-				if ( ! triSet.has( key2 ) ) {
+			if ( ! data[ key ] ) return;
 
-					triSet.add( key2 );
-					arr.push( intersects[ key2 ] );
+			if ( id2 !== null ) {
+
+				if ( data[ key ].intersects[ id2 ] ) {
+
+					arr.push( data[ key ].intersects[ id2 ] );
 
 				}
+
+			} else {
+
+				const intersects = data[ key ].intersects;
+				for ( const key2 in intersects ) {
+
+					if ( ! triSet.has( key2 ) ) {
+
+						triSet.add( key2 );
+						arr.push( intersects[ key2 ] );
+
+					}
+
+				}
+
+			}
+
+		};
+
+		if ( id !== null ) {
+
+			addTriangles( id );
+
+		} else {
+
+			for ( const key in data ) {
+
+				addTriangles( key );
 
 			}
 

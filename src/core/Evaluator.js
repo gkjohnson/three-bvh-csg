@@ -5,6 +5,33 @@ import { OperationDebugData } from './OperationDebugData.js';
 import { performOperation } from './operations.js';
 import { setDebugContext } from './operationsUtils.js';
 
+export function getTriangleDefinitions( ...triangles ) {
+
+	function getVectorDefinition( v ) {
+
+		return /* js */`new THREE.Vector3( ${ v.x }, ${ v.y }, ${ v.z } )`;
+
+	}
+
+	return triangles.map( t => {
+
+		return /* js */`
+			new THREE.Triangle(
+				${ getVectorDefinition( t.a ) },
+				${ getVectorDefinition( t.b ) },
+				${ getVectorDefinition( t.c ) },
+			)`.substring( 1 );
+
+	} );
+
+}
+
+export function logTriangleDefinitions( ...triangles ) {
+
+	console.log( getTriangleDefinitions( ...triangles ).join( ',\n' ) );
+
+}
+
 // applies the given set of attribute data to the provided geometry. If the attributes are
 // not large enough to hold the new set of data then new attributes will be created. Otherwise
 // the existing attributes will be used and draw range updated to accommodate the new size.
