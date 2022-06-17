@@ -24,7 +24,7 @@ Function for performing CSG operations (Difference, Union, Intersection)
 
 ## Issues
 
-- intersctions along the edges of triangles (three-mesh-bvh issue)
+- intersctions along the edges of triangles (three-mesh-bvh issue) (see edges along exactly aligned boxes)
 
 ## Phases
 ### Phase 1
