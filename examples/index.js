@@ -28,6 +28,7 @@ const params = {
 	displayControls: true,
 	shadows: true,
 
+	enableDebugTelemetry: true,
 	displayIntersectionEdges: false,
 	displayTriangleIntersections: false,
 	displayBrush1BVH: false,
@@ -217,9 +218,10 @@ function init() {
 	} );
 
 	const debugFolder = gui.addFolder( 'debug' );
-	debugFolder.add( params, 'wireframe' );
+	debugFolder.add( params, 'enableDebugTelemetry' ).onChange( () => needsUpdate = true );
 	debugFolder.add( params, 'displayIntersectionEdges' );
 	debugFolder.add( params, 'displayTriangleIntersections' );
+	debugFolder.add( params, 'wireframe' );
 	debugFolder.add( params, 'displayBrush1BVH' );
 	debugFolder.add( params, 'displayBrush2BVH' );
 
@@ -294,6 +296,8 @@ function render() {
 
 	requestAnimationFrame( render );
 
+	const enableDebugTelemetry = params.enableDebugTelemetry;
+
 	if ( needsUpdate ) {
 
 		needsUpdate = false;
@@ -309,7 +313,7 @@ function render() {
 
 		const startTime = window.performance.now();
 		resultObject.geometry.dispose();
-		csgEvaluator.debug.enabled = true;
+		csgEvaluator.debug.enabled = enableDebugTelemetry;
 		resultObject.geometry = csgEvaluator.evaluate( brush1, brush2, params.operation );
 
 		wireframeResult.geometry.dispose();
@@ -318,12 +322,16 @@ function render() {
 		const deltaTime = window.performance.now() - startTime;
 		outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
 
-		edgesHelper.setEdges( csgEvaluator.debug.intersectionEdges );
+		if ( enableDebugTelemetry ) {
 
-		trisHelper.setTriangles( [
-			...csgEvaluator.debug.triangleIntersectsA.getTrianglesAsArray(),
-			...csgEvaluator.debug.triangleIntersectsA.getIntersectionTrianglesAsArray()
-		] );
+			edgesHelper.setEdges( csgEvaluator.debug.intersectionEdges );
+
+			trisHelper.setTriangles( [
+				...csgEvaluator.debug.triangleIntersectsA.getTrianglesAsArray(),
+				...csgEvaluator.debug.triangleIntersectsA.getIntersectionTrianglesAsArray()
+			] );
+
+		}
 
 	}
 
@@ -336,8 +344,8 @@ function render() {
 	transformControls.enabled = params.displayControls;
 	transformControls.visible = params.displayControls;
 
-	edgesHelper.visible = params.displayIntersectionEdges;
-	trisHelper.visible = params.displayTriangleIntersections;
+	edgesHelper.visible = enableDebugTelemetry && params.displayIntersectionEdges;
+	trisHelper.visible = enableDebugTelemetry && params.displayTriangleIntersections;
 
 	bvhHelper1.visible = params.displayBrush1BVH;
 	bvhHelper2.visible = params.displayBrush2BVH;
