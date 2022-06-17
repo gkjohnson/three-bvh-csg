@@ -11,35 +11,33 @@ let plane = new THREE.Plane();
 let _vec = new THREE.Vector3();
 
 const tri = new THREE.Triangle(
-	new THREE.Vector3(0.5,-0.5,-0.5),
-	new THREE.Vector3(-0.5,-0.5,-0.5),
-	new THREE.Vector3(-0.5,0.5,-0.5),
+	new THREE.Vector3( 0.5, - 0.5, - 0.5 ),
+	new THREE.Vector3( - 0.5, - 0.5, - 0.5 ),
+	new THREE.Vector3( - 0.5, 0.5, - 0.5 ),
 );
 
-const tris = [
-	// new THREE.Triangle(
-	// 	new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
-	// 	new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,0.4195971342532181),
-	// 	new THREE.Vector3(-0.21581882810821285,0.8160882562967348,0.4195971342532181),
-	// ),
-	new THREE.Triangle(
-		new THREE.Vector3(-0.21581882810821285,0.8160882562967348,-0.5804028657467819),
-		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
-		new THREE.Vector3(-0.21581882810821285,0.8160882562967348,0.4195971342532181),
-	),
-	new THREE.Triangle(
-		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
-		new THREE.Vector3(0.7841811718917872,-0.18391174370326524,-0.5804028657467819),
-		new THREE.Vector3(0.7841811718917872,-0.18391174370326524,0.4195971342532181),
-	),
-	new THREE.Triangle(
-		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,0.4195971342532181),
-		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
-		new THREE.Vector3(0.7841811718917872,-0.18391174370326524,0.4195971342532181),
-	),
-];
-
-
+// const tris = [
+// 	// new THREE.Triangle(
+// 	// 	new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
+// 	// 	new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,0.4195971342532181),
+// 	// 	new THREE.Vector3(-0.21581882810821285,0.8160882562967348,0.4195971342532181),
+// 	// ),
+// 	new THREE.Triangle(
+// 		new THREE.Vector3(-0.21581882810821285,0.8160882562967348,-0.5804028657467819),
+// 		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
+// 		new THREE.Vector3(-0.21581882810821285,0.8160882562967348,0.4195971342532181),
+// 	),
+// 	new THREE.Triangle(
+// 		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
+// 		new THREE.Vector3(0.7841811718917872,-0.18391174370326524,-0.5804028657467819),
+// 		new THREE.Vector3(0.7841811718917872,-0.18391174370326524,0.4195971342532181),
+// 	),
+// 	new THREE.Triangle(
+// 		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,0.4195971342532181),
+// 		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
+// 		new THREE.Vector3(0.7841811718917872,-0.18391174370326524,0.4195971342532181),
+// 	),
+// ];
 
 init();
 render();
@@ -79,7 +77,7 @@ function init() {
 		controls.enabled = ! e.value;
 
 	} );
-	// scene.add( transformControls );
+	scene.add( transformControls );
 
 	planeObject = new THREE.Object3D();
 	transformControls.attach( planeObject );
@@ -88,12 +86,12 @@ function init() {
 	planeObject.rotation.y = Math.PI / 2;
 
 	planeHelper = new THREE.PlaneHelper( plane );
-	// scene.add( planeHelper );
+	scene.add( planeHelper );
 
 	clippedTris = new TriangleSetHelper();
 	splitter = new TriangleSplitter();
 
-	scene.add( new TriangleSetHelper( [ tri, ...tris ] ), clippedTris );
+	scene.add( new TriangleSetHelper( [ tri ] ), clippedTris );
 
 	window.addEventListener( 'resize', function () {
 
@@ -113,21 +111,16 @@ function render() {
 	_vec.set( 0, 0, 1 ).transformDirection( planeObject.matrixWorld );
 	plane.setFromNormalAndCoplanarPoint( _vec, planeObject.position );
 
-	clipper.initialize( tri );
-	// clipper.clipByPlane( plane );
-	tris.forEach( t => {
+	splitter.initialize( tri );
+	splitter.splitByPlane( plane );
+	// tris.forEach( t => {
 
-		t.getPlane( plane );
-		clipper.clipByPlane( plane );
+	// 	t.getPlane( plane );
+	// 	splitter.splitByPlane( plane );
 
-	} );
+	// } );
 
-	// console.log( clipper.triangles.length );
-	// console.log( clipper.triangles.map( t => t.getArea() ) );
-
-
-	clippedTris.setTriangles( clipper.triangles );
-
+	clippedTris.setTriangles( splitter.triangles );
 	clippedTris.position.y = - 2;
 
 	renderer.render( scene, camera );
