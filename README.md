@@ -79,7 +79,6 @@ Function for performing CSG operations (Difference, Union, Intersection)
   - Half edge connectivity (future)
 - Pass two items into CSG function with operation
   - Compute cached data if necessary (aync if possible)
-  - Throw error if non uniform scale is used
   - Collect all intersecting triangles
     - Use the geometry with fewest triangles to perform the intersction primarily and avoid unnecessary transforms?
   - Clip triangles and add the right triangles to the appropriate side
@@ -93,16 +92,6 @@ Function for performing CSG operations (Difference, Union, Intersection)
 - Also find which nodes are touching to determine what needs to be recomputed?
 - Recompute the dirty nodes from the bottom up.
 - Unchanged / non-intersecting geometry can just be propagated up.
-
-## Demos
-- Interactive level editor (ramps, stairs, etc)
-  - wireframe view for hidden objects.
-- Complex model editor (swiss cheese rabbit, animated, etc)
-- Hierarchical demo
-- Async generation
-- Switch between interactive demo setups
-- Draw polygons on surfaces and extrude
-- Full level / building (interactive)
 
 ## References
 - [Godot CSG](https://github.com/godotengine/godot/blob/master/modules/csg/csg.cpp)
