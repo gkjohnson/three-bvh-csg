@@ -33,17 +33,25 @@ export function generateRandomTriangleColors( geometry ) {
 	const array = new Float32Array( position.count * 3 );
 
 	const color = new Color();
-	for ( let i = 0, l = array.length; i < l; i += 3 ) {
+	for ( let i = 0, l = array.length; i < l; i += 9 ) {
 
 		color.setHSL(
 			Math.random(),
-			MathUtils.lerp( 0.25, 0.75, Math.random() ),
-			MathUtils.lerp( 0.25, 0.75, Math.random() ),
+			MathUtils.lerp( 0.5, 1.0, Math.random() ),
+			MathUtils.lerp( 0.5, 0.75, Math.random() ),
 		);
 
 		array[ i + 0 ] = color.r;
 		array[ i + 1 ] = color.g;
 		array[ i + 2 ] = color.b;
+
+		array[ i + 3 ] = color.r;
+		array[ i + 4 ] = color.g;
+		array[ i + 5 ] = color.b;
+
+		array[ i + 6 ] = color.r;
+		array[ i + 7 ] = color.g;
+		array[ i + 8 ] = color.b;
 
 	}
 

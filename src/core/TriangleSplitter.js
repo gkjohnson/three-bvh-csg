@@ -3,12 +3,14 @@ import { ExtendedTriangle } from 'three-mesh-bvh';
 
 const EPSILON = 1e-14;
 const COPLANAR_EPSILON = 1e-7;
+const AREA_EPSILON = 1e-10;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
-const _triangle = new ExtendedTriangle();
+const _exTriangle = new ExtendedTriangle();
+const _triangle = new Triangle();
 
 // A pool of triangles to avoid unnecessary triangle creation
 class TrianglePool {
@@ -116,7 +118,7 @@ export class TriangleSplitter {
 		let splittingTriangle = null;
 		if ( triangle !== null ) {
 
-			splittingTriangle = _triangle;
+			splittingTriangle = _exTriangle;
 			splittingTriangle.copy( triangle );
 			splittingTriangle.needsUpdate = true;
 
@@ -139,6 +141,7 @@ export class TriangleSplitter {
 			let vertexSplitEnd = - 1;
 			let positiveSide = 0;
 			let onPlane = 0;
+			let coplanarEdge = false;
 			const arr = [ a, b, c ];
 			for ( let t = 0; t < 3; t ++ ) {
 
@@ -149,21 +152,28 @@ export class TriangleSplitter {
 
 				// track if the start point sits on the plane or if it's on the positive side of it
 				// so we can use that information to determine whether to split later.
-				const distance = plane.distanceToPoint( _edge.start );
-				if ( Math.abs( distance ) < EPSILON ) {
+				const startDist = plane.distanceToPoint( _edge.start );
+				const endDist = plane.distanceToPoint( _edge.end );
+				if ( Math.abs( startDist ) < EPSILON ) {
 
 					onPlane ++;
 
-				} else if ( distance > 0 ) {
+				} else if ( startDist > 0 ) {
 
 					positiveSide ++;
 
 				}
 
+				if ( Math.abs( startDist ) < COPLANAR_EPSILON && Math.abs( endDist ) < COPLANAR_EPSILON ) {
+
+					coplanarEdge = true;
+
+				}
+
 				// double check the end point since the "intersectLine" function sometimes does not
 				// return it as an intersection (see issue #28)
-				let didIntersect = plane.intersectLine( _edge, _vec );
-				if ( ! didIntersect && plane.distanceToPoint( _edge.end ) === 0 ) {
+				let didIntersect = ! ! plane.intersectLine( _edge, _vec );
+				if ( ! didIntersect && Math.abs( endDist ) < EPSILON ) {
 
 					_vec.copy( _edge.end );
 					didIntersect = true;
@@ -171,11 +181,11 @@ export class TriangleSplitter {
 				}
 
 				// check if we intersect the plane (ignoring the start point so we don't double count)
-				if ( didIntersect && ! _vec.equals( _edge.start ) ) {
+				if ( didIntersect && ! ( _vec.distanceTo( _edge.start ) < EPSILON ) ) {
 
 					// if we intersect at the end point then we track that point as one that we
 					// have to split down the middle
-					if ( _vec.equals( _edge.end ) ) {
+					if ( _vec.distanceTo( _edge.end ) < EPSILON ) {
 
 						vertexSplitEnd = t;
 
@@ -202,7 +212,7 @@ export class TriangleSplitter {
 			// - we have two points on the plane then the plane intersects the triangle exactly on an edge
 			// - the plane does not intersect on 2 points
 			// - the intersection edge is too small
-			if ( onPlane < 2 && intersects === 2 && _foundEdge.distance() > EPSILON ) {
+			if ( ! coplanarEdge && onPlane < 2 && intersects === 2 && _foundEdge.distance() > COPLANAR_EPSILON ) {
 
 				if ( vertexSplitEnd !== - 1 ) {
 
@@ -265,16 +275,33 @@ export class TriangleSplitter {
 					nextTri1.a.copy( arr[ nextVert1 ] );
 					nextTri1.b.copy( _foundEdge.start );
 					nextTri1.c.copy( _foundEdge.end );
-					triangles.push( nextTri1 );
+
+					if ( nextTri1.getArea() > AREA_EPSILON ) {
+
+						triangles.push( nextTri1 );
+
+					}
 
 					nextTri2.a.copy( arr[ nextVert1 ] );
 					nextTri2.b.copy( arr[ nextVert2 ] );
 					nextTri2.c.copy( _foundEdge.start );
-					triangles.push( nextTri2 );
+
+					if ( nextTri2.getArea() > AREA_EPSILON ) {
+
+						triangles.push( nextTri2 );
+
+					}
 
 					tri.a.copy( arr[ singleVert ] );
 					tri.b.copy( _foundEdge.end );
 					tri.c.copy( _foundEdge.start );
+
+					if ( tri.getArea() < AREA_EPSILON ) {
+
+						triangles.splice( i, 1 );
+						i --;
+
+					}
 
 				}
 

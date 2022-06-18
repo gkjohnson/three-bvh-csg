@@ -29,7 +29,6 @@ export class TriangleSetHelper extends Group {
 		this._mesh = new Mesh( geometry, new MeshPhongMaterial( {
 			flatShading: true,
 			transparent: true,
-			depthWrite: false,
 			opacity: 0.25,
 		} ) );
 		this._lines = new LineSegments( lineGeom, new LineBasicMaterial() );
