@@ -146,6 +146,7 @@ async function init() {
 
 	// add object displaying the result
 	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( {
+		roughness: 0.1,
 		flatShading: false,
 		polygonOffset: true,
 		polygonOffsetUnits: 1,
