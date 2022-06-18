@@ -67,6 +67,7 @@ function applyToGeometry( geometry, referenceGeometry, attributeData ) {
 	}
 
 	// remove the bounds tree if it exists because its now out of date
+	// TODO: can we have this dispose in the same way that a brush does?
 	geometry.boundsTree = null;
 
 	if ( needsDisposal ) {
@@ -103,6 +104,26 @@ export class Evaluator {
 			const key = attributes[ i ];
 			const attr = aAttributes[ key ];
 			attributeData.initializeArray( key, attr.array.constructor );
+
+		}
+
+		for ( const key in attributeData.attributes ) {
+
+			if ( ! attributes.includes( key ) ) {
+
+				attributeData.delete( key );
+
+			}
+
+		}
+
+		for ( const key in targetGeometry.attributes ) {
+
+			if ( ! attributes.includes( key ) ) {
+
+				targetGeometry.deleteAttribute( key );
+
+			}
 
 		}
 

@@ -72,7 +72,6 @@ function init() {
 
 	// scene setup
 	scene = new THREE.Scene();
-	scene.fog = new THREE.Fog( 0xffca28, 20, 60 );
 
 	// lights
 	light = new THREE.DirectionalLight( 0xffffff, 1 );
