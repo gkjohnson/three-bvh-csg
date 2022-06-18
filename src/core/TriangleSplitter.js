@@ -3,6 +3,7 @@ import { ExtendedTriangle } from 'three-mesh-bvh';
 
 const EPSILON = 1e-14;
 const COPLANAR_EPSILON = 1e-7;
+const AREA_EPSILON = 1e-10;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
@@ -211,7 +212,7 @@ export class TriangleSplitter {
 			// - we have two points on the plane then the plane intersects the triangle exactly on an edge
 			// - the plane does not intersect on 2 points
 			// - the intersection edge is too small
-			if ( ! coplanarEdge && onPlane < 2 && intersects === 2 && _foundEdge.distance() > EPSILON ) {
+			if ( ! coplanarEdge && onPlane < 2 && intersects === 2 && _foundEdge.distance() > COPLANAR_EPSILON ) {
 
 				if ( vertexSplitEnd !== - 1 ) {
 
@@ -274,16 +275,33 @@ export class TriangleSplitter {
 					nextTri1.a.copy( arr[ nextVert1 ] );
 					nextTri1.b.copy( _foundEdge.start );
 					nextTri1.c.copy( _foundEdge.end );
-					triangles.push( nextTri1 );
+
+					if ( nextTri1.getArea() > AREA_EPSILON ) {
+
+						triangles.push( nextTri1 );
+
+					}
 
 					nextTri2.a.copy( arr[ nextVert1 ] );
 					nextTri2.b.copy( arr[ nextVert2 ] );
 					nextTri2.c.copy( _foundEdge.start );
-					triangles.push( nextTri2 );
+
+					if ( nextTri2.getArea() > AREA_EPSILON ) {
+
+						triangles.push( nextTri2 );
+
+					}
 
 					tri.a.copy( arr[ singleVert ] );
 					tri.b.copy( _foundEdge.end );
 					tri.c.copy( _foundEdge.start );
+
+					if ( tri.getArea() < AREA_EPSILON ) {
+
+						triangles.splice( i, 1 );
+						i --;
+
+					}
 
 				}
 
