@@ -10,7 +10,6 @@ const _vec = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _exTriangle = new ExtendedTriangle();
-const _triangle = new Triangle();
 
 // A pool of triangles to avoid unnecessary triangle creation
 class TrianglePool {
