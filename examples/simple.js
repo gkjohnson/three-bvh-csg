@@ -21,15 +21,18 @@ const params = {
 
 	brush1Shape: 'box',
 	brush1Complexity: 1,
+	brush1Color: '#ffffff',
 
 	brush2Shape: 'sphere',
 	brush2Complexity: 1,
+	brush2Color: '#E91E63',
 
 	operation: SUBTRACTION,
 	wireframe: false,
 	displayBrushes: true,
 	displayControls: true,
 	shadows: true,
+	vertexColors: false,
 
 	enableDebugTelemetry: true,
 	displayIntersectionEdges: false,
@@ -194,6 +197,24 @@ function init() {
 	gui.add( params, 'displayBrushes' );
 	gui.add( params, 'displayControls' );
 	gui.add( params, 'shadows' );
+	gui.add( params, 'vertexColors' ).onChange( v => {
+
+		brush1.material.vertexColors = v;
+		brush1.material.needsUpdate = true;
+
+		brush2.material.vertexColors = v;
+		brush2.material.needsUpdate = true;
+
+		resultObject.material.vertexColors = v;
+		resultObject.material.needsUpdate = true;
+
+		csgEvaluator.attributes = v ?
+			[ 'color', 'position', 'uv', 'normal' ] :
+			[ 'position', 'uv', 'normal' ];
+
+		needsUpdate = true;
+
+	} );
 
 	const brush1Folder = gui.addFolder( 'brush 1' );
 	brush1Folder.add( params, 'brush1Shape', [ 'sphere', 'box', 'torus', 'torus knot' ] ).name( 'shape' ).onChange( v => {
@@ -204,6 +225,11 @@ function init() {
 	brush1Folder.add( params, 'brush1Complexity', 0, 2 ).name( 'complexity' ).onChange( v => {
 
 		updateBrush( brush1, params.brush1Shape, v );
+
+	} );
+	brush1Folder.addColor( params, 'brush1Color' ).onChange( v => {
+
+		brush1.material.color.set( v ).convertSRGBToLinear();
 
 	} );
 
@@ -218,6 +244,12 @@ function init() {
 		updateBrush( brush2, params.brush2Shape, v );
 
 	} );
+	brush2Folder.addColor( params, 'brush2Color' ).onChange( v => {
+
+		brush2.material.color.set( v ).convertSRGBToLinear();
+
+	} );
+
 
 	const debugFolder = gui.addFolder( 'debug' );
 	debugFolder.add( params, 'enableDebugTelemetry' ).onChange( () => needsUpdate = true );
@@ -290,6 +322,27 @@ function updateBrush( brush, type, complexity ) {
 
 	}
 
+	brush.geometry = brush.geometry.toNonIndexed();
+
+	const position = brush.geometry.attributes.position;
+	const array = new Float32Array( position.count * 3 );
+	for ( let i = 0, l = array.length; i < l; i += 9 ) {
+
+		array[ i + 0 ] = 1;
+		array[ i + 1 ] = 0;
+		array[ i + 2 ] = 0;
+
+		array[ i + 3 ] = 0;
+		array[ i + 4 ] = 1;
+		array[ i + 5 ] = 0;
+
+		array[ i + 6 ] = 0;
+		array[ i + 7 ] = 0;
+		array[ i + 8 ] = 1;
+
+	}
+
+	brush.geometry.setAttribute( 'color', new THREE.BufferAttribute( array, 3 ) );
 	needsUpdate = true;
 
 }
