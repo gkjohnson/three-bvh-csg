@@ -299,6 +299,7 @@ export class TriangleSplitter {
 
 						triangles.splice( i, 1 );
 						i --;
+						l --;
 
 					}
 

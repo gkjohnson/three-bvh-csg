@@ -21,23 +21,19 @@ function applyToGeometry( geometry, referenceGeometry, attributeData ) {
 		const trimmedArray = new type( array.buffer, 0, length );
 
 		let attr = attributes[ key ];
-		if ( ! attr ) {
+		if ( ! attr || attr.array.length < length ) {
 
 			// create the attribute if it doesn't exist yet
 			const refAttr = referenceGeometry.attributes[ key ];
 			attr = new BufferAttribute( trimmedArray.slice(), refAttr.itemSize, refAttr.normalized );
 			geometry.setAttribute( key, attr );
-
-		} else if ( attr.array.length < length ) {
-
-			// set the new array if it's larger
 			needsDisposal = true;
-			attr.array = trimmedArray.slice();
 
 		} else {
 
 			// set the new array data
 			attr.array.set( trimmedArray, 0 );
+			attr.needsUpdate = true;
 
 		}
 
