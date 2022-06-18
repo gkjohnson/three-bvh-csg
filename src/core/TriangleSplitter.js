@@ -8,7 +8,8 @@ const _foundEdge = new Line3();
 const _vec = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
-const _triangle = new ExtendedTriangle();
+const _exTriangle = new ExtendedTriangle();
+const _triangle = new Triangle();
 
 // A pool of triangles to avoid unnecessary triangle creation
 class TrianglePool {
@@ -116,7 +117,7 @@ export class TriangleSplitter {
 		let splittingTriangle = null;
 		if ( triangle !== null ) {
 
-			splittingTriangle = _triangle;
+			splittingTriangle = _exTriangle;
 			splittingTriangle.copy( triangle );
 			splittingTriangle.needsUpdate = true;
 
@@ -162,8 +163,8 @@ export class TriangleSplitter {
 
 				// double check the end point since the "intersectLine" function sometimes does not
 				// return it as an intersection (see issue #28)
-				let didIntersect = plane.intersectLine( _edge, _vec );
-				if ( ! didIntersect && plane.distanceToPoint( _edge.end ) === 0 ) {
+				let didIntersect = ! ! plane.intersectLine( _edge, _vec );
+				if ( ! didIntersect && Math.abs( plane.distanceToPoint( _edge.end ) ) < EPSILON ) {
 
 					_vec.copy( _edge.end );
 					didIntersect = true;
@@ -171,11 +172,11 @@ export class TriangleSplitter {
 				}
 
 				// check if we intersect the plane (ignoring the start point so we don't double count)
-				if ( didIntersect && ! _vec.equals( _edge.start ) ) {
+				if ( didIntersect && ! ( _vec.distanceTo( _edge.start ) < EPSILON ) ) {
 
 					// if we intersect at the end point then we track that point as one that we
 					// have to split down the middle
-					if ( _vec.equals( _edge.end ) ) {
+					if ( _vec.distanceTo( _edge.end ) < EPSILON ) {
 
 						vertexSplitEnd = t;
 
