@@ -131,8 +131,8 @@ function init() {
 	brush1.material.transparent = true;
 	brush1.material.depthWrite = false;
 	brush1.material.polygonOffset = true;
-	brush1.material.polygonOffsetFactor = 2;
-	brush1.material.polygonOffsetUnits = 2;
+	brush1.material.polygonOffsetFactor = 0.2;
+	brush1.material.polygonOffsetUnits = 0.2;
 	brush1.material.side = THREE.DoubleSide;
 	brush1.material.premultipliedAlpha = true;
 
@@ -140,8 +140,8 @@ function init() {
 	brush2.material.transparent = true;
 	brush2.material.depthWrite = false;
 	brush2.material.polygonOffset = true;
-	brush2.material.polygonOffsetFactor = 2;
-	brush2.material.polygonOffsetUnits = 2;
+	brush2.material.polygonOffsetFactor = 0.2;
+	brush2.material.polygonOffsetUnits = 0.2;
 	brush2.material.side = THREE.DoubleSide;
 	brush2.material.premultipliedAlpha = true;
 	brush2.material.roughness = 0.25;
@@ -157,8 +157,8 @@ function init() {
 	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( {
 		flatShading: false,
 		polygonOffset: true,
-		polygonOffsetUnits: 1,
-		polygonOffsetFactor: 1,
+		polygonOffsetUnits: 0.1,
+		polygonOffsetFactor: 0.1,
 	} ) );
 	resultObject.castShadow = true;
 	resultObject.receiveShadow = true;
