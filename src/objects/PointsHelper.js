@@ -12,6 +12,7 @@ export class PointsHelper extends InstancedMesh {
 	constructor( count = 1000, points = [] ) {
 
 		super( new SphereBufferGeometry( 0.025 ), new MeshBasicMaterial(), count );
+		this.frustumCulled = false;
 		this.setPoints( points );
 
 	}

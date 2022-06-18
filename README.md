@@ -4,11 +4,23 @@ An _in progress_, flexible, memory compact, fast and dynamic CSG implementation 
 
 # Examples
 
-TODO
+[Simple CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/index.html)
 
 # Use
 
-TODO
+```js
+import { SUBTRACTION, Brush, Evaluator } from 'three-bvh-csg';
+import { MeshStandardMaterial, Mesh, SphereGeometry, BoxGeometry } from 'three';
+
+const csgEvaluator = new Evaluator();
+const brush1 = new Brush( new SphereGeometry() );
+const brush2 = new Brush( new BoxGeometry() );
+
+const result = csgEvaluator.evaluate( brush1, brush2, SUBTRACTION );
+const mesh = new Mesh( result, new MeshStandardMaterial() );
+
+// render the mesh!
+```
 
 # API
 
