@@ -9,14 +9,11 @@ import {
 	Evaluator,
 	EdgesHelper,
 	TriangleSetHelper,
-	logTriangleDefinitions,
 	ADDITION,
 	SUBTRACTION,
 	INTERSECTION,
 	DIFFERENCE,
 } from '..';
-
-window.logTriangleDefinitions = logTriangleDefinitions;
 
 const params = {
 
@@ -24,10 +21,18 @@ const params = {
 	wireframe: false,
 	displayBrushes: false,
 	shadows: true,
+
+	randomize: () => {
+
+		randomizeBrushes();
+		updateCSG();
+
+	}
 };
 
 let renderer, camera, scene, controls, gui, outputContainer;
 let bunnyBrush, brushes;
+let material, surfaceSampler;
 let resultObject, wireframeResult, light;
 let edgesHelper, trisHelper;
 let csgEvaluator = new Evaluator();
@@ -75,7 +80,6 @@ async function init() {
 	camera.position.set( 0, 0.65, 2.5 );
 	camera.far = 100;
 	camera.updateProjectionMatrix();
-	window.LIGHT = light;
 
 	// controls
 	controls = new OrbitControls( camera, renderer.domElement );
@@ -100,19 +104,15 @@ async function init() {
 	bunnyBrush.position.y = - 0.5;
 	bunnyBrush.updateMatrixWorld();
 
-	const material = new THREE.MeshStandardMaterial();
+	material = new THREE.MeshStandardMaterial();
 	brushes = [];
 
-	const surfaceSampler = new MeshSurfaceSampler( bunnyBrush );
+	surfaceSampler = new MeshSurfaceSampler( bunnyBrush );
 	surfaceSampler.build();
 
 	for ( let i = 0; i < 50; i ++ ) {
 
 		const b = new Brush( new THREE.SphereBufferGeometry( 1, 15, 15 ), material );
-		surfaceSampler.sample( b.position );
-		b.position.applyMatrix4( bunnyBrush.matrixWorld );
-		b.scale.setScalar( THREE.MathUtils.lerp( 0.1, 0.2, Math.random() ) );
-		b.updateMatrixWorld();
 		b.receiveShadow = true;
 		scene.add( b );
 		brushes.push( b );
@@ -183,10 +183,8 @@ async function init() {
 	} );
 	gui.add( params, 'displayBrushes' );
 	gui.add( params, 'shadows' );
-
-
-	const debugFolder = gui.addFolder( 'debug' );
-	debugFolder.add( params, 'wireframe' );
+	gui.add( params, 'wireframe' );
+	gui.add( params, 'randomize' );
 
 	window.addEventListener( 'resize', function () {
 
@@ -197,6 +195,7 @@ async function init() {
 
 	}, false );
 
+	randomizeBrushes();
 	updateCSG();
 	render();
 
@@ -217,6 +216,20 @@ function updateCSG() {
 
 	const deltaTime = window.performance.now() - startTime;
 	outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
+
+}
+
+function randomizeBrushes() {
+
+	for ( let i = 0; i < brushes.length; i ++ ) {
+
+		const b = brushes[ i ];
+		surfaceSampler.sample( b.position );
+		b.position.applyMatrix4( bunnyBrush.matrixWorld );
+		b.scale.setScalar( THREE.MathUtils.lerp( 0.1, 0.2, Math.random() ) );
+		b.updateMatrixWorld();
+
+	}
 
 }
 
