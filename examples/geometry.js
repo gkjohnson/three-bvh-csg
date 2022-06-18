@@ -56,9 +56,8 @@ async function init() {
 
 	// lights
 	light = new THREE.DirectionalLight( 0xffffff, 1 );
-	light.position.set( - 1, 2, 3 );
-	scene.add( light, light.target );
-	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
+	light.position.set( 1, 2, 1 );
+	scene.add( light, new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
 
 	// shadows
 	const shadowCam = light.shadow.camera;
@@ -73,12 +72,21 @@ async function init() {
 
 	// camera setup
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
-	camera.position.set( 1, 2, 4 ).multiplyScalar( 0.5 );
+	camera.position.set( 0, 0.65, 2.5 );
 	camera.far = 100;
 	camera.updateProjectionMatrix();
+	window.LIGHT = light;
 
 	// controls
 	controls = new OrbitControls( camera, renderer.domElement );
+
+	// floor
+	const floor = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial( { color: 0xffffff, opacity: 0.05 } ) );
+	floor.rotation.x = - Math.PI / 2;
+	floor.scale.setScalar( 10 );
+	floor.position.y = - 0.5;
+	floor.receiveShadow = true;
+	scene.add( floor );
 
 	const gltf = await new GLTFLoader()
 		.setMeshoptDecoder( MeshoptDecoder )
