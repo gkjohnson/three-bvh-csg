@@ -30,6 +30,6 @@ jobs:
     - name: Commit Examples
       uses: EndBug/add-and-commit@v7
       with:
-        add: 'example/bundle'
+        add: 'examples/bundle'
         message: 'update builds'
         push: 'origin HEAD:examples --force'
