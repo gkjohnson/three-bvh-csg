@@ -2,6 +2,11 @@
 
 An _in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of three-mesh-bvh.
 
+# Roadmap
+- Material retention support
+- Hierarchical operations
+- Performance improvements
+
 # Examples
 
 [Simple CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/index.html)
