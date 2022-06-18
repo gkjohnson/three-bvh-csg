@@ -171,7 +171,7 @@ export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, m
 
 			}
 
-			pushBarycoordInterpolatedValues( _tri.a, _tri.b, _tri.c, baryCoordTri, 3, arr, invert );
+			pushBarycoordInterpolatedValues( _tri.a, _tri.b, _tri.c, baryCoordTri, 3, arr, invert, true );
 
 		} else {
 
@@ -261,7 +261,7 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 
 // takes a set of barycentric values in the form of a triangle, a set of vectors, number of components,
 // and whether to invert the result and pushes the new values onto the provided attribute array
-function pushBarycoordInterpolatedValues( v0, v1, v2, baryCoordTri, itemSize, attrArr, invert = false ) {
+function pushBarycoordInterpolatedValues( v0, v1, v2, baryCoordTri, itemSize, attrArr, invert = false, normalize = false ) {
 
 	// adds the appropriate number of values for the vector onto the array
 	const addValues = v => {
@@ -288,6 +288,14 @@ function pushBarycoordInterpolatedValues( v0, v1, v2, baryCoordTri, itemSize, at
 		.addScaledVector( v0, baryCoordTri.c.x )
 		.addScaledVector( v1, baryCoordTri.c.y )
 		.addScaledVector( v2, baryCoordTri.c.z );
+
+	if ( normalize ) {
+
+		_vec4_0.normalize();
+		_vec4_1.normalize();
+		_vec4_2.normalize();
+
+	}
 
 	// if the face is inverted then add the values in an inverted order
 	addValues( _vec4_0 );
