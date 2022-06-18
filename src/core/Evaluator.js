@@ -122,6 +122,7 @@ export class Evaluator {
 			if ( ! attributes.includes( key ) ) {
 
 				targetGeometry.deleteAttribute( key );
+				targetGeometry.dispose();
 
 			}
 
