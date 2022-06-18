@@ -1,5 +1,11 @@
 # three-bvh-csg
 
+[![lgtm code quality](https://img.shields.io/lgtm/grade/javascript/g/gkjohnson/three-bvh-csg.svg?style=flat-square&label=code-quality)](https://lgtm.com/projects/g/gkjohnson/three-bvh-csg/)
+[![build](https://img.shields.io/github/workflow/status/gkjohnson/three-bvh-csg/Node.js%20CI?style=flat-square&label=build)](https://github.com/gkjohnson/three-bvh-csg/actions)
+[![github](https://flat.badgen.net/badge/icon/github?icon=github&label)](https://github.com/gkjohnson/three-bvh-csg/)
+[![twitter](https://flat.badgen.net/twitter/follow/garrettkjohnson)](https://twitter.com/garrettkjohnson)
+[![sponsors](https://img.shields.io/github/sponsors/gkjohnson?style=flat-square&color=1da1f2)](https://github.com/sponsors/gkjohnson/)
+
 An _in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of three-mesh-bvh.
 
 # Roadmap
