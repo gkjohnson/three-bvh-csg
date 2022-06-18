@@ -140,6 +140,7 @@ export class TriangleSplitter {
 			let vertexSplitEnd = - 1;
 			let positiveSide = 0;
 			let onPlane = 0;
+			let coplanarEdge = false;
 			const arr = [ a, b, c ];
 			for ( let t = 0; t < 3; t ++ ) {
 
@@ -150,21 +151,28 @@ export class TriangleSplitter {
 
 				// track if the start point sits on the plane or if it's on the positive side of it
 				// so we can use that information to determine whether to split later.
-				const distance = plane.distanceToPoint( _edge.start );
-				if ( Math.abs( distance ) < EPSILON ) {
+				const startDist = plane.distanceToPoint( _edge.start );
+				const endDist = plane.distanceToPoint( _edge.end );
+				if ( Math.abs( startDist ) < EPSILON ) {
 
 					onPlane ++;
 
-				} else if ( distance > 0 ) {
+				} else if ( startDist > 0 ) {
 
 					positiveSide ++;
+
+				}
+
+				if ( Math.abs( startDist ) < COPLANAR_EPSILON && Math.abs( endDist ) < COPLANAR_EPSILON ) {
+
+					coplanarEdge = true;
 
 				}
 
 				// double check the end point since the "intersectLine" function sometimes does not
 				// return it as an intersection (see issue #28)
 				let didIntersect = ! ! plane.intersectLine( _edge, _vec );
-				if ( ! didIntersect && Math.abs( plane.distanceToPoint( _edge.end ) ) < EPSILON ) {
+				if ( ! didIntersect && Math.abs( endDist ) < EPSILON ) {
 
 					_vec.copy( _edge.end );
 					didIntersect = true;
@@ -203,7 +211,7 @@ export class TriangleSplitter {
 			// - we have two points on the plane then the plane intersects the triangle exactly on an edge
 			// - the plane does not intersect on 2 points
 			// - the intersection edge is too small
-			if ( onPlane < 2 && intersects === 2 && _foundEdge.distance() > EPSILON ) {
+			if ( ! coplanarEdge && onPlane < 2 && intersects === 2 && _foundEdge.distance() > EPSILON ) {
 
 				if ( vertexSplitEnd !== - 1 ) {
 
