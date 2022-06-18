@@ -12,10 +12,11 @@ An _in progress_, flexible, memory compact, fast and dynamic CSG implementation 
 - Material retention support
 - Hierarchical operations
 - Performance improvements
+- Webworker support
 
 # Examples
 
-[Simple CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/index.html)
+[Simple CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/simple.html)
 
 # Use
 
