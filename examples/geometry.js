@@ -26,7 +26,7 @@ const params = {
 	shadows: true,
 };
 
-let renderer, camera, scene, gui, outputContainer;
+let renderer, camera, scene, controls, gui, outputContainer;
 let bunnyBrush, brushes;
 let resultObject, wireframeResult, light;
 let edgesHelper, trisHelper;
