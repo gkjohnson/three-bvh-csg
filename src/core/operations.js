@@ -17,23 +17,30 @@ const _barycoordTri = new Triangle();
 
 // runs the given operation against a and b using the splitter and appending data to the
 // typedAttributeData object.
-export function performOperation( a, b, operation, splitter, typedAttributeData ) {
+export function performOperation( a, b, operation, splitter, typedAttributeData, options ) {
 
+	const { useGroups = true } = options;
 	const attributeInfo = typedAttributeData.attributes;
 	const { aToB, bToA } = collectIntersectingTriangles( a, b );
 
 	const resultGroups = [];
-	const resultMaterials = [];
+	let resultMaterials = null;
 
-	// performWholeTriangleOperations( a, b, aToB, operation, false, attributeInfo );
-	// performSplitTriangleOperations( a, b, aToB, operation, false, splitter, attributeInfo );
+	if ( useGroups ) {
 
-	// performWholeTriangleOperations( b, a, bToA, operation, true, attributeInfo );
-	// performSplitTriangleOperations( b, a, bToA, operation, true, splitter, attributeInfo );
+		resultMaterials = [];
+		processWithGroups( a, b, aToB, false );
+		processWithGroups( b, a, bToA, true );
 
-	processWithGroups( a, b, aToB, false );
-	processWithGroups( b, a, bToA, true );
+	} else {
 
+		performWholeTriangleOperations( a, b, aToB, operation, false, attributeInfo );
+		performSplitTriangleOperations( a, b, aToB, operation, false, splitter, attributeInfo );
+
+		performWholeTriangleOperations( b, a, bToA, operation, true, attributeInfo );
+		performSplitTriangleOperations( b, a, bToA, operation, true, splitter, attributeInfo );
+
+	}
 
 	return {
 		groups: resultGroups,
@@ -188,7 +195,7 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, split
 }
 
 // perform CSG operations on the set of whole triangles
-function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, attributeInfo ) {
+function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, attributeInfo, group ) {
 
 	// matrix for transforming into the local frame of geometry b
 	_matrix
@@ -209,6 +216,19 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 		if ( i in splitTriSet ) {
 
 			continue;
+
+		}
+
+		// skip triangles outside of this group
+		// TODO: we could make this a lot faster
+		if ( group ) {
+
+			const relativeIndex = 3 * i - group.start;
+			if ( relativeIndex < 0 || relativeIndex >= group.count ) {
+
+				continue;
+
+			}
 
 		}
 

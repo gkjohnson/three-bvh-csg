@@ -88,6 +88,7 @@ export class Evaluator {
 		this.triangleSplitter = new TriangleSplitter();
 		this.attributeData = new TypedAttributeData();
 		this.attributes = [ 'position', 'uv', 'normal' ];
+		this.useGroups = true;
 		this.debug = new OperationDebugData();
 
 	}
@@ -137,7 +138,7 @@ export class Evaluator {
 
 		}
 
-		performOperation( a, b, operation, triangleSplitter, attributeData );
+		const { groups, materials } = performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups: this.useGroups } );
 
 		if ( debug.enabled ) {
 
