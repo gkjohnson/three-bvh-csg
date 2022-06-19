@@ -100,8 +100,11 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, split
 
 	_normalMatrix.getNormalMatrix( a.matrixWorld );
 
+	const aIndex = a.geometry.index;
 	const aPosition = a.geometry.attributes.position;
+
 	const bBVH = b.geometry.boundsTree;
+	const bIndex = b.geometry.index;
 	const bPosition = b.geometry.attributes.position;
 
 	// iterate over all split triangle indices
@@ -125,9 +128,9 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, split
 
 		// get the triangle in the geometry B local frame
 		const ia3 = 3 * ia;
-		const ia0 = ia3 + 0;
-		const ia1 = ia3 + 1;
-		const ia2 = ia3 + 2;
+		const ia0 = aIndex.getX( ia3 + 0 );
+		const ia1 = aIndex.getX( ia3 + 1 );
+		const ia2 = aIndex.getX( ia3 + 2 );
 		_triA.a.fromBufferAttribute( aPosition, ia0 ).applyMatrix4( _matrix );
 		_triA.b.fromBufferAttribute( aPosition, ia1 ).applyMatrix4( _matrix );
 		_triA.c.fromBufferAttribute( aPosition, ia2 ).applyMatrix4( _matrix );
@@ -139,9 +142,9 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, split
 		for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
 
 			const ib3 = 3 * intersectingIndices[ ib ];
-			const ib0 = ib3 + 0;
-			const ib1 = ib3 + 1;
-			const ib2 = ib3 + 2;
+			const ib0 = bIndex.getX( ib3 + 0 );
+			const ib1 = bIndex.getX( ib3 + 1 );
+			const ib2 = bIndex.getX( ib3 + 2 );
 			_triB.a.fromBufferAttribute( bPosition, ib0 );
 			_triB.b.fromBufferAttribute( bPosition, ib1 );
 			_triB.c.fromBufferAttribute( bPosition, ib2 );
@@ -185,7 +188,7 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, split
 }
 
 // perform CSG operations on the set of whole triangles
-function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, attributeInfo, group ) {
+function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, attributeInfo ) {
 
 	// matrix for transforming into the local frame of geometry b
 	_matrix
@@ -196,9 +199,10 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 	_normalMatrix.getNormalMatrix( a.matrixWorld );
 
 	const bBVH = b.geometry.boundsTree;
+	const aIndex = a.geometry.index;
 	const aAttributes = a.geometry.attributes;
 	const aPosition = aAttributes.position;
-	for ( let i = 0, l = aPosition.count / 3; i < l; i ++ ) {
+	for ( let i = 0, l = aIndex.count / 3; i < l; i ++ ) {
 
 		// if we find the index in the set of triangles that is supposed to be clipped
 		// then ignore it because it will be handled separately
@@ -208,24 +212,11 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 
 		}
 
-		// skip triangles outside of this group
-		// TODO: we could make this a lot faster
-		if ( group ) {
-
-			const relativeIndex = 3 * i - group.start;
-			if ( relativeIndex < 0 || relativeIndex >= group.count ) {
-
-				continue;
-
-			}
-
-		}
-
 		// get the vertex indices
 		const i3 = 3 * i;
-		const i0 = i3 + 0;
-		const i1 = i3 + 1;
-		const i2 = i3 + 2;
+		const i0 = aIndex.getX( i3 + 0 );
+		const i1 = aIndex.getX( i3 + 1 );
+		const i2 = aIndex.getX( i3 + 2 );
 
 		// get the vertex position in the frame of geometry b so we can
 		// perform hit testing

@@ -94,17 +94,11 @@ export function collectIntersectingTriangles( a, b ) {
 		.invert()
 		.multiply( b.matrixWorld );
 
-	const aIndex = a.geometry.index;
-	const bIndex = b.geometry.index;
-
 	a.geometry.boundsTree.bvhcast( b.geometry.boundsTree, _matrix, {
 
 		intersectsTriangles( triangleA, triangleB, ia, ib ) {
 
 			if ( triangleA.intersectsTriangle( triangleB, _debugContext ? _edge : undefined ) ) {
-
-				if ( aIndex ) ia = aIndex.getX( ia * 3 ) / 3;
-				if ( bIndex ) ib = bIndex.getX( ib * 3 ) / 3;
 
 				if ( ! aToB[ ia ] ) aToB[ ia ] = [];
 				if ( ! bToA[ ib ] ) bToA[ ib ] = [];
@@ -135,10 +129,11 @@ export function collectIntersectingTriangles( a, b ) {
 export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, matrixWorld, normalMatrix, attributeInfo, invert ) {
 
 	const attributes = geometry.attributes;
+	const indexAttr = geometry.index;
 	const i3 = triIndex * 3;
-	const i0 = i3 + 0;
-	const i1 = i3 + 1;
-	const i2 = i3 + 2;
+	const i0 = indexAttr.getX( i3 + 0 );
+	const i1 = indexAttr.getX( i3 + 1 );
+	const i2 = indexAttr.getX( i3 + 2 );
 
 	for ( const key in attributeInfo ) {
 
