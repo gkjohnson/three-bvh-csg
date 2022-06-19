@@ -62,12 +62,15 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 
 		const mats = a.material;
 		groups.sort( ( a, b ) => a.start - b.start );
+
+		let wholeTriangleStartIndex = 0;
+		let splitTriangleStartIndex = 0;
 		for ( let i = 0, l = groups.length; i < l; i ++ ) {
 
 			const group = groups[ i ];
 			const startLength = attributeInfo.position.length / 3;
-			performWholeTriangleOperations( a, b, triSet, operation, invert, attributeInfo, group );
-			performSplitTriangleOperations( a, b, triSet, operation, invert, splitter, attributeInfo, group );
+			wholeTriangleStartIndex = performWholeTriangleOperations( a, b, triSet, operation, invert, attributeInfo, group, wholeTriangleStartIndex );
+			splitTriangleStartIndex = performSplitTriangleOperations( a, b, triSet, operation, invert, splitter, attributeInfo, group, splitTriangleStartIndex );
 
 			const endLength = attributeInfo.position.length / 3;
 			if ( startLength !== endLength ) {
@@ -97,7 +100,7 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 }
 
 // perform triangle splitting and CSG operations on the set of split triangles
-function performSplitTriangleOperations( a, b, intersectionMap, operation, invert, splitter, attributeInfo, group = null ) {
+function performSplitTriangleOperations( a, b, intersectionMap, operation, invert, splitter, attributeInfo, group = null, startIndex = 0 ) {
 
 	// transforms into the local frame of matrix b
 	_matrix
@@ -117,16 +120,19 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 	const intersectionSet = intersectionMap.intersectionSet;
 
 	// iterate over all split triangle indices
-	for ( let i = 0, l = splitIds.length; i < l; i ++ ) {
+	const finalIndex = group ? group.start + group.count : Infinity;
+	for ( let i = startIndex, l = splitIds.length; i < l; i ++ ) {
 
 		const ia = splitIds[ i ];
 
 		// skip triangles outside of this group
-		// TODO: improve this
 		if ( group ) {
 
-			const relativeIndex = 3 * ia - group.start;
-			if ( relativeIndex < 0 || relativeIndex >= group.count ) {
+			if ( ia >= finalIndex ) {
+
+				return i;
+
+			} else if ( ia < group.start ) {
 
 				continue;
 
@@ -191,13 +197,14 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 
 		}
 
-
 	}
+
+	return splitIds.length;
 
 }
 
 // perform CSG operations on the set of whole triangles
-function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, attributeInfo, group ) {
+function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, attributeInfo, group, startIndex = 0 ) {
 
 	// matrix for transforming into the local frame of geometry b
 	_matrix
@@ -212,7 +219,9 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 	const aAttributes = a.geometry.attributes;
 	const aPosition = aAttributes.position;
 	const { intersectionSet } = splitTriSet;
-	for ( let i = 0, l = aIndex.count / 3; i < l; i ++ ) {
+
+	const finalIndex = group ? group.start + group.count : Infinity;
+	for ( let i = startIndex, l = aIndex.count / 3; i < l; i ++ ) {
 
 		// if we find the index in the set of triangles that is supposed to be clipped
 		// then ignore it because it will be handled separately
@@ -223,11 +232,13 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 		}
 
 		// skip triangles outside of this group
-		// TODO: we could make this a lot faster
 		if ( group ) {
 
-			const relativeIndex = 3 * i - group.start;
-			if ( relativeIndex < 0 || relativeIndex >= group.count ) {
+			if ( i >= finalIndex ) {
+
+				return i;
+
+			} else if ( i < group.start ) {
 
 				continue;
 
@@ -263,6 +274,8 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 		}
 
 	}
+
+	return aIndex.count / 3;
 
 }
 
