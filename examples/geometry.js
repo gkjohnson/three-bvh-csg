@@ -176,6 +176,7 @@ async function init() {
 		opacity: 0.15,
 		transparent: true,
 	} ) );
+	wireframeResult.material.color.set( 0x001516 ).convertSRGBToLinear();
 	scene.add( wireframeResult );
 
 	// gui
