@@ -271,19 +271,33 @@ export class TriangleSplitter {
 					const nextTri1 = trianglePool.getTriangle();
 					const nextTri2 = trianglePool.getTriangle();
 
-					nextTri1.a.copy( arr[ nextVert1 ] );
-					nextTri1.b.copy( _foundEdge.start );
-					nextTri1.c.copy( _foundEdge.end );
+					if ( arr[ nextVert1 ].distanceTo( _foundEdge.start ) < arr[ nextVert2 ].distanceTo( _foundEdge.end ) ) {
+
+						nextTri1.a.copy( arr[ nextVert1 ] );
+						nextTri1.b.copy( _foundEdge.start );
+						nextTri1.c.copy( _foundEdge.end );
+
+						nextTri2.a.copy( arr[ nextVert1 ] );
+						nextTri2.b.copy( arr[ nextVert2 ] );
+						nextTri2.c.copy( _foundEdge.start );
+
+					} else {
+
+						nextTri1.a.copy( arr[ nextVert2 ] );
+						nextTri1.b.copy( _foundEdge.start );
+						nextTri1.c.copy( _foundEdge.end );
+
+						nextTri2.a.copy( arr[ nextVert1 ] );
+						nextTri2.b.copy( arr[ nextVert2 ] );
+						nextTri2.c.copy( _foundEdge.end );
+
+					}
 
 					if ( nextTri1.getArea() > AREA_EPSILON ) {
 
 						triangles.push( nextTri1 );
 
 					}
-
-					nextTri2.a.copy( arr[ nextVert1 ] );
-					nextTri2.b.copy( arr[ nextVert2 ] );
-					nextTri2.c.copy( _foundEdge.start );
 
 					if ( nextTri2.getArea() > AREA_EPSILON ) {
 
