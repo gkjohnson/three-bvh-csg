@@ -264,14 +264,14 @@ export class TriangleSplitter {
 
 					}
 
-					// TODO: split along a shortest edge here to optimize for larger triangles
 					const nextVert1 = ( singleVert + 1 ) % 3;
 					const nextVert2 = ( singleVert + 2 ) % 3;
 
 					const nextTri1 = trianglePool.getTriangle();
 					const nextTri2 = trianglePool.getTriangle();
 
-					if ( arr[ nextVert1 ].distanceTo( _foundEdge.start ) < arr[ nextVert2 ].distanceTo( _foundEdge.end ) ) {
+					// choose the triangle that has the larger areas (shortest split distance)
+					if ( arr[ nextVert1 ].distanceToSquared( _foundEdge.start ) < arr[ nextVert2 ].distanceToSquared( _foundEdge.end ) ) {
 
 						nextTri1.a.copy( arr[ nextVert1 ] );
 						nextTri1.b.copy( _foundEdge.start );
@@ -293,6 +293,11 @@ export class TriangleSplitter {
 
 					}
 
+					tri.a.copy( arr[ singleVert ] );
+					tri.b.copy( _foundEdge.end );
+					tri.c.copy( _foundEdge.start );
+
+					// don't add degenerate triangles to the list
 					if ( nextTri1.getArea() > AREA_EPSILON ) {
 
 						triangles.push( nextTri1 );
@@ -304,10 +309,6 @@ export class TriangleSplitter {
 						triangles.push( nextTri2 );
 
 					}
-
-					tri.a.copy( arr[ singleVert ] );
-					tri.b.copy( _foundEdge.end );
-					tri.c.copy( _foundEdge.start );
 
 					if ( tri.getArea() < AREA_EPSILON ) {
 
