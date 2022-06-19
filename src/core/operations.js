@@ -49,7 +49,7 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 
 	function processWithGroups( a, b, triSet, invert ) {
 
-		const groups = JSON.parse( JSON.stringify( a.geometry.groups ) );
+		const groups = [ ...a.geometry.groups ];
 		if ( groups.length === 0 ) {
 
 			groups.push( {
