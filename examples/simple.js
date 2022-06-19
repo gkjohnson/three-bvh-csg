@@ -33,6 +33,7 @@ const params = {
 	displayControls: true,
 	shadows: true,
 	vertexColors: false,
+	flatShading: false,
 
 	enableDebugTelemetry: true,
 	displayIntersectionEdges: false,
@@ -215,14 +216,35 @@ function init() {
 		brush2.material.vertexColors = v;
 		brush2.material.needsUpdate = true;
 
-		resultObject.material.vertexColors = v;
-		resultObject.material.needsUpdate = true;
+		materialMap.forEach( m => {
+
+			m.vertexColors = v;
+			m.needsUpdate = true;
+
+		} );
 
 		csgEvaluator.attributes = v ?
 			[ 'color', 'position', 'uv', 'normal' ] :
 			[ 'position', 'uv', 'normal' ];
 
 		needsUpdate = true;
+
+	} );
+
+	gui.add( params, 'flatShading' ).onChange( v => {
+
+		brush1.material.flatShading = v;
+		brush1.material.needsUpdate = true;
+
+		brush2.material.flatShading = v;
+		brush2.material.needsUpdate = true;
+
+		materialMap.forEach( m => {
+
+			m.flatShading = v;
+			m.needsUpdate = true;
+
+		} );
 
 	} );
 
