@@ -9,9 +9,8 @@
 An _in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh).
 
 # Roadmap
-- Material retention support
-- Hierarchical operations
 - Performance improvements
+- Hierarchical operations
 - Webworker support
 
 # Examples
