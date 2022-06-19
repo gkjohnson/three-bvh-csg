@@ -1,9 +1,10 @@
-import { BufferGeometry, BufferAttribute } from 'three';
+import { BufferAttribute } from 'three';
 import { TriangleSplitter } from './TriangleSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './OperationDebugData.js';
 import { performOperation } from './operations.js';
 import { setDebugContext } from './operationsUtils.js';
+import { Brush } from './Brush.js';
 
 // applies the given set of attribute data to the provided geometry. If the attributes are
 // not large enough to hold the new set of data then new attributes will be created. Otherwise
@@ -88,16 +89,18 @@ export class Evaluator {
 		this.triangleSplitter = new TriangleSplitter();
 		this.attributeData = new TypedAttributeData();
 		this.attributes = [ 'position', 'uv', 'normal' ];
+		this.useGroups = true;
 		this.debug = new OperationDebugData();
 
 	}
 
-	evaluate( a, b, operation, targetGeometry = new BufferGeometry() ) {
+	evaluate( a, b, operation, targetBrush = new Brush() ) {
 
 		a.prepareGeometry();
 		b.prepareGeometry();
 
 		const { triangleSplitter, attributeData, attributes, debug } = this;
+		const targetGeometry = targetBrush.geometry;
 		const aAttributes = a.geometry.attributes;
 		for ( let i = 0, l = attributes.length; i < l; i ++ ) {
 
@@ -137,7 +140,7 @@ export class Evaluator {
 
 		}
 
-		performOperation( a, b, operation, triangleSplitter, attributeData );
+		const { groups, materials } = performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups: this.useGroups } );
 
 		if ( debug.enabled ) {
 
@@ -145,7 +148,18 @@ export class Evaluator {
 
 		}
 
-		return applyToGeometry( targetGeometry, a.geometry, attributeData.attributes );
+		applyToGeometry( targetGeometry, a.geometry, attributeData.attributes );
+
+		targetBrush.material = materials || targetBrush.material;
+		targetGeometry.clearGroups();
+		for ( let i = 0, l = groups.length; i < l; i ++ ) {
+
+			const group = groups[ i ];
+			targetGeometry.addGroup( group.start, group.count, group.materialIndex );
+
+		}
+
+		return targetBrush;
 
 	}
 

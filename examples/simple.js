@@ -33,6 +33,7 @@ const params = {
 	displayControls: true,
 	shadows: true,
 	vertexColors: false,
+	flatShading: false,
 
 	enableDebugTelemetry: true,
 	displayIntersectionEdges: false,
@@ -50,6 +51,7 @@ let edgesHelper, trisHelper;
 let bvhHelper1, bvhHelper2;
 let needsUpdate = true;
 let csgEvaluator = new Evaluator();
+const materialMap = new Map();
 
 init();
 render();
@@ -119,10 +121,6 @@ function init() {
 	brush2.position.set( - 0.75, 0.75, 0 );
 	brush2.scale.setScalar( 0.75 );
 
-	// PROBLEM CASE:
-	// brush2.position.set( - 0.27300968690619787, 0.5329319712626078, 0 );
-	// brush2.scale.setScalar( 1 );
-
 	updateBrush( brush1, params.brush1Shape, params.brush1Complexity );
 	updateBrush( brush2, params.brush2Shape, params.brush2Complexity );
 
@@ -152,6 +150,20 @@ function init() {
 	transformControls.attach( brush2 );
 
 	scene.add( brush1, brush2 );
+
+	// create material map for transparent to opaque variants
+	let mat;
+	mat = brush1.material.clone();
+	mat.opacity = 1;
+	mat.transparent = false;
+	mat.depthWrite = true;
+	materialMap.set( brush1.material, mat );
+
+	mat = brush2.material.clone();
+	mat.opacity = 1;
+	mat.transparent = false;
+	mat.depthWrite = true;
+	materialMap.set( brush2.material, mat );
 
 	// add object displaying the result
 	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( {
@@ -204,14 +216,35 @@ function init() {
 		brush2.material.vertexColors = v;
 		brush2.material.needsUpdate = true;
 
-		resultObject.material.vertexColors = v;
-		resultObject.material.needsUpdate = true;
+		materialMap.forEach( m => {
+
+			m.vertexColors = v;
+			m.needsUpdate = true;
+
+		} );
 
 		csgEvaluator.attributes = v ?
 			[ 'color', 'position', 'uv', 'normal' ] :
 			[ 'position', 'uv', 'normal' ];
 
 		needsUpdate = true;
+
+	} );
+
+	gui.add( params, 'flatShading' ).onChange( v => {
+
+		brush1.material.flatShading = v;
+		brush1.material.needsUpdate = true;
+
+		brush2.material.flatShading = v;
+		brush2.material.needsUpdate = true;
+
+		materialMap.forEach( m => {
+
+			m.flatShading = v;
+			m.needsUpdate = true;
+
+		} );
 
 	} );
 
@@ -229,6 +262,7 @@ function init() {
 	brush1Folder.addColor( params, 'brush1Color' ).onChange( v => {
 
 		brush1.material.color.set( v ).convertSRGBToLinear();
+		materialMap.get( brush1.material ).color.set( v ).convertSRGBToLinear();
 
 	} );
 
@@ -246,9 +280,9 @@ function init() {
 	brush2Folder.addColor( params, 'brush2Color' ).onChange( v => {
 
 		brush2.material.color.set( v ).convertSRGBToLinear();
+		materialMap.get( brush2.material ).color.set( v ).convertSRGBToLinear();
 
 	} );
-
 
 	const debugFolder = gui.addFolder( 'debug' );
 	debugFolder.add( params, 'enableDebugTelemetry' ).onChange( () => needsUpdate = true );
@@ -367,7 +401,8 @@ function render() {
 
 		const startTime = window.performance.now();
 		csgEvaluator.debug.enabled = enableDebugTelemetry;
-		csgEvaluator.evaluate( brush1, brush2, params.operation, resultObject.geometry );
+		csgEvaluator.evaluate( brush1, brush2, params.operation, resultObject );
+		resultObject.material = resultObject.material.map( m => materialMap.get( m ) );
 
 		const deltaTime = window.performance.now() - startTime;
 		outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;

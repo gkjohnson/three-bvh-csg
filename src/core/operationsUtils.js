@@ -1,4 +1,5 @@
 import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle, Line3 } from 'three';
+import { IntersectionMap } from './IntersectionMap.js';
 import { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE, PASSTHROUGH } from './constants.js';
 
 const _ray = new Ray();
@@ -86,8 +87,8 @@ export function getHitSide( tri, bvh ) {
 // the other triangles intersected
 export function collectIntersectingTriangles( a, b ) {
 
-	const aToB = {};
-	const bToA = {};
+	const aIntersections = new IntersectionMap();
+	const bIntersections = new IntersectionMap();
 
 	_matrix
 		.copy( a.matrixWorld )
@@ -100,11 +101,8 @@ export function collectIntersectingTriangles( a, b ) {
 
 			if ( triangleA.intersectsTriangle( triangleB, _debugContext ? _edge : undefined ) ) {
 
-				if ( ! aToB[ ia ] ) aToB[ ia ] = [];
-				if ( ! bToA[ ib ] ) bToA[ ib ] = [];
-
-				aToB[ ia ].push( ib );
-				bToA[ ib ].push( ia );
+				aIntersections.add( ia, ib );
+				bIntersections.add( ib, ia );
 
 				if ( _debugContext ) {
 
@@ -121,7 +119,7 @@ export function collectIntersectingTriangles( a, b ) {
 
 	} );
 
-	return { aToB, bToA };
+	return { aIntersections, bIntersections };
 
 }
 
