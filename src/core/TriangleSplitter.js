@@ -1,5 +1,6 @@
 import { Triangle, Line3, Vector3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
+import { BACK_SIDE, FRONT_SIDE, COPLANAR } from './operationsUtils.js';
 
 const EPSILON = 1e-14;
 const COPLANAR_EPSILON = 1e-7;
@@ -10,6 +11,42 @@ const _vec = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _exTriangle = new ExtendedTriangle();
+
+class CullableTriangle extends Triangle {
+
+	constructor( ...args ) {
+
+		super( ...args );
+		this.side = BACK_SIDE;
+
+	}
+
+	updateSide( plane, parentSide, triangle = null, isCoplanar = false ) {
+
+		if ( triangle && isCoplanar ) {
+
+			if ( ! triangle.intersects( this ) ) {
+
+				this.side = parentSide;
+
+			} else {
+
+				this.side = COPLANAR;
+
+			}
+
+		} else {
+
+			// TODO: use distanceToPointSquared where precision is less important
+			this.getCenter( _vec );
+			this.side = plane.distanceToPointSquared( _vec ) < 0 ? BACK_SIDE : FRONT_SIDE;
+
+		}
+
+
+	}
+
+}
 
 // A pool of triangles to avoid unnecessary triangle creation
 class TrianglePool {
@@ -25,11 +62,13 @@ class TrianglePool {
 
 		if ( this._index >= this._pool.length ) {
 
-			this._pool.push( new Triangle() );
+			this._pool.push( new CullableTriangle() );
 
 		}
 
-		return this._pool[ this._index ++ ];
+		const result = this._pool[ this._index ++ ];
+		result.side = BACK_SIDE;
+		return result;
 
 	}
 
@@ -94,7 +133,7 @@ export class TriangleSplitter {
 				_planeNormal.crossVectors( normal, _vec );
 				_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
 
-				this.splitByPlane( _plane, triangle );
+				this.splitByPlane( _plane, triangle, true );
 
 			}
 
@@ -109,7 +148,7 @@ export class TriangleSplitter {
 
 	// Split the triangles by the given plan. If a triangle is provided then we ensure we
 	// intersect the triangle before splitting the plane
-	splitByPlane( plane, triangle = null ) {
+	splitByPlane( plane, triangle = null, isCoplanar = false ) {
 
 		const { triangles, trianglePool } = this;
 
@@ -242,11 +281,11 @@ export class TriangleSplitter {
 
 						if ( positiveSide >= 2 ) {
 
-							return plane.distanceToPoint( v ) < 0;
+							return plane.distanceToPointSquared( v ) < 0;
 
 						} else {
 
-							return plane.distanceToPoint( v ) > 0;
+							return plane.distanceToPointSquared( v ) > 0;
 
 						}
 
@@ -301,12 +340,14 @@ export class TriangleSplitter {
 					if ( nextTri1.getArea() > AREA_EPSILON ) {
 
 						triangles.push( nextTri1 );
+						nextTri1.updateSide( plane, tri.side, splittingTriangle, isCoplanar );
 
 					}
 
 					if ( nextTri2.getArea() > AREA_EPSILON ) {
 
 						triangles.push( nextTri2 );
+						nextTri2.updateSide( plane, tri.side, splittingTriangle, isCoplanar );
 
 					}
 
@@ -315,6 +356,10 @@ export class TriangleSplitter {
 						triangles.splice( i, 1 );
 						i --;
 						l --;
+
+					} else {
+
+						tri.updateSide( plane, tri.side, splittingTriangle, isCoplanar );
 
 					}
 
