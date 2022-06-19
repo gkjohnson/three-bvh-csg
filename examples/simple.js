@@ -157,12 +157,14 @@ function init() {
 	mat.opacity = 1;
 	mat.transparent = false;
 	mat.depthWrite = true;
+	mat.side = THREE.FrontSide;
 	materialMap.set( brush1.material, mat );
 
 	mat = brush2.material.clone();
 	mat.opacity = 1;
 	mat.transparent = false;
 	mat.depthWrite = true;
+	mat.side = THREE.FrontSide;
 	materialMap.set( brush2.material, mat );
 
 	// add object displaying the result
