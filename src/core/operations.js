@@ -47,7 +47,7 @@ export function performOperation( a, b, operation, splitter, typedAttributeData 
 
 			groups.push( {
 				start: 0,
-				count: a.geometry.attributes.position.count,
+				count: Infinity,
 				materialIndex: 0
 			} );
 
