@@ -37,9 +37,9 @@ class CullableTriangle extends Triangle {
 
 		} else {
 
-			// TODO: use distanceToPointSquared where precision is less important
-			this.getCenter( _vec );
-			this.side = plane.distanceToPointSquared( _vec ) < 0 ? BACK_SIDE : FRONT_SIDE;
+			// get center
+			_vec.set( 0, 0, 0 ).add( this.a ).add( this.b ).add( this.c ).multiplyScalar( 1 / 3 );
+			this.side = plane.distanceToPoint( _vec ) < 0 ? BACK_SIDE : FRONT_SIDE;
 
 		}
 
@@ -281,11 +281,11 @@ export class TriangleSplitter {
 
 						if ( positiveSide >= 2 ) {
 
-							return plane.distanceToPointSquared( v ) < 0;
+							return plane.distanceToPoint( v ) < 0;
 
 						} else {
 
-							return plane.distanceToPointSquared( v ) > 0;
+							return plane.distanceToPoint( v ) > 0;
 
 						}
 
