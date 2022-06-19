@@ -367,7 +367,7 @@ function render() {
 
 		const startTime = window.performance.now();
 		csgEvaluator.debug.enabled = enableDebugTelemetry;
-		csgEvaluator.evaluate( brush1, brush2, params.operation, resultObject.geometry );
+		csgEvaluator.evaluate( brush1, brush2, params.operation, resultObject );
 
 		const deltaTime = window.performance.now() - startTime;
 		outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;

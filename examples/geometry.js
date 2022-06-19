@@ -100,7 +100,7 @@ async function init() {
 	geometry.computeVertexNormals();
 
 	// initialize brushes
-	bunnyBrush = new Brush( gltf.scene.children[ 0 ].geometry, new THREE.MeshStandardMaterial() );
+	bunnyBrush = new Brush( geometry, new THREE.MeshStandardMaterial() );
 	bunnyBrush.position.y = - 0.5;
 	bunnyBrush.updateMatrixWorld();
 
@@ -205,13 +205,16 @@ function updateCSG() {
 
 	const startTime = window.performance.now();
 	let finalBrush = brushes[ 0 ];
+	csgEvaluator.useGroups = false;
 	for ( let i = 1, l = brushes.length; i < l; i ++ ) {
 
 		const b = brushes[ i ];
-		finalBrush = new Brush( csgEvaluator.evaluate( finalBrush, b, ADDITION ) );
+		finalBrush = csgEvaluator.evaluate( finalBrush, b, ADDITION );
+		finalBrush.material = material;
 
 	}
 
+	csgEvaluator.useGroups = true;
 	csgEvaluator.evaluate( bunnyBrush, finalBrush, params.operation, resultObject.geometry );
 
 	const deltaTime = window.performance.now() - startTime;
