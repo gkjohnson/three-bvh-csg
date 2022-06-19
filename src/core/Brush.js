@@ -8,6 +8,7 @@ export class Brush extends Mesh {
 
 		super( ...args );
 
+		this.isBrush = true;
 		this._previousMatrix = new Matrix4();
 		this._previousMatrix.elements.fill( 0 );
 
