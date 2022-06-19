@@ -7,8 +7,6 @@ import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.j
 import {
 	Brush,
 	Evaluator,
-	EdgesHelper,
-	TriangleSetHelper,
 	ADDITION,
 	SUBTRACTION,
 	INTERSECTION,
@@ -34,9 +32,10 @@ let renderer, camera, scene, controls, gui, outputContainer;
 let bunnyBrush, brushes;
 let material, surfaceSampler;
 let resultObject, wireframeResult, light;
-let edgesHelper, trisHelper;
 let csgEvaluator = new Evaluator();
 csgEvaluator.attributes = [ 'position', 'normal' ];
+
+const materialMap = new Map();
 
 init();
 
@@ -85,7 +84,8 @@ async function init() {
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	// floor
-	const floor = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial( { color: 0xffffff, opacity: 0.05 } ) );
+	const floor = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial( { opacity: 0.05 } ) );
+	floor.material.color.set( 0xE0F7FA ).convertSRGBToLinear();
 	floor.rotation.x = - Math.PI / 2;
 	floor.scale.setScalar( 10 );
 	floor.position.y = - 0.5;
@@ -103,6 +103,8 @@ async function init() {
 	bunnyBrush = new Brush( geometry, new THREE.MeshStandardMaterial() );
 	bunnyBrush.position.y = - 0.5;
 	bunnyBrush.updateMatrixWorld();
+	bunnyBrush.receiveShadow = true;
+	scene.add( bunnyBrush );
 
 	material = new THREE.MeshStandardMaterial();
 	brushes = [];
@@ -128,6 +130,7 @@ async function init() {
 	bunnyBrush.material.polygonOffsetUnits = 0.1;
 	bunnyBrush.material.side = THREE.DoubleSide;
 	bunnyBrush.material.premultipliedAlpha = true;
+	bunnyBrush.material.color.set( 0xE0F7FA ).convertSRGBToLinear();
 
 	material.opacity = 0.15;
 	material.transparent = true;
@@ -138,11 +141,21 @@ async function init() {
 	material.side = THREE.DoubleSide;
 	material.premultipliedAlpha = true;
 	material.roughness = 0.25;
-	material.color.set( 0xE91E63 ).convertSRGBToLinear();
+	material.color.set( 0x4DD0E1 ).convertSRGBToLinear();
 
-	bunnyBrush.receiveShadow = true;
+	// create solid material equivalents
+	let mat;
+	mat = bunnyBrush.material.clone();
+	mat.opacity = 1;
+	mat.transparent = false;
+	mat.depthWrite = true;
+	materialMap.set( bunnyBrush.material, mat );
 
-	scene.add( bunnyBrush );
+	mat = material.clone();
+	mat.opacity = 1;
+	mat.transparent = false;
+	mat.depthWrite = true;
+	materialMap.set( material, mat );
 
 	// add object displaying the result
 	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( {
@@ -164,15 +177,6 @@ async function init() {
 		transparent: true,
 	} ) );
 	scene.add( wireframeResult );
-
-	// helpers
-	edgesHelper = new EdgesHelper();
-	edgesHelper.color.set( 0xE91E63 ).convertSRGBToLinear();
-	scene.add( edgesHelper );
-
-	trisHelper = new TriangleSetHelper();
-	trisHelper.color.set( 0x00BCD4 ).convertSRGBToLinear();
-	scene.add( trisHelper );
 
 	// gui
 	gui = new GUI();
@@ -215,7 +219,8 @@ function updateCSG() {
 	}
 
 	csgEvaluator.useGroups = true;
-	csgEvaluator.evaluate( bunnyBrush, finalBrush, params.operation, resultObject.geometry );
+	csgEvaluator.evaluate( bunnyBrush, finalBrush, params.operation, resultObject );
+	resultObject.material = resultObject.material.map( m => materialMap.get( m ) );
 
 	const deltaTime = window.performance.now() - startTime;
 	outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
@@ -229,7 +234,7 @@ function randomizeBrushes() {
 		const b = brushes[ i ];
 		surfaceSampler.sample( b.position );
 		b.position.applyMatrix4( bunnyBrush.matrixWorld );
-		b.scale.setScalar( THREE.MathUtils.lerp( 0.1, 0.2, Math.random() ) );
+		b.scale.setScalar( THREE.MathUtils.lerp( 0.05, 0.15, Math.random() ) );
 		b.updateMatrixWorld();
 
 	}
@@ -240,17 +245,11 @@ function render() {
 
 	requestAnimationFrame( render );
 
-	const enableDebugTelemetry = params.enableDebugTelemetry;
-
 	wireframeResult.visible = params.wireframe;
 	bunnyBrush.visible = params.displayBrushes;
 	brushes.forEach( b => b.visible = params.displayBrushes );
 
-
 	light.castShadow = params.shadows;
-
-	edgesHelper.visible = enableDebugTelemetry && params.displayIntersectionEdges;
-	trisHelper.visible = enableDebugTelemetry && params.displayTriangleIntersections;
 
 	renderer.render( scene, camera );
 
