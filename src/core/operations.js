@@ -20,8 +20,8 @@ const _barycoordTri = new Triangle();
 export function performOperation( a, b, operation, splitter, typedAttributeData, options ) {
 
 	const { useGroups = true } = options;
+	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b );
 	const attributeInfo = typedAttributeData.attributes;
-	const { aToB, bToA } = collectIntersectingTriangles( a, b );
 
 	const resultGroups = [];
 	let resultMaterials = null;
@@ -29,16 +29,16 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 	if ( useGroups ) {
 
 		resultMaterials = [];
-		processWithGroups( a, b, aToB, false );
-		processWithGroups( b, a, bToA, true );
+		processWithGroups( a, b, aIntersections, false );
+		processWithGroups( b, a, bIntersections, true );
 
 	} else {
 
-		performWholeTriangleOperations( a, b, aToB, operation, false, attributeInfo );
-		performSplitTriangleOperations( a, b, aToB, operation, false, splitter, attributeInfo );
+		performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeInfo );
+		performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeInfo );
 
-		performWholeTriangleOperations( b, a, bToA, operation, true, attributeInfo );
-		performSplitTriangleOperations( b, a, bToA, operation, true, splitter, attributeInfo );
+		performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeInfo );
+		performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeInfo );
 
 	}
 
@@ -97,7 +97,7 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 }
 
 // perform triangle splitting and CSG operations on the set of split triangles
-function performSplitTriangleOperations( a, b, triSets, operation, invert, splitter, attributeInfo, group = null ) {
+function performSplitTriangleOperations( a, b, intersectionMap, operation, invert, splitter, attributeInfo, group = null ) {
 
 	// transforms into the local frame of matrix b
 	_matrix
@@ -113,12 +113,13 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, split
 	const bBVH = b.geometry.boundsTree;
 	const bIndex = b.geometry.index;
 	const bPosition = b.geometry.attributes.position;
+	const splitIds = intersectionMap.ids;
+	const intersectionSet = intersectionMap.intersectionSet;
 
 	// iterate over all split triangle indices
-	for ( const key in triSets ) {
+	for ( let i = 0, l = splitIds.length; i < l; i ++ ) {
 
-		const intersectingIndices = triSets[ key ];
-		const ia = parseInt( key );
+		const ia = splitIds[ i ];
 
 		// skip triangles outside of this group
 		// TODO: improve this
@@ -146,6 +147,7 @@ function performSplitTriangleOperations( a, b, triSets, operation, invert, split
 		splitter.initialize( _triA );
 
 		// split the triangle with the intersecting triangles from B
+		const intersectingIndices = intersectionSet[ ia ];
 		for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
 
 			const ib3 = 3 * intersectingIndices[ ib ];
@@ -209,11 +211,12 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 	const aIndex = a.geometry.index;
 	const aAttributes = a.geometry.attributes;
 	const aPosition = aAttributes.position;
+	const { intersectionSet } = splitTriSet;
 	for ( let i = 0, l = aIndex.count / 3; i < l; i ++ ) {
 
 		// if we find the index in the set of triangles that is supposed to be clipped
 		// then ignore it because it will be handled separately
-		if ( i in splitTriSet ) {
+		if ( i in intersectionSet ) {
 
 			continue;
 
