@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { TriangleSplitter, TriangleSetHelper, logTriangleDefinitions } from '..';
+import { TriangleSplitter, TriangleSetHelper } from '..';
 
 let renderer, camera, scene;
 let controls, transformControls;
@@ -12,22 +12,22 @@ let _vec = new THREE.Vector3();
 
 const ogTris = [
 	new THREE.Triangle(
-		new THREE.Vector3( -0.25, 1.25, 0.25 ),
-		new THREE.Vector3( -0.25, 0.25, 0.25 ),
-		new THREE.Vector3( -1.25, 1.25, 0.25 ),
+		new THREE.Vector3( - 0.25, 1.25, 0.25 ),
+		new THREE.Vector3( - 0.25, 0.25, 0.25 ),
+		new THREE.Vector3( - 1.25, 1.25, 0.25 ),
 	)
 ];
 
 const tris = [
 	new THREE.Triangle(
-		new THREE.Vector3( -0.5, 0.5, -0.5 ),
-		new THREE.Vector3( -0.5, -0.5, -0.5 ),
-		new THREE.Vector3( -0.5, 0.5, 0.5 ),
+		new THREE.Vector3( - 0.5, 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.5, - 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.5, 0.5, 0.5 ),
 	),
 	new THREE.Triangle(
-		new THREE.Vector3( -0.5, 0.5, -0.5 ),
-		new THREE.Vector3( -0.5, 0.5, 0.5 ),
-		new THREE.Vector3( 0.5, 0.5, -0.5 ),
+		new THREE.Vector3( - 0.5, 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.5, 0.5, 0.5 ),
+		new THREE.Vector3( 0.5, 0.5, - 0.5 ),
 	),
 	// new THREE.Triangle(
 	// 	new THREE.Vector3( -0.5, 0.5, 0.5 ),
