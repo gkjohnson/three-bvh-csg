@@ -251,7 +251,7 @@ function init() {
 	} );
 
 	const brush1Folder = gui.addFolder( 'brush 1' );
-	brush1Folder.add( params, 'brush1Shape', [ 'sphere', 'box', 'torus', 'torus knot' ] ).name( 'shape' ).onChange( v => {
+	brush1Folder.add( params, 'brush1Shape', [ 'sphere', 'box', 'cylinder', 'torus', 'torus knot' ] ).name( 'shape' ).onChange( v => {
 
 		updateBrush( brush1, v, params.brush1Complexity );
 
@@ -269,7 +269,7 @@ function init() {
 	} );
 
 	const brush2Folder = gui.addFolder( 'brush 2' );
-	brush2Folder.add( params, 'brush2Shape', [ 'sphere', 'box', 'torus', 'torus knot' ] ).name( 'shape' ).onChange( v => {
+	brush2Folder.add( params, 'brush2Shape', [ 'sphere', 'box', 'cylinder', 'torus', 'torus knot' ] ).name( 'shape' ).onChange( v => {
 
 		updateBrush( brush2, v, params.brush2Complexity );
 
@@ -337,6 +337,12 @@ function updateBrush( brush, type, complexity ) {
 			break;
 		case 'box':
 			brush.geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+			break;
+		case 'cylinder':
+			brush.geometry = new THREE.CylinderBufferGeometry(
+				0.5, 0.5, 1,
+				Math.round( THREE.MathUtils.lerp( 5, 32, complexity ) ),
+			);
 			break;
 		case 'torus':
 			brush.geometry = new THREE.TorusBufferGeometry(

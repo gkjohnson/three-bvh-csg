@@ -47,7 +47,7 @@ export class Brush extends Mesh {
 				const attribute = attributes[ key ];
 				if ( attribute.isInterleavedBufferAttribute ) {
 
-					throw new Error();
+					throw new Error( 'Brush: InterleavedBufferAttributes are not supported.' );
 
 				}
 
