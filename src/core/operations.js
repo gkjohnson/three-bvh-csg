@@ -177,17 +177,12 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 			// get the barycentric coordinates of the clipped triangle to add
 			const clippedTri = triangles[ ib ];
 
-			const hitSide = clippedTri.side;
+			// try to use the side derived from the clipping but if it turns out to be
+			// uncertain then fall back to the raycasting approach
+			let hitSide = clippedTri.side;
+			if ( hitSide === null ) {
 
-			console.log( clippedTri.side, getHitSide( clippedTri, bBVH ) )
-			if ( getHitSide( clippedTri, bBVH ) !== hitSide ) {
-
-				window.TRIANGLE1 = clippedTri.clone();
-				window.TRIANGLE2 = clippedTri.__triangle.clone();
-				window.TRIANGLES = clippedTri.planes;
-
-				console.log('RUN TEST', clippedTri.runTest());
-				// window.TRIANGLE2 = clippedTri.clone();
+				hitSide = getHitSide( clippedTri, bBVH );
 
 			}
 
