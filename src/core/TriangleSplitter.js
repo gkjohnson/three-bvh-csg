@@ -17,34 +17,80 @@ class CullableTriangle extends Triangle {
 	constructor( ...args ) {
 
 		super( ...args );
-		this.side = BACK_SIDE;
+		this.side = null;
+		this.planes = [];
 
 	}
 
 	updateSide( plane, parentSide, triangle = null, isCoplanar = false ) {
 
-		if ( triangle && isCoplanar ) {
+		// if ( triangle && isCoplanar ) {
 
-			if ( ! triangle.intersects( this ) ) {
+		// 	if ( ! triangle.intersects( this ) ) {
 
-				this.side = parentSide;
+		// 		this.side = parentSide;
 
-			} else {
+		// 	} else {
 
-				this.side = COPLANAR;
+		// 		this.side = COPLANAR;
 
-			}
+		// 	}
+
+		// } else
+
+		this.__triangle = triangle.clone();
+		this.__plane = plane.clone();
+
+		this.planes.push( triangle.clone() );
+
+		// get center
+		_vec
+			.copy( this.a )
+			.add( this.b )
+			.add( this.c )
+			.multiplyScalar( 1 / 3 );
+		const foundSide = plane.distanceToPoint( _vec ) < 0 ? BACK_SIDE : FRONT_SIDE;
+		if ( parentSide === null ) {
+
+			// set the clip side based on the plane side
+			this.side = foundSide;
+
+		} else if ( foundSide === parentSide ) {
+
+			this.side = foundSide;
+
+		} else if ( parentSide === FRONT_SIDE || foundSide === FRONT_SIDE ) {
+
+			this.side = FRONT_SIDE;
+			// this.side = parentSide === BACK_SIDE ? FRONT_SIDE : BACK_SIDE;
 
 		} else {
 
-			// get center
-			_vec.set( 0, 0, 0 ).add( this.a ).add( this.b ).add( this.c ).multiplyScalar( 1 / 3 );
-			this.side = plane.distanceToPoint( _vec ) < 0 ? BACK_SIDE : FRONT_SIDE;
+			this.side = foundSide;
 
 		}
+		// this.side = parentSide || foundSide
+
+	}
+
+	runTest() {
+
+		const plane = this.__plane;
+		const triangle = this.__triangle;
+		_vec
+			.copy( this.a )
+			.add( this.b )
+			.add( this.c )
+			.multiplyScalar( 1 / 3 );
+
+		console.log( plane.distanceToPoint( _vec ) );
+
+
 
 
 	}
+
+	
 
 }
 
@@ -67,7 +113,8 @@ class TrianglePool {
 		}
 
 		const result = this._pool[ this._index ++ ];
-		result.side = BACK_SIDE;
+		result.side = null;
+		result.planes.length = 0;
 		return result;
 
 	}
@@ -102,12 +149,37 @@ export class TriangleSplitter {
 	initialize( tri ) {
 
 		const { triangles, trianglePool, normal } = this;
-		const poolTri = trianglePool.getTriangle();
 		triangles.length = 0;
 
-		tri.getNormal( normal );
-		poolTri.copy( tri );
-		triangles.push( poolTri );
+		if ( Array.isArray( tri ) ) {
+
+			tri.forEach( ( tri, i ) => {
+
+				if ( i === 0 ) {
+
+					tri.getNormal( normal );
+
+				} else if ( tri.getNormal( _vec ).dot( normal ) !== 1 ) {
+
+					throw new Error();
+
+				}
+
+				const poolTri = trianglePool.getTriangle();
+				poolTri.copy( tri );
+				triangles.push( poolTri );
+
+			} );
+
+		} else {
+
+			tri.getNormal( normal );
+
+			const poolTri = trianglePool.getTriangle();
+			poolTri.copy( tri );
+			triangles.push( poolTri );
+
+		}
 
 	}
 
@@ -169,14 +241,14 @@ export class TriangleSplitter {
 			const { a, b, c } = tri;
 
 			// skip the triangle if we don't intersect with it
-			if ( splittingTriangle && ! splittingTriangle.intersectsTriangle( tri ) ) {
+			// if ( splittingTriangle && ! splittingTriangle.intersectsTriangle( tri ) ) {
 
-				const parentSide = tri.side;
-				tri.side = null;
-				tri.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
-				continue;
+			// 	const parentSide = tri.side;
+			// 	tri.side = null;
+			// 	tri.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
+			// 	continue;
 
-			}
+			// }
 
 			let intersects = 0;
 			let vertexSplitEnd = - 1;
@@ -278,6 +350,7 @@ export class TriangleSplitter {
 					tri.c.copy( _foundEdge.end );
 
 					const parentSide = tri.side;
+					nextTri.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
 					nextTri.planes.push( ...tri.planes );
 
 					tri.side = null;
@@ -350,6 +423,7 @@ export class TriangleSplitter {
 					if ( nextTri1.getArea() > AREA_EPSILON ) {
 
 						triangles.push( nextTri1 );
+						nextTri1.planes.push( ...tri.planes );
 						nextTri1.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
 
 					}
@@ -357,6 +431,7 @@ export class TriangleSplitter {
 					if ( nextTri2.getArea() > AREA_EPSILON ) {
 
 						triangles.push( nextTri2 );
+						nextTri2.planes.push( ...tri.planes );
 						nextTri2.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
 
 					}

@@ -175,6 +175,19 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 			const clippedTri = triangles[ ib ];
 
 			const hitSide = getHitSide( clippedTri, bBVH );
+
+			console.log( clippedTri.side, getHitSide( clippedTri, bBVH ) )
+			if ( getHitSide( clippedTri, bBVH ) !== hitSide ) {
+
+				window.TRIANGLE1 = clippedTri.clone();
+				window.TRIANGLE2 = clippedTri.__triangle.clone();
+				window.TRIANGLES = clippedTri.planes;
+
+				console.log('RUN TEST', clippedTri.runTest());
+				// window.TRIANGLE2 = clippedTri.clone();
+
+			}
+
 			const action = getOperationAction( operation, hitSide, invert );
 			if ( action !== SKIP_TRI ) {
 
