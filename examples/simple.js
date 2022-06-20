@@ -392,9 +392,6 @@ function render() {
 
 		needsUpdate = false;
 
-		brush1.prepareGeometry();
-		brush2.prepareGeometry();
-
 		brush1.updateMatrixWorld();
 		brush2.updateMatrixWorld();
 
