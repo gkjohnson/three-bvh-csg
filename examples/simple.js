@@ -420,6 +420,21 @@ function render() {
 
 	}
 
+	// window.CSG_DEBUG = csgEvaluator.debug;
+	// if ( window.TRI !== undefined ) {
+
+	// 	trisHelper.setTriangles( [
+	// 		...csgEvaluator.debug.triangleIntersectsA.getTrianglesAsArray( window.TRI ),
+	// 		...csgEvaluator.debug.triangleIntersectsA.getIntersectionsAsArray( window.TRI )
+	// 	] );
+
+	// 	logTriangleDefinitions(
+	// 		...csgEvaluator.debug.triangleIntersectsA.getTrianglesAsArray( window.TRI ),
+	// 		...csgEvaluator.debug.triangleIntersectsA.getIntersectionsAsArray( window.TRI )
+	// 	);
+
+	// }
+
 	wireframeResult.visible = params.wireframe;
 	brush1.visible = params.displayBrushes;
 	brush2.visible = params.displayBrushes;
