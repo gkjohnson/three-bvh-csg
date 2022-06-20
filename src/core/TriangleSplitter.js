@@ -152,7 +152,7 @@ export class TriangleSplitter {
 
 				} else if ( t.getNormal( _vec ).dot( normal ) !== 1 ) {
 
-					throw new Error();
+					throw new Error( 'Triangle Splitter: Cannot initialize with triangles that have different normals.' );
 
 				}
 
