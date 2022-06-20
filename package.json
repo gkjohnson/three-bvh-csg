@@ -52,6 +52,6 @@
     "parcel": "^2.6.0",
     "rollup": "^2.70.0",
     "three": "^0.141.0",
-    "three-mesh-bvh": "^0.5.13"
+    "three-mesh-bvh": "^0.5.14"
   }
 }
