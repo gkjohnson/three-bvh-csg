@@ -39,6 +39,8 @@ const mesh = new Mesh( result, new MeshStandardMaterial() );
 
 ## Constants
 
+### Operations
+
 ```
 ADDITION
 SUBTRACTION
@@ -62,7 +64,9 @@ TODO
 
 ### .evaluate
 
-TODO
+```js
+evaluate( brushA : Brush, brushB : Brush, operation : Operation, target = null : Brush | Mesh ) : Brush | Mesh
+```
 
 ### .evaluateHierarchy
 
