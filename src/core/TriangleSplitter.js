@@ -43,6 +43,12 @@ class CullableTriangle extends Triangle {
 
 	updateSide( plane, triangle = null, coplanarIndex = - 1 ) {
 
+		if ( this.originalSide !== null && this.side === null ) {
+
+			return;
+
+		}
+
 		// get center and find the side of the plane we're on
 		_vec
 			.copy( this.a )
