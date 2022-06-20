@@ -177,7 +177,7 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 			// get the barycentric coordinates of the clipped triangle to add
 			const clippedTri = triangles[ ib ];
 
-			const hitSide = getHitSide( clippedTri, bBVH );
+			const hitSide = clippedTri.side;
 
 			console.log( clippedTri.side, getHitSide( clippedTri, bBVH ) )
 			if ( getHitSide( clippedTri, bBVH ) !== hitSide ) {

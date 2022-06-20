@@ -154,12 +154,14 @@ function init() {
 	// create material map for transparent to opaque variants
 	let mat;
 	mat = brush1.material.clone();
+	mat.side = THREE.FrontSide;
 	mat.opacity = 1;
 	mat.transparent = false;
 	mat.depthWrite = true;
 	materialMap.set( brush1.material, mat );
 
 	mat = brush2.material.clone();
+	mat.side = THREE.FrontSide;
 	mat.opacity = 1;
 	mat.transparent = false;
 	mat.depthWrite = true;
