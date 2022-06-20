@@ -90,6 +90,7 @@ evaluate(
 ) : Brush | Mesh
 ```
 
+Performs the given `operation` on `brushA` with `brushB`. If no target is provided then a new `Brush` will be created with the new geometry. Otherwise the provided Brush will be _modified in place_ and geometry disposed or marked for update as needed.
 
 <!--
 ### .evaluateHierarchy
