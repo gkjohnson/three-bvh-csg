@@ -34,6 +34,7 @@ const params = {
 	shadows: true,
 	vertexColors: false,
 	flatShading: false,
+	useGroups: true,
 
 	enableDebugTelemetry: true,
 	displayIntersectionEdges: false,
@@ -46,7 +47,7 @@ const params = {
 let renderer, camera, scene, gui, outputContainer;
 let controls, transformControls;
 let brush1, brush2;
-let resultObject, wireframeResult, light;
+let resultObject, wireframeResult, light, originalMaterial;
 let edgesHelper, trisHelper;
 let bvhHelper1, bvhHelper2;
 let needsUpdate = true;
@@ -176,6 +177,7 @@ function init() {
 	} ) );
 	resultObject.castShadow = true;
 	resultObject.receiveShadow = true;
+	originalMaterial = resultObject.material;
 	scene.add( resultObject );
 
 	// add wireframe representation
@@ -210,6 +212,7 @@ function init() {
 	gui.add( params, 'displayBrushes' );
 	gui.add( params, 'displayControls' );
 	gui.add( params, 'shadows' );
+	gui.add( params, 'useGroups' ).onChange( () => needsUpdate = true );
 	gui.add( params, 'vertexColors' ).onChange( v => {
 
 		brush1.material.vertexColors = v;
@@ -406,8 +409,18 @@ function render() {
 
 		const startTime = window.performance.now();
 		csgEvaluator.debug.enabled = enableDebugTelemetry;
+		csgEvaluator.useGroups = params.useGroups;
 		csgEvaluator.evaluate( brush1, brush2, params.operation, resultObject );
-		resultObject.material = resultObject.material.map( m => materialMap.get( m ) );
+
+		if ( params.useGroups ) {
+
+			resultObject.material = resultObject.material.map( m => materialMap.get( m ) );
+
+		} else {
+
+			resultObject.material = originalMaterial;
+
+		}
 
 		const deltaTime = window.performance.now() - startTime;
 		outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
