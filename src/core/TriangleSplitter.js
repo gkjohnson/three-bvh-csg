@@ -380,6 +380,12 @@ export class TriangleSplitter {
 
 				console.warn( 'TriangleClipper: Coplanar clip not handled' );
 
+			} else {
+
+				const parentSide = tri.side;
+				tri.side = null;
+				tri.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
+
 			}
 
 		}
