@@ -65,7 +65,12 @@ TODO
 ### .evaluate
 
 ```js
-evaluate( brushA : Brush, brushB : Brush, operation : Operation, target = null : Brush | Mesh ) : Brush | Mesh
+evaluate(
+	brushA : Brush,
+	brushB : Brush,
+	operation : Operation,
+	target = null : Brush | Mesh
+) : Brush | Mesh
 ```
 
 ### .evaluateHierarchy
