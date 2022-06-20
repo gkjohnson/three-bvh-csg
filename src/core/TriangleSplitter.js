@@ -171,6 +171,9 @@ export class TriangleSplitter {
 			// skip the triangle if we don't intersect with it
 			if ( splittingTriangle && ! splittingTriangle.intersectsTriangle( tri ) ) {
 
+				const parentSide = tri.side;
+				tri.side = null;
+				tri.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
 				continue;
 
 			}
@@ -274,6 +277,12 @@ export class TriangleSplitter {
 					tri.b.copy( _foundEdge.start );
 					tri.c.copy( _foundEdge.end );
 
+					const parentSide = tri.side;
+					nextTri.planes.push( ...tri.planes );
+
+					tri.side = null;
+					tri.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
+
 				} else {
 
 					// we're splitting with a quad and a triangle
@@ -337,17 +346,18 @@ export class TriangleSplitter {
 					tri.c.copy( _foundEdge.start );
 
 					// don't add degenerate triangles to the list
+					const parentSide = tri.side;
 					if ( nextTri1.getArea() > AREA_EPSILON ) {
 
 						triangles.push( nextTri1 );
-						nextTri1.updateSide( plane, tri.side, splittingTriangle, isCoplanar );
+						nextTri1.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
 
 					}
 
 					if ( nextTri2.getArea() > AREA_EPSILON ) {
 
 						triangles.push( nextTri2 );
-						nextTri2.updateSide( plane, tri.side, splittingTriangle, isCoplanar );
+						nextTri2.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
 
 					}
 
@@ -359,7 +369,8 @@ export class TriangleSplitter {
 
 					} else {
 
-						tri.updateSide( plane, tri.side, splittingTriangle, isCoplanar );
+						tri.side = null;
+						tri.updateSide( plane, parentSide, splittingTriangle, isCoplanar );
 
 					}
 
