@@ -6,38 +6,35 @@ import { TriangleSplitter, TriangleSetHelper } from '..';
 let renderer, camera, scene;
 let controls, transformControls;
 let planeObject, planeHelper;
-let splitter, clippedTris;
+let splitter, frontClippedTris, backClippedTris, coplanarTris, initialTris;
 let plane = new THREE.Plane();
 let _vec = new THREE.Vector3();
 
-const tri = new THREE.Triangle(
-	new THREE.Vector3( 0.5, - 0.5, - 0.5 ),
-	new THREE.Vector3( - 0.5, - 0.5, - 0.5 ),
-	new THREE.Vector3( - 0.5, 0.5, - 0.5 ),
-);
+const ogTris = [
+	new THREE.Triangle(
+		new THREE.Vector3( - 0.25, 1.25, 0.25 ),
+		new THREE.Vector3( - 0.25, 0.25, 0.25 ),
+		new THREE.Vector3( - 1.25, 1.25, 0.25 ),
+	)
+];
 
-// const tris = [
-// 	// new THREE.Triangle(
-// 	// 	new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
-// 	// 	new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,0.4195971342532181),
-// 	// 	new THREE.Vector3(-0.21581882810821285,0.8160882562967348,0.4195971342532181),
-// 	// ),
-// 	new THREE.Triangle(
-// 		new THREE.Vector3(-0.21581882810821285,0.8160882562967348,-0.5804028657467819),
-// 		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
-// 		new THREE.Vector3(-0.21581882810821285,0.8160882562967348,0.4195971342532181),
-// 	),
-// 	new THREE.Triangle(
-// 		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
-// 		new THREE.Vector3(0.7841811718917872,-0.18391174370326524,-0.5804028657467819),
-// 		new THREE.Vector3(0.7841811718917872,-0.18391174370326524,0.4195971342532181),
-// 	),
-// 	new THREE.Triangle(
-// 		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,0.4195971342532181),
-// 		new THREE.Vector3(-0.21581882810821285,-0.18391174370326524,-0.5804028657467819),
-// 		new THREE.Vector3(0.7841811718917872,-0.18391174370326524,0.4195971342532181),
-// 	),
-// ];
+const tris = [
+	new THREE.Triangle(
+		new THREE.Vector3( - 0.5, 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.5, - 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.5, 0.5, 0.5 ),
+	),
+	new THREE.Triangle(
+		new THREE.Vector3( - 0.5, 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.5, 0.5, 0.5 ),
+		new THREE.Vector3( 0.5, 0.5, - 0.5 ),
+	),
+	// new THREE.Triangle(
+	// 	new THREE.Vector3( -0.5, 0.5, 0.5 ),
+	// 	new THREE.Vector3( 0.5, 0.5, 0.5 ),
+	// 	new THREE.Vector3( 0.5, 0.5, -0.5 ),
+	// ),
+];
 
 init();
 render();
@@ -88,10 +85,18 @@ function init() {
 	planeHelper = new THREE.PlaneHelper( plane );
 	scene.add( planeHelper );
 
-	clippedTris = new TriangleSetHelper();
+	initialTris = new TriangleSetHelper();
+	frontClippedTris = new TriangleSetHelper();
+
+	backClippedTris = new TriangleSetHelper();
+	backClippedTris.color.set( 0xff0000 );
+
+	coplanarTris = new TriangleSetHelper();
+	coplanarTris.color.set( 0x0000ff );
+
 	splitter = new TriangleSplitter();
 
-	scene.add( new TriangleSetHelper( [ tri ] ), clippedTris );
+	scene.add( initialTris, frontClippedTris, backClippedTris, coplanarTris );
 
 	window.addEventListener( 'resize', function () {
 
@@ -111,17 +116,31 @@ function render() {
 	_vec.set( 0, 0, 1 ).transformDirection( planeObject.matrixWorld );
 	plane.setFromNormalAndCoplanarPoint( _vec, planeObject.position );
 
-	splitter.initialize( tri );
-	splitter.splitByPlane( plane );
-	// tris.forEach( t => {
+	splitter.initialize( ogTris );
+	tris.forEach( t => {
 
-	// 	t.getPlane( plane );
-	// 	splitter.splitByPlane( plane );
+		splitter.splitByTriangle( t );
 
-	// } );
+	} );
 
-	clippedTris.setTriangles( splitter.triangles );
-	clippedTris.position.y = - 2;
+	// logTriangleDefinitions( ...splitter.triangles );
+
+	// plane.copy( splitter.triangles[ 0 ].__plane )
+	// console.log( splitter.triangles.map( t => t.side ) )
+	planeHelper.visible = false;
+	transformControls.visible = false;
+	transformControls.enabled = false;
+
+	frontClippedTris.setTriangles( splitter.triangles.filter( t => t.side === 1 || t.side === null ) );
+	frontClippedTris.position.y = - 2;
+
+	backClippedTris.setTriangles( splitter.triangles.filter( t => t.side === - 1 ) );
+	backClippedTris.position.y = - 2;
+
+	coplanarTris.setTriangles( splitter.triangles.filter( t => t.side === 0 ) );
+	coplanarTris.position.y = - 2;
+
+	initialTris.setTriangles( [ ...ogTris, ...tris ] );
 
 	renderer.render( scene, camera );
 

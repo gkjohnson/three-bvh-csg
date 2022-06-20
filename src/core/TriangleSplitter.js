@@ -1,15 +1,95 @@
 import { Triangle, Line3, Vector3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
+import { BACK_SIDE, FRONT_SIDE, COPLANAR } from './operationsUtils.js';
 
 const EPSILON = 1e-14;
 const COPLANAR_EPSILON = 1e-7;
-const AREA_EPSILON = 1e-10;
+const AREA_EPSILON = 1e-8;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _exTriangle = new ExtendedTriangle();
+
+// Triangle with fields used to track whether it falls on the same side of all planes
+// being used to clip it. Side is set to "null" if it cannot be determined
+class CullableTriangle extends Triangle {
+
+	constructor( ...args ) {
+
+		super( ...args );
+		this.side = null;
+		this.originalSide = null;
+		this.coplanarCount = 0;
+
+	}
+
+	init() {
+
+		this.side = null;
+		this.originalSide = null;
+		this.coplanarCount = 0;
+
+	}
+
+	initFrom( other ) {
+
+		this.side = other.side;
+		this.originalSide = other.originalSide;
+		this.coplanarCount = other.coplanarCount;
+
+	}
+
+	updateSide( plane, triangle = null, coplanarIndex = - 1 ) {
+
+		if ( this.originalSide !== null && this.side === null ) {
+
+			return;
+
+		}
+
+		// get center and find the side of the plane we're on
+		_vec
+			.copy( this.a )
+			.add( this.b )
+			.add( this.c )
+			.multiplyScalar( 1 / 3 );
+
+		const foundSide = plane.distanceToPoint( _vec ) < 0 ? BACK_SIDE : FRONT_SIDE;
+		if ( triangle && coplanarIndex !== - 1 ) {
+
+			if ( foundSide === FRONT_SIDE ) {
+
+				this.coplanarCount ++;
+				if ( this.coplanarCount === 3 ) {
+
+					this.side = COPLANAR;
+
+				}
+
+			}
+
+		} else {
+
+			if ( this.originalSide === null ) {
+
+				this.originalSide = foundSide;
+				this.side = foundSide;
+
+			}
+
+			if ( foundSide !== this.side ) {
+
+				this.side = null;
+
+			}
+
+		}
+
+	}
+
+}
 
 // A pool of triangles to avoid unnecessary triangle creation
 class TrianglePool {
@@ -25,11 +105,13 @@ class TrianglePool {
 
 		if ( this._index >= this._pool.length ) {
 
-			this._pool.push( new Triangle() );
+			this._pool.push( new CullableTriangle() );
 
 		}
 
-		return this._pool[ this._index ++ ];
+		const result = this._pool[ this._index ++ ];
+		result.init();
+		return result;
 
 	}
 
@@ -63,12 +145,38 @@ export class TriangleSplitter {
 	initialize( tri ) {
 
 		const { triangles, trianglePool, normal } = this;
-		const poolTri = trianglePool.getTriangle();
 		triangles.length = 0;
 
-		tri.getNormal( normal );
-		poolTri.copy( tri );
-		triangles.push( poolTri );
+		if ( Array.isArray( tri ) ) {
+
+			for ( let i = 0, l = tri.length; i < l; i ++ ) {
+
+				const t = tri[ i ];
+				if ( i === 0 ) {
+
+					t.getNormal( normal );
+
+				} else if ( t.getNormal( _vec ).dot( normal ) !== 1 ) {
+
+					throw new Error( 'Triangle Splitter: Cannot initialize with triangles that have different normals.' );
+
+				}
+
+				const poolTri = trianglePool.getTriangle();
+				poolTri.copy( t );
+				triangles.push( poolTri );
+
+			}
+
+		} else {
+
+			tri.getNormal( normal );
+
+			const poolTri = trianglePool.getTriangle();
+			poolTri.copy( tri );
+			triangles.push( poolTri );
+
+		}
 
 	}
 
@@ -76,7 +184,7 @@ export class TriangleSplitter {
 	// coplanar it will attempt to split by the triangle edge planes
 	splitByTriangle( triangle ) {
 
-		const { normal } = this;
+		const { normal, triangles } = this;
 		triangle.getPlane( _plane );
 
 		if ( Math.abs( 1.0 - Math.abs( _plane.normal.dot( normal ) ) ) < COPLANAR_EPSILON ) {
@@ -94,7 +202,14 @@ export class TriangleSplitter {
 				_planeNormal.crossVectors( normal, _vec );
 				_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
 
-				this.splitByPlane( _plane, triangle );
+				this.splitByPlane( _plane, triangle, i );
+
+			}
+
+			for ( let i = 0, l = triangles.length; i < l; i ++ ) {
+
+				const t = triangles[ i ];
+				t.coplanarCount = 0;
 
 			}
 
@@ -109,7 +224,7 @@ export class TriangleSplitter {
 
 	// Split the triangles by the given plan. If a triangle is provided then we ensure we
 	// intersect the triangle before splitting the plane
-	splitByPlane( plane, triangle = null ) {
+	splitByPlane( plane, triangle = null, coplanarIndex = - 1 ) {
 
 		const { triangles, trianglePool } = this;
 
@@ -130,8 +245,9 @@ export class TriangleSplitter {
 			const { a, b, c } = tri;
 
 			// skip the triangle if we don't intersect with it
-			if ( splittingTriangle && ! splittingTriangle.intersectsTriangle( tri ) ) {
+			if ( splittingTriangle && ! splittingTriangle.intersectsTriangle( tri, _edge ) ) {
 
+				tri.updateSide( plane, splittingTriangle, coplanarIndex );
 				continue;
 
 			}
@@ -235,6 +351,12 @@ export class TriangleSplitter {
 					tri.b.copy( _foundEdge.start );
 					tri.c.copy( _foundEdge.end );
 
+					nextTri.initFrom( tri );
+					nextTri.updateSide( plane, splittingTriangle, coplanarIndex );
+
+					tri.side = null;
+					tri.updateSide( plane, splittingTriangle, coplanarIndex );
+
 				} else {
 
 					// we're splitting with a quad and a triangle
@@ -301,12 +423,16 @@ export class TriangleSplitter {
 					if ( nextTri1.getArea() > AREA_EPSILON ) {
 
 						triangles.push( nextTri1 );
+						nextTri1.initFrom( tri );
+						nextTri1.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
 					if ( nextTri2.getArea() > AREA_EPSILON ) {
 
 						triangles.push( nextTri2 );
+						nextTri2.initFrom( tri );
+						nextTri2.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
@@ -316,6 +442,10 @@ export class TriangleSplitter {
 						i --;
 						l --;
 
+					} else {
+
+						tri.updateSide( plane, splittingTriangle, coplanarIndex );
+
 					}
 
 				}
@@ -323,6 +453,10 @@ export class TriangleSplitter {
 			} else if ( intersects === 3 ) {
 
 				console.warn( 'TriangleClipper: Coplanar clip not handled' );
+
+			} else {
+
+				tri.updateSide( plane, splittingTriangle, coplanarIndex );
 
 			}
 
