@@ -41,6 +41,8 @@ const mesh = new Mesh( result, new MeshStandardMaterial() );
 
 ### Operations
 
+CSG operations enums for use with `Evaluator`.
+
 ```
 ADDITION
 SUBTRACTION
@@ -52,15 +54,30 @@ INTERSECTION
 
 _extends THREE.Mesh_
 
-TODO
+An object with the same interface as `THREE.Mesh` but used to evaluate CSG operations. Once a brush is created the geometry should not be modified.
 
+> **Note**
+> 
+> It is recommended to remove groups from a geometry before creating a brush if multi-material support is not required.
+
+<!--
 ## Operation
 
 _extends Brush_
 
 TODO
 
+-->
+
 ## Evaluator
+
+### .useGroups
+
+```js
+useGroups = true : Boolean
+```
+
+Whether to use geometry groups when processing the geometry. If geometry groups are used then a material array and groups will be assigned to the target `Brush` after processing. If groups are disabled then a single coherent piece of geometry with no groups will be produced.
 
 ### .evaluate
 
@@ -73,6 +90,8 @@ evaluate(
 ) : Brush | Mesh
 ```
 
+
+<!--
 ### .evaluateHierarchy
 
 TODO
@@ -88,6 +107,7 @@ TODO
 ### .evaluateHierarchy
 
 TODO
+-->
 
 # Gotchas
 - All geometry is expected to have all attributes to be interpolated using the same type of array.
