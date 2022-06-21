@@ -140,7 +140,7 @@ export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, m
 		const arr = attributeInfo[ key ];
 		if ( ! ( key in attributes ) ) {
 
-			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );
+			throw new Error( `CSG Operations: Attribute ${ key } not available on geometry.` );
 
 		}
 
