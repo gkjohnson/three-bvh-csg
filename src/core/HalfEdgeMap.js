@@ -41,6 +41,7 @@ export class HalfEdgeMap {
 
 		const triCount = indexAttr ? indexAttr.count / 3 : posAttr.count / 3;
 		const data = triCount >= 2 ** 15 - 1 ? new Int16Array( 3 * triCount ) : new Int32Array( 3 * triCount );
+		data.fill( - 1 );
 
 		let unmatchedEdges = 0;
 		for ( let i = 0; i < triCount; i ++ ) {
