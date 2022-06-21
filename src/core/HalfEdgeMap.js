@@ -38,6 +38,20 @@ export class HalfEdgeMap {
 
 	}
 
+	getSiblingTriangleIndex( triIndex, edgeIndex ) {
+
+		const otherIndex = this.data[ triIndex * 3 + edgeIndex ];
+		return otherIndex === - 1 ? - 1 : ~ ~ ( otherIndex / 3 );
+
+	}
+
+	getSiblingEdgeIndex( triIndex, edgeIndex ) {
+
+		const otherIndex = this.data[ triIndex * 3 + edgeIndex ];
+		return otherIndex === - 1 ? - 1 : ( otherIndex % 3 );
+
+	}
+
 	updateFrom( geometry ) {
 
 		// runs on the assumption that there is a 1 : 1 match of edges
@@ -56,8 +70,12 @@ export class HalfEdgeMap {
 		let offset = 0;
 		if ( this.useDrawRange ) {
 
-			triCount = ~ ~ ( geometry.drawRange.count / 3 );
 			offset = geometry.drawRange.start;
+			if ( geometry.drawRange.count !== Infinity ) {
+				
+				triCount = ~ ~ ( geometry.drawRange.count / 3 );
+
+			}
 
 		}
 
@@ -92,8 +110,8 @@ export class HalfEdgeMap {
 
 					// create a reference between the two triangles and clear the hash
 					const otherIndex = map[ reverseHash ];
-					data[ i0 ] = otherIndex;
-					data[ otherIndex ] = i0;
+					data[ i3 + e ] = otherIndex;
+					data[ otherIndex ] = i3 + e;
 					delete map[ reverseHash ];
 					unmatchedEdges --;
 					matchedEdges ++;
@@ -103,7 +121,7 @@ export class HalfEdgeMap {
 					// save the triangle and triangle edge index captured in one value
 					// triIndex = ~ ~ ( i0 / 3 );
 					// edgeIndex = i0 % 3;
-					map[ hash ] = i0;
+					map[ hash ] = i3 + e;
 					unmatchedEdges ++;
 
 				}

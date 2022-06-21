@@ -56,19 +56,20 @@ export class Brush extends Mesh {
 
 		}
 
-		// generate half edges
-		if ( ! geometry.halfEdges ) {
-
-			geometry.halfEdges = new HalfEdgeMap( geometry );
-
-		}
-
 		// generate bounds tree
 		if ( ! geometry.boundsTree ) {
 
 			geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3 } );
+			geometry.halfEdges = null;
 
 		}
+
+		// generate half edges
+		// if ( ! geometry.halfEdges ) {
+
+		// 	geometry.halfEdges = new HalfEdgeMap( geometry );
+
+		// }
 
 	}
 
