@@ -1,5 +1,6 @@
 import { Mesh, Matrix4 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
+import { HalfEdgeMap } from './HalfEdgeMap.js';
 import { areSharedArrayBuffersSupported, convertToSharedArrayBuffer } from './utils.js';
 
 export class Brush extends Mesh {
@@ -35,8 +36,6 @@ export class Brush extends Mesh {
 
 	prepareGeometry() {
 
-		// - half edges
-
 		// generate shared array buffers
 		const geometry = this.geometry;
 		const attributes = geometry.attributes;
@@ -57,6 +56,13 @@ export class Brush extends Mesh {
 
 		}
 
+		// generate half edges
+		if ( ! geometry.halfEdges ) {
+
+			geometry.halfEdges = new HalfEdgeMap( geometry );
+
+		}
+
 		// generate bounds tree
 		if ( ! geometry.boundsTree ) {
 
@@ -68,9 +74,9 @@ export class Brush extends Mesh {
 
 	disposeCacheData() {
 
-		// - half edges
-
-		this.geometry.boundsTree = null;
+		const { geometry } = this;
+		geometry.halfEdges = null;
+		geometry.boundsTree = null;
 
 	}
 

@@ -70,6 +70,7 @@ function applyToGeometry( geometry, referenceGeometry, attributeData ) {
 	// remove the bounds tree if it exists because its now out of date
 	// TODO: can we have this dispose in the same way that a brush does?
 	geometry.boundsTree = null;
+	geometry.halfEdges = null;
 
 	if ( needsDisposal ) {
 
