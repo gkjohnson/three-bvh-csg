@@ -1,7 +1,6 @@
 import { Vector3 } from 'three';
 
-const _vec0 = new Vector3();
-const _vec1 = new Vector3();
+const _vertices = [ new Vector3(), new Vector3(), new Vector3() ];
 
 function hashNumber( v ) {
 
@@ -12,12 +11,6 @@ function hashNumber( v ) {
 function hashVertex( v ) {
 
 	return `${ hashNumber( v.x ) },${ hashNumber( v.y ) },${ hashNumber( v.z ) }`;
-
-}
-
-function hashEdge( a, b ) {
-
-	return `${ hashVertex( a ) }_${ hashVertex( b ) }`;
 
 }
 
@@ -55,7 +48,7 @@ export class HalfEdgeMap {
 	updateFrom( geometry ) {
 
 		// runs on the assumption that there is a 1 : 1 match of edges
-		const map = {};
+		const map = new Map();
 
 		// attributes
 		const { attributes } = geometry;
@@ -80,7 +73,14 @@ export class HalfEdgeMap {
 		}
 
 		// initialize the connectivity buffer - 1 means no connectivity
-		const data = maxTriCount >= 2 ** 15 - 1 ? new Int16Array( 3 * maxTriCount ) : new Int32Array( 3 * maxTriCount );
+		let data = this.data;
+		if ( ! data || data.length < 3 * maxTriCount ) {
+
+			data = new Int32Array( 3 * maxTriCount );
+
+		} 
+
+
 		data.fill( - 1 );
 
 		// iterate over all triangles
@@ -91,28 +91,35 @@ export class HalfEdgeMap {
 			const i3 = 3 * i + offset;
 			for ( let e = 0; e < 3; e ++ ) {
 
-				const nextE = ( e + 1 ) % 3;
 				let i0 = i3 + e;
-				let i1 = i3 + nextE;
 				if ( indexAttr ) {
 
 					i0 = indexAttr.getX( i0 );
-					i1 = indexAttr.getX( i1 );
 
 				}
 
-				_vec0.fromBufferAttribute( posAttr, i0 );
-				_vec1.fromBufferAttribute( posAttr, i1 );
+				_vertices[ e ].fromBufferAttribute( posAttr, i0 );
 
-				const hash = hashEdge( _vec0, _vec1 );
-				const reverseHash = hashEdge( _vec1, _vec0 );
-				if ( reverseHash in map ) {
+			}
+
+
+			for ( let e = 0; e < 3; e ++ ) {
+
+				const nextE = ( e + 1 ) % 3;
+				const _vec0 = _vertices[ e ];
+				const _vec1 = _vertices[ nextE ];
+
+				const vh0 = hashVertex( _vec0 );
+				const vh1 = hashVertex( _vec1 );
+				
+				const reverseHash = `${ vh1 }_${ vh0 }`;
+				if ( map.has( reverseHash ) ) {
 
 					// create a reference between the two triangles and clear the hash
-					const otherIndex = map[ reverseHash ];
+					const otherIndex = map.get( reverseHash );
 					data[ i3 + e ] = otherIndex;
 					data[ otherIndex ] = i3 + e;
-					delete map[ reverseHash ];
+					map.delete( reverseHash );
 					unmatchedEdges --;
 					matchedEdges ++;
 
@@ -121,7 +128,8 @@ export class HalfEdgeMap {
 					// save the triangle and triangle edge index captured in one value
 					// triIndex = ~ ~ ( i0 / 3 );
 					// edgeIndex = i0 % 3;
-					map[ hash ] = i3 + e;
+					const hash = `${ vh0 }_${ vh1 }`;
+					map.set( hash, i3 + e );
 					unmatchedEdges ++;
 
 				}
