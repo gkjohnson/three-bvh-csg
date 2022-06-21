@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { MeshBVHVisualizer } from 'three-mesh-bvh';
 import {
 	Brush,
@@ -34,7 +36,7 @@ const params = {
 	shadows: true,
 	vertexColors: false,
 	flatShading: false,
-	useGroups: true,
+	useGroups: false,
 
 	enableDebugTelemetry: true,
 	displayIntersectionEdges: false,
@@ -50,14 +52,15 @@ let brush1, brush2;
 let resultObject, wireframeResult, light, originalMaterial;
 let edgesHelper, trisHelper;
 let bvhHelper1, bvhHelper2;
+let bunnyGeom;
 let needsUpdate = true;
-let csgEvaluator = new Evaluator();
+let csgEvaluator;
+
 const materialMap = new Map();
 
 init();
-render();
 
-function init() {
+async function init() {
 
 	const bgColor = 0x111111;
 
@@ -115,6 +118,10 @@ function init() {
 
 	} );
 	scene.add( transformControls );
+
+	// bunny mesh has no UVs so skip that attribute
+	csgEvaluator = new Evaluator();
+	csgEvaluator.attributes = [ 'position', 'normal' ];
 
 	// initialize brushes
 	brush1 = new Brush( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial() );
@@ -202,6 +209,14 @@ function init() {
 	bvhHelper2 = new MeshBVHVisualizer( brush2, 20 );
 	scene.add( bvhHelper1, bvhHelper2 );
 
+	// load bunny geometry
+	const gltf = await new GLTFLoader()
+		.setMeshoptDecoder( MeshoptDecoder )
+		.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/stanford-bunny/bunny.glb' );
+
+	bunnyGeom = gltf.scene.children[ 0 ].geometry;
+	bunnyGeom.computeVertexNormals();
+
 	// gui
 	gui = new GUI();
 	gui.add( params, 'operation', { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
@@ -229,8 +244,8 @@ function init() {
 		} );
 
 		csgEvaluator.attributes = v ?
-			[ 'color', 'position', 'uv', 'normal' ] :
-			[ 'position', 'uv', 'normal' ];
+			[ 'color', 'position', 'normal' ] :
+			[ 'position', 'normal' ];
 
 		needsUpdate = true;
 
@@ -254,7 +269,7 @@ function init() {
 	} );
 
 	const brush1Folder = gui.addFolder( 'brush 1' );
-	brush1Folder.add( params, 'brush1Shape', [ 'sphere', 'box', 'cylinder', 'torus', 'torus knot' ] ).name( 'shape' ).onChange( v => {
+	brush1Folder.add( params, 'brush1Shape', [ 'sphere', 'box', 'cylinder', 'torus', 'torus knot', 'mesh' ] ).name( 'shape' ).onChange( v => {
 
 		updateBrush( brush1, v, params.brush1Complexity );
 
@@ -272,7 +287,7 @@ function init() {
 	} );
 
 	const brush2Folder = gui.addFolder( 'brush 2' );
-	brush2Folder.add( params, 'brush2Shape', [ 'sphere', 'box', 'cylinder', 'torus', 'torus knot' ] ).name( 'shape' ).onChange( v => {
+	brush2Folder.add( params, 'brush2Shape', [ 'sphere', 'box', 'cylinder', 'torus', 'torus knot', 'mesh' ] ).name( 'shape' ).onChange( v => {
 
 		updateBrush( brush2, v, params.brush2Complexity );
 
@@ -324,6 +339,8 @@ function init() {
 
 	} );
 
+	render();
+
 }
 
 function updateBrush( brush, type, complexity ) {
@@ -363,6 +380,9 @@ function updateBrush( brush, type, complexity ) {
 				Math.round( THREE.MathUtils.lerp( 4, 16, complexity ) ),
 			);
 			break;
+		case 'mesh':
+			brush.geometry = bunnyGeom.clone();
+			break;
 
 	}
 
@@ -395,8 +415,11 @@ function render() {
 
 	requestAnimationFrame( render );
 
-	const enableDebugTelemetry = params.enableDebugTelemetry;
+	brush2.scale.x = Math.max( brush2.scale.x, 0.01 );
+	brush2.scale.y = Math.max( brush2.scale.y, 0.01 );
+	brush2.scale.z = Math.max( brush2.scale.z, 0.01 );
 
+	const enableDebugTelemetry = params.enableDebugTelemetry;
 	if ( needsUpdate ) {
 
 		needsUpdate = false;
