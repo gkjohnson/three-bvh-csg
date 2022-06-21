@@ -41,14 +41,18 @@ export class HalfEdgeMap {
 	updateFrom( geometry ) {
 
 		// runs on the assumption that there is a 1 : 1 match of edges
-		const { attributes } = geometry;
 		const map = {};
 
+		// attributes
+		const { attributes } = geometry;
 		const indexAttr = geometry.index;
 		const posAttr = attributes.position;
 
+		// get the potential number of triangles
 		let triCount = indexAttr ? indexAttr.count / 3 : posAttr.count / 3;
 		const maxTriCount = triCount;
+
+		// get the real number of triangles from the based on the draw range
 		let offset = 0;
 		if ( this.useDrawRange ) {
 
@@ -57,12 +61,13 @@ export class HalfEdgeMap {
 
 		}
 
+		// initialize the connectivity buffer - 1 means no connectivity
 		const data = maxTriCount >= 2 ** 15 - 1 ? new Int16Array( 3 * maxTriCount ) : new Int32Array( 3 * maxTriCount );
 		data.fill( - 1 );
 
+		// iterate over all triangles
 		let unmatchedEdges = 0;
 		let matchedEdges = 0;
-
 		for ( let i = 0; i < triCount; i ++ ) {
 
 			const i3 = 3 * i + offset;
