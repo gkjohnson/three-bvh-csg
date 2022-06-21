@@ -146,6 +146,7 @@ export class TriangleSplitter {
 
 		const { triangles, trianglePool, normal } = this;
 		triangles.length = 0;
+		trianglePool.clear();
 
 		if ( Array.isArray( tri ) ) {
 
