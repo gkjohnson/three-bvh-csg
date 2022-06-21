@@ -69,23 +69,20 @@ export class HalfEdgeHelper extends EdgesHelper {
 		const triCount = indexAttr ? indexAttr.count / 3 : posAttr.count / 3;
 		for ( let triIndex = 0; triIndex < triCount; triIndex ++ ) {
 
-			const i3 = triIndex * 3;
 			getTriangle( geometry, triIndex, _tri1 );
 			_tri1.getMidpoint( _center );
 			_tri1.getPlane( _plane );
 			for ( let e = 0; e < 3; e ++ ) {
 
-				const index = i3 + e;
-				const otherIndex = halfEdges.data[ index ];
-				if ( otherIndex === - 1 ) {
+				const otherTriIndex = halfEdges.getSiblingTriangleIndex( triIndex, e );
+				const otherEdgeIndex = halfEdges.getSiblingEdgeIndex( triIndex, e );
+				if ( otherTriIndex === - 1 ) {
 
 					continue;
 
 				}
 
 				// get other triangle
-				const otherTriIndex = ~ ~ ( otherIndex / 3 );
-				const otherEdgeIndex = otherIndex % 3;
 				getTriangle( geometry, otherTriIndex, _tri2 );
 				_tri2.getPlane( _plane2 );
 
