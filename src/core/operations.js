@@ -27,7 +27,6 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 
 	const { useGroups = true } = options;
 	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b );
-	const attributeInfo = typedAttributeData.attributes;
 
 	aIntersections.ids.sort( ( a, b ) => a - b );
 	bIntersections.ids.sort( ( a, b ) => a - b );
@@ -43,11 +42,11 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 
 	} else {
 
-		performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeInfo );
-		performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeInfo );
+		performWholeTriangleOperations( a, b, aIntersections, operation, false, typedAttributeData );
+		performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, typedAttributeData );
 
-		performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeInfo );
-		performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeInfo );
+		performWholeTriangleOperations( b, a, bIntersections, operation, true, typedAttributeData );
+		performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, typedAttributeData );
 
 	}
 
@@ -77,11 +76,11 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 		for ( let i = 0, l = groups.length; i < l; i ++ ) {
 
 			const group = groups[ i ];
-			const startLength = attributeInfo.position.length / 3;
-			wholeTriangleStartIndex = performWholeTriangleOperations( a, b, triSet, operation, invert, attributeInfo, group, wholeTriangleStartIndex );
-			splitTriangleStartIndex = performSplitTriangleOperations( a, b, triSet, operation, invert, splitter, attributeInfo, group, splitTriangleStartIndex );
+			const startLength = typedAttributeData.getGroupArray( 'position', 0 ).length / 3;
+			wholeTriangleStartIndex = performWholeTriangleOperations( a, b, triSet, operation, invert, typedAttributeData, group, wholeTriangleStartIndex );
+			splitTriangleStartIndex = performSplitTriangleOperations( a, b, triSet, operation, invert, splitter, typedAttributeData, group, splitTriangleStartIndex );
 
-			const endLength = attributeInfo.position.length / 3;
+			const endLength = typedAttributeData.getGroupArray( 'position', 0 ).length / 3;
 			if ( startLength !== endLength ) {
 
 				if ( Array.isArray( mats ) ) {
@@ -329,12 +328,8 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 
 	}
 
-	let trav = 0;
-	let iter = 0;
-
 	while ( traverseSet.size > 0 ) {
 
-		iter ++;
 		const id = getFirstIdFromSet( traverseSet );
 		traverseSet.delete( id );
 
@@ -358,7 +353,6 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 		while ( stack.length > 0 ) {
 
 			const currId = stack.pop();
-			trav ++;
 
 			for ( let i = 0; i < 3; i ++ ) {
 

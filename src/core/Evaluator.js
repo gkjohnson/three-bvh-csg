@@ -9,16 +9,16 @@ import { Brush } from './Brush.js';
 // applies the given set of attribute data to the provided geometry. If the attributes are
 // not large enough to hold the new set of data then new attributes will be created. Otherwise
 // the existing attributes will be used and draw range updated to accommodate the new size.
-function applyToGeometry( geometry, referenceGeometry, attributeData ) {
+function applyToGeometry( geometry, referenceGeometry, attributeInfo ) {
 
 	let needsDisposal = false;
 	let drawRange = - 1;
 
 	// set the data
 	const attributes = geometry.attributes;
-	for ( const key in attributeData ) {
+	for ( const key in attributeInfo.attributes ) {
 
-		const { array, type, length } = attributeData[ key ];
+		const { array, type, length } = attributeInfo.getGroupArray( key, 0 );
 		const trimmedArray = new type( array.buffer, 0, length );
 
 		let attr = attributes[ key ];
@@ -148,7 +148,7 @@ export class Evaluator {
 
 		}
 
-		applyToGeometry( targetGeometry, a.geometry, attributeData.attributes );
+		applyToGeometry( targetGeometry, a.geometry, attributeData );
 
 		targetBrush.material = materials || targetBrush.material;
 		targetGeometry.clearGroups();

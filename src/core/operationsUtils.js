@@ -133,11 +133,11 @@ export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, m
 	const i1 = indexAttr.getX( i3 + 1 );
 	const i2 = indexAttr.getX( i3 + 2 );
 
-	for ( const key in attributeInfo ) {
+	for ( const key in attributeInfo.attributes ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = attributeInfo[ key ];
+		const arr = attributeInfo.getGroupArray( key, 0 );
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } not available on geometry.` );
@@ -313,13 +313,13 @@ function pushBarycoordInterpolatedValues( v0, v1, v2, baryCoordTri, itemSize, at
 }
 
 // Adds the values for the given vertex index onto the new attribute arrays
-function appendAttributeFromIndex( index, attributes, matrixWorld, normalMatrix, info, invert = false ) {
+function appendAttributeFromIndex( index, attributes, matrixWorld, normalMatrix, attributeInfo, invert = false ) {
 
-	for ( const key in info ) {
+	for ( const key in attributeInfo.attributes ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = info[ key ];
+		const arr = attributeInfo.getGroupArray( key, 0 );
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );

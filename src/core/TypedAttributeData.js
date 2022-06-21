@@ -15,13 +15,35 @@ export class TypedAttributeData {
 
 	}
 
+	getGroupArray( name, index = 0 ) {
+
+		const { attributes } = this;
+		if ( ! attributes[ name ] ) {
+
+			throw new Error();
+
+		}
+
+		const groups = attributes[ name ];
+		while ( index >= groups.length ) {
+
+			const ogAttr = groups[ 0 ];
+			const newAttr = new TypeBackedArray( ogAttr.type );
+			groups.push( newAttr );
+
+		}
+
+		return groups[ index ];
+
+	}
+
 	// initializes an attribute array with the given name, type, and size
-	initializeArray( name, type, initialSize = undefined ) {
+	initializeArray( name, type ) {
 
 		const { attributes } = this;
 		if ( name in attributes ) {
 
-			if ( attributes[ name ].type !== type ) {
+			if ( attributes[ name ][ 0 ].type !== type ) {
 
 				throw new Error( `TypedAttributeData: Array ${ name } already initialized with a different type.` );
 
@@ -29,7 +51,7 @@ export class TypedAttributeData {
 
 		} else {
 
-			attributes[ name ] = new TypeBackedArray( type, initialSize );
+			attributes[ name ] = [ new TypeBackedArray( type ) ];
 
 		}
 
@@ -40,7 +62,7 @@ export class TypedAttributeData {
 		const { attributes } = this;
 		for ( const key in attributes ) {
 
-			attributes[ key ].clear();
+			attributes[ key ].forEach( a => a.clear() );
 
 		}
 
