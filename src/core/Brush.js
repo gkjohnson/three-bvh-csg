@@ -1,6 +1,6 @@
 import { Mesh, Matrix4 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
-import { HalfEdgeMap } from './HalfEdgeMap.js';
+// import { HalfEdgeMap } from './HalfEdgeMap.js';
 import { areSharedArrayBuffersSupported, convertToSharedArrayBuffer } from './utils.js';
 
 export class Brush extends Mesh {
