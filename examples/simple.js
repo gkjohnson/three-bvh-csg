@@ -395,8 +395,11 @@ function render() {
 
 	requestAnimationFrame( render );
 
-	const enableDebugTelemetry = params.enableDebugTelemetry;
+	brush2.scale.x = Math.max( brush2.scale.x, 0.01 );
+	brush2.scale.y = Math.max( brush2.scale.y, 0.01 );
+	brush2.scale.z = Math.max( brush2.scale.z, 0.01 );
 
+	const enableDebugTelemetry = params.enableDebugTelemetry;
 	if ( needsUpdate ) {
 
 		needsUpdate = false;
