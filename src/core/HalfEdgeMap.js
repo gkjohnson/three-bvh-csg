@@ -23,10 +23,16 @@ function hashEdge( a, b ) {
 
 export class HalfEdgeMap {
 
-	constructor() {
+	constructor( geometry = null ) {
 
 		this.data = null;
 		this.unmatchedEdges = null;
+
+		if ( geometry ) {
+
+			this.updateFrom( geometry );
+
+		}
 
 	}
 
@@ -63,7 +69,7 @@ export class HalfEdgeMap {
 				_vec1.fromBufferAttribute( posAttr, i1 );
 
 				const hash = hashEdge( _vec0, _vec1 );
-				const reverseHash = hashEdge( _vec1, _vec1 );
+				const reverseHash = hashEdge( _vec1, _vec0 );
 				if ( reverseHash in map ) {
 
 					// create a reference between the two triangles and clear the hash

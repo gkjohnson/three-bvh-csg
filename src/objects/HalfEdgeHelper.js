@@ -37,10 +37,15 @@ function getTriangle( geometry, triIndex, target ) {
 
 export class HalfEdgeHelper extends EdgesHelper {
 
-	constructor( geometry, halfEdges ) {
+	constructor( geometry = null, halfEdges = null ) {
 
 		super();
-		this.setHalfEdges( geometry, halfEdges );
+
+		if ( geometry && halfEdges ) {
+
+			this.setHalfEdges( geometry, halfEdges );
+
+		}
 
 	}
 
