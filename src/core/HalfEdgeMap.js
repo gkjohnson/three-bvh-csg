@@ -72,7 +72,7 @@ export class HalfEdgeMap {
 
 			offset = geometry.drawRange.start;
 			if ( geometry.drawRange.count !== Infinity ) {
-				
+
 				triCount = ~ ~ ( geometry.drawRange.count / 3 );
 
 			}
