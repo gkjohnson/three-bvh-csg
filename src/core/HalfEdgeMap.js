@@ -27,6 +27,8 @@ export class HalfEdgeMap {
 
 		this.data = null;
 		this.unmatchedEdges = null;
+		this.matchedEdges = null;
+		this.useDrawRange = true;
 
 		if ( geometry ) {
 
@@ -45,14 +47,25 @@ export class HalfEdgeMap {
 		const indexAttr = geometry.index;
 		const posAttr = attributes.position;
 
-		const triCount = indexAttr ? indexAttr.count / 3 : posAttr.count / 3;
-		const data = triCount >= 2 ** 15 - 1 ? new Int16Array( 3 * triCount ) : new Int32Array( 3 * triCount );
+		let triCount = indexAttr ? indexAttr.count / 3 : posAttr.count / 3;
+		const maxTriCount = triCount;
+		let offset = 0;
+		if ( this.useDrawRange ) {
+
+			triCount = ~ ~ ( geometry.drawRange.count / 3 );
+			offset = geometry.drawRange.start;
+
+		}
+
+		const data = maxTriCount >= 2 ** 15 - 1 ? new Int16Array( 3 * maxTriCount ) : new Int32Array( 3 * maxTriCount );
 		data.fill( - 1 );
 
 		let unmatchedEdges = 0;
+		let matchedEdges = 0;
+
 		for ( let i = 0; i < triCount; i ++ ) {
 
-			const i3 = 3 * i;
+			const i3 = 3 * i + offset;
 			for ( let e = 0; e < 3; e ++ ) {
 
 				const nextE = ( e + 1 ) % 3;
@@ -78,6 +91,7 @@ export class HalfEdgeMap {
 					data[ otherIndex ] = i0;
 					delete map[ reverseHash ];
 					unmatchedEdges --;
+					matchedEdges ++;
 
 				} else {
 
@@ -93,6 +107,7 @@ export class HalfEdgeMap {
 
 		}
 
+		this.matchedEdges = matchedEdges;
 		this.unmatchedEdges = unmatchedEdges;
 		this.data = data;
 
