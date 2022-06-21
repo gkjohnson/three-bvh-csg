@@ -60,7 +60,11 @@ export class Brush extends Mesh {
 		if ( ! geometry.boundsTree ) {
 
 			geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3 } );
-			geometry.halfEdges = null;
+			if ( geometry.halfEdges ) {
+
+				geometry.halfEdges.updateFrom( geometry );
+
+			}
 
 		}
 

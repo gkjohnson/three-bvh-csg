@@ -36,7 +36,7 @@ const params = {
 	shadows: true,
 	vertexColors: false,
 	flatShading: false,
-	useGroups: false,
+	useGroups: true,
 
 	enableDebugTelemetry: true,
 	displayIntersectionEdges: false,
