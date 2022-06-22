@@ -100,6 +100,24 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 
 }
 
+function getMaterialList( groups, materials ) {
+
+	let result = materials;
+	if ( ! Array.isArray( materials ) ) {
+
+		result = [];
+		groups.forEach( g => {
+
+			result[ g.materialIndex ] = materials;
+
+		} );
+
+	}
+
+	return result;
+
+}
+
 // Utility class for performing CSG operations
 export class Evaluator {
 
@@ -118,7 +136,7 @@ export class Evaluator {
 		a.prepareGeometry();
 		b.prepareGeometry();
 
-		const { triangleSplitter, attributeData, attributes, debug } = this;
+		const { triangleSplitter, attributeData, attributes, useGroups, debug } = this;
 		const targetGeometry = targetBrush.geometry;
 		const aAttributes = a.geometry.attributes;
 		for ( let i = 0, l = attributes.length; i < l; i ++ ) {
@@ -159,7 +177,7 @@ export class Evaluator {
 
 		}
 
-		performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups: this.useGroups } );
+		performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups } );
 
 		if ( debug.enabled ) {
 
@@ -168,42 +186,17 @@ export class Evaluator {
 		}
 
 		// structure the groups appropriately
-		const aGroups = [ ...a.geometry.groups ].map( g => ( { ...g } ) );
-		const bGroups = [ ...b.geometry.groups ].map( g => ( { ...g } ) );
-		if ( aGroups.length === 0 ) aGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
-		if ( bGroups.length === 0 ) bGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
+		const aGroups = ! useGroups || a.geometry.groups.length === 0 ?
+			[ { start: 0, count: Infinity, materialIndex: 0 } ] :
+			a.geometry.groups.map( group => ( { ...group } ) );
+
+		const bGroups = ! useGroups || b.geometry.groups.length === 0 ?
+			[ { start: 0, count: Infinity, materialIndex: 0 } ] :
+			b.geometry.groups.map( group => ( { ...group } ) );
 
 		// get the materials
-		let aMaterials, bMaterials;
-		if ( Array.isArray( a.material ) ) {
-
-			aMaterials = a.material;
-
-		} else {
-
-			aMaterials = [];
-			aGroups.forEach( g => {
-
-				aMaterials[ g.materialIndex ] = a.material;
-
-			} );
-
-		}
-
-		if ( Array.isArray( b.material ) ) {
-
-			bMaterials = b.material;
-
-		} else {
-
-			bMaterials = [];
-			bGroups.forEach( g => {
-
-				bMaterials[ g.materialIndex ] = b.material;
-
-			} );
-
-		}
+		const aMaterials = getMaterialList( aGroups, a.material );
+		const bMaterials = getMaterialList( bGroups, b.material );
 
 		// adjust the material index
 		bGroups.forEach( g => {
@@ -212,39 +205,44 @@ export class Evaluator {
 
 		} );
 
-		// apply the geometry
+		// apply groups and attribute data to the geometry
 		applyToGeometry( targetGeometry, a.geometry, [ ...aGroups, ...bGroups ], attributeData );
 
-
+		// generate the minimum set of materials needed for the list of groups and adjust the groups
+		// if they're needed
 		const groups = targetGeometry.groups;
-		if ( this.useGroups && groups.length !== 0 ) {
+		if ( useGroups ) {
 
 			const materialMap = new Map();
-			const allMaterials = [ ...aMaterials, ...bMaterials ].map( ( mat, i ) => {
+			const allMaterials = [ ...aMaterials, ...bMaterials ];
 
-				return groups.find( group => group.materialIndex === i ) ? mat : null;
-
-			} );
-
+			// create a map from old to new index and remove materials that aren't used
 			let newIndex = 0;
-			allMaterials.forEach( ( m, i ) => {
+			for ( let i = 0, l = allMaterials.length; i < l; i ++ ) {
 
-				if ( m ) {
+				const foundGroup = Boolean( groups.find( group => group.materialIndex === i ) );
+				if ( ! foundGroup ) {
+
+					allMaterials[ i ] = null;
+
+				} else {
 
 					materialMap.set( i, newIndex );
 					newIndex ++;
 
 				}
 
-			} );
+			}
 
-			groups.forEach( g => {
+			// adjust the groups indices
+			for ( let i = 0, l = groups.length; i < l; i ++ ) {
 
-				g.materialIndex = materialMap.get( g.materialIndex );
+				const group = groups[ i ];
+				group.materialIndex = materialMap.get( group.materialIndex );
 
-			} );
+			}
 
-			targetBrush.material = allMaterials.filter( m => m );
+			targetBrush.material = allMaterials.filter( material => material );
 
 		}
 

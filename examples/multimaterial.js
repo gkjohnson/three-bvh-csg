@@ -65,23 +65,23 @@ async function init() {
 	scene.add( floor );
 
 	// materials
-	const redMaterial = new THREE.MeshStandardMaterial( { color: 0xff0000, roughness: 0.4 } );
-	const greenMaterial = new THREE.MeshStandardMaterial( { color: 0x00ff00, roughness: 0.4 } );
-	const blueMaterial = new THREE.MeshStandardMaterial( { color: 0x2196F3, roughness: 0.4 } );
+	const redMaterial = new THREE.MeshStandardMaterial( { roughness: 0.25 } );
+	const greenMaterial = new THREE.MeshStandardMaterial( { roughness: 0.25 } );
+	const blueMaterial = new THREE.MeshStandardMaterial( { roughness: 0.25 } );
 
 	redMaterial.color.set( 0xFF1744 ).convertSRGBToLinear();
 	greenMaterial.color.set( 0x76FF03 ).convertSRGBToLinear();
 	blueMaterial.color.set( 0x2979FF ).convertSRGBToLinear();
 
 	// basic pieces
-	const cylinder1 = new Brush( new THREE.CylinderBufferGeometry( 0.5, 0.5, 6, 30 ), blueMaterial );
+	const cylinder1 = new Brush( new THREE.CylinderBufferGeometry( 0.5, 0.5, 6, 45 ), blueMaterial );
 	cylinder1.updateMatrixWorld();
 
-	const cylinder2 = new Brush( new THREE.CylinderBufferGeometry( 0.5, 0.5, 6, 30 ), blueMaterial );
+	const cylinder2 = new Brush( new THREE.CylinderBufferGeometry( 0.5, 0.5, 6, 45 ), blueMaterial );
 	cylinder2.rotation.x = Math.PI / 2;
 	cylinder2.updateMatrixWorld();
 
-	const cylinder3 = new Brush( new THREE.CylinderBufferGeometry( 0.5, 0.5, 6, 30 ), blueMaterial );
+	const cylinder3 = new Brush( new THREE.CylinderBufferGeometry( 0.5, 0.5, 6, 45 ), blueMaterial );
 	cylinder3.rotation.z = Math.PI / 2;
 	cylinder3.updateMatrixWorld();
 
