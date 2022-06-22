@@ -1,5 +1,6 @@
 import { Mesh, Matrix4 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
+import { HalfEdgeMap } from './HalfEdgeMap.js';
 import { areSharedArrayBuffersSupported, convertToSharedArrayBuffer } from './utils.js';
 
 export class Brush extends Mesh {
@@ -35,8 +36,6 @@ export class Brush extends Mesh {
 
 	prepareGeometry() {
 
-		// - half edges
-
 		// generate shared array buffers
 		const geometry = this.geometry;
 		const attributes = geometry.attributes;
@@ -61,6 +60,39 @@ export class Brush extends Mesh {
 		if ( ! geometry.boundsTree ) {
 
 			geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3 } );
+			if ( geometry.halfEdges ) {
+
+				geometry.halfEdges.updateFrom( geometry );
+
+			}
+
+		}
+
+		// generate half edges
+		if ( ! geometry.halfEdges ) {
+
+			geometry.halfEdges = new HalfEdgeMap( geometry );
+
+		}
+
+		// save group indices for materials
+		if ( ! geometry.groupIndices ) {
+
+			const triCount = geometry.index.count / 3;
+			const array = new Uint16Array( triCount );
+			const groups = geometry.groups;
+			for ( let i = 0, l = groups.length; i < l; i ++ ) {
+
+				const { start, count } = groups[ i ];
+				for ( let g = start / 3, lg = ( start + count ) / 3; g < lg; g ++ ) {
+
+					array[ g ] = i;
+
+				}
+
+			}
+
+			geometry.groupIndices = array;
 
 		}
 
@@ -68,9 +100,9 @@ export class Brush extends Mesh {
 
 	disposeCacheData() {
 
-		// - half edges
-
-		this.geometry.boundsTree = null;
+		const { geometry } = this;
+		geometry.halfEdges = null;
+		geometry.boundsTree = null;
 
 	}
 

@@ -19,6 +19,7 @@ const params = {
 	wireframe: false,
 	displayBrushes: false,
 	shadows: true,
+	useGroups: true,
 
 	randomize: () => {
 
@@ -34,6 +35,7 @@ let material, surfaceSampler;
 let resultObject, wireframeResult, light;
 let csgEvaluator = new Evaluator();
 csgEvaluator.attributes = [ 'position', 'normal' ];
+csgEvaluator.useGroups = false;
 
 const materialMap = new Map();
 
@@ -189,6 +191,7 @@ async function init() {
 	gui.add( params, 'displayBrushes' );
 	gui.add( params, 'shadows' );
 	gui.add( params, 'wireframe' );
+	gui.add( params, 'useGroups' ).onChange( updateCSG );
 	gui.add( params, 'randomize' );
 
 	window.addEventListener( 'resize', function () {
@@ -219,9 +222,17 @@ function updateCSG() {
 
 	}
 
-	csgEvaluator.useGroups = true;
+	csgEvaluator.useGroups = params.useGroups;
 	csgEvaluator.evaluate( bunnyBrush, finalBrush, params.operation, resultObject );
-	resultObject.material = resultObject.material.map( m => materialMap.get( m ) );
+	if ( params.useGroups ) {
+
+		resultObject.material = resultObject.material.map( m => materialMap.get( m ) );
+
+	} else {
+
+		resultObject.material = materialMap.get( bunnyBrush.material );
+
+	}
 
 	const deltaTime = window.performance.now() - startTime;
 	outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;

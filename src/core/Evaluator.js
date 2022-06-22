@@ -9,42 +9,62 @@ import { Brush } from './Brush.js';
 // applies the given set of attribute data to the provided geometry. If the attributes are
 // not large enough to hold the new set of data then new attributes will be created. Otherwise
 // the existing attributes will be used and draw range updated to accommodate the new size.
-function applyToGeometry( geometry, referenceGeometry, attributeData ) {
+function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 
 	let needsDisposal = false;
 	let drawRange = - 1;
+	const groupCount = attributeInfo.groupCount;
 
 	// set the data
 	const attributes = geometry.attributes;
-	for ( const key in attributeData ) {
+	const rootAttrSet = attributeInfo.groupAttributes[ 0 ];
+	for ( const key in rootAttrSet ) {
 
-		const { array, type, length } = attributeData[ key ];
-		const trimmedArray = new type( array.buffer, 0, length );
-
+		const requiredLength = attributeInfo.getTotalLength( key, groupCount );
+		const type = rootAttrSet[ key ].type;
 		let attr = attributes[ key ];
-		if ( ! attr || attr.array.length < length ) {
+		if ( ! attr || attr.array.length < requiredLength ) {
 
 			// create the attribute if it doesn't exist yet
 			const refAttr = referenceGeometry.attributes[ key ];
-			attr = new BufferAttribute( trimmedArray.slice(), refAttr.itemSize, refAttr.normalized );
+			attr = new BufferAttribute( new type( requiredLength ), refAttr.itemSize, refAttr.normalized );
 			geometry.setAttribute( key, attr );
 			needsDisposal = true;
 
-		} else {
+		}
 
-			// set the new array data
-			attr.array.set( trimmedArray, 0 );
-			attr.needsUpdate = true;
+		let offset = 0;
+		for ( let i = 0; i < groupCount; i ++ ) {
+
+			const { array, type, length } = attributeInfo.groupAttributes[ i ][ key ];
+			const trimmedArray = new type( array.buffer, 0, length );
+			attr.array.set( trimmedArray, offset );
+			offset += trimmedArray.length;
 
 		}
 
-		drawRange = length / attr.itemSize;
-
+		attr.needsUpdate = true;
+		drawRange = requiredLength / attr.itemSize;
 
 	}
 
 	// update the draw range
 	geometry.setDrawRange( 0, drawRange );
+	geometry.clearGroups();
+
+	let groupOffset = 0;
+	for ( let i = 0; i < groupCount; i ++ ) {
+
+		const posCount = attributeInfo.getGroupArray( 'position', i ).length / 3;
+		if ( posCount !== 0 ) {
+
+			const group = groups[ i ];
+			geometry.addGroup( groupOffset, posCount, group.materialIndex );
+			groupOffset += posCount;
+
+		}
+
+	}
 
 	// remove or update the index appropriately
 	if ( geometry.index ) {
@@ -81,6 +101,24 @@ function applyToGeometry( geometry, referenceGeometry, attributeData ) {
 
 }
 
+function getMaterialList( groups, materials ) {
+
+	let result = materials;
+	if ( ! Array.isArray( materials ) ) {
+
+		result = [];
+		groups.forEach( g => {
+
+			result[ g.materialIndex ] = materials;
+
+		} );
+
+	}
+
+	return result;
+
+}
+
 // Utility class for performing CSG operations
 export class Evaluator {
 
@@ -99,7 +137,7 @@ export class Evaluator {
 		a.prepareGeometry();
 		b.prepareGeometry();
 
-		const { triangleSplitter, attributeData, attributes, debug } = this;
+		const { triangleSplitter, attributeData, attributes, useGroups, debug } = this;
 		const targetGeometry = targetBrush.geometry;
 		const aAttributes = a.geometry.attributes;
 		for ( let i = 0, l = attributes.length; i < l; i ++ ) {
@@ -140,7 +178,7 @@ export class Evaluator {
 
 		}
 
-		const { groups, materials } = performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups: this.useGroups } );
+		performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups } );
 
 		if ( debug.enabled ) {
 
@@ -148,14 +186,64 @@ export class Evaluator {
 
 		}
 
-		applyToGeometry( targetGeometry, a.geometry, attributeData.attributes );
+		// structure the groups appropriately
+		const aGroups = ! useGroups || a.geometry.groups.length === 0 ?
+			[ { start: 0, count: Infinity, materialIndex: 0 } ] :
+			a.geometry.groups.map( group => ( { ...group } ) );
 
-		targetBrush.material = materials || targetBrush.material;
-		targetGeometry.clearGroups();
-		for ( let i = 0, l = groups.length; i < l; i ++ ) {
+		const bGroups = ! useGroups || b.geometry.groups.length === 0 ?
+			[ { start: 0, count: Infinity, materialIndex: 0 } ] :
+			b.geometry.groups.map( group => ( { ...group } ) );
 
-			const group = groups[ i ];
-			targetGeometry.addGroup( group.start, group.count, group.materialIndex );
+		// get the materials
+		const aMaterials = getMaterialList( aGroups, a.material );
+		const bMaterials = getMaterialList( bGroups, b.material );
+
+		// adjust the material index
+		bGroups.forEach( g => {
+
+			g.materialIndex += aMaterials.length;
+
+		} );
+
+		// apply groups and attribute data to the geometry
+		applyToGeometry( targetGeometry, a.geometry, [ ...aGroups, ...bGroups ], attributeData );
+
+		// generate the minimum set of materials needed for the list of groups and adjust the groups
+		// if they're needed
+		const groups = targetGeometry.groups;
+		if ( useGroups ) {
+
+			const materialMap = new Map();
+			const allMaterials = [ ...aMaterials, ...bMaterials ];
+
+			// create a map from old to new index and remove materials that aren't used
+			let newIndex = 0;
+			for ( let i = 0, l = allMaterials.length; i < l; i ++ ) {
+
+				const foundGroup = Boolean( groups.find( group => group.materialIndex === i ) );
+				if ( ! foundGroup ) {
+
+					allMaterials[ i ] = null;
+
+				} else {
+
+					materialMap.set( i, newIndex );
+					newIndex ++;
+
+				}
+
+			}
+
+			// adjust the groups indices
+			for ( let i = 0, l = groups.length; i < l; i ++ ) {
+
+				const group = groups[ i ];
+				group.materialIndex = materialMap.get( group.materialIndex );
+
+			}
+
+			targetBrush.material = allMaterials.filter( material => material );
 
 		}
 
