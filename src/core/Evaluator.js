@@ -17,10 +17,11 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 
 	// set the data
 	const attributes = geometry.attributes;
-	for ( const key in attributeInfo.groupAttributes[ 0 ] ) {
+	const rootAttrSet = attributeInfo.groupAttributes[ 0 ];
+	for ( const key in rootAttrSet ) {
 
 		const requiredLength = attributeInfo.getTotalLength( key, groupCount );
-		const type = attributeInfo.getGroupArray( key, 0 ).type;
+		const type = rootAttrSet[ key ].type;
 		let attr = attributes[ key ];
 		if ( ! attr || attr.array.length < requiredLength ) {
 
@@ -35,7 +36,7 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 		let offset = 0;
 		for ( let i = 0; i < groupCount; i ++ ) {
 
-			const { array, type, length } = attributeInfo.getGroupArray( key, i );
+			const { array, type, length } = attributeInfo.groupAttributes[ i ][ key ];
 			const trimmedArray = new type( array.buffer, 0, length );
 			attr.array.set( trimmedArray, offset );
 			offset += trimmedArray.length;
