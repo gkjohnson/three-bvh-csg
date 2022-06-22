@@ -124,7 +124,15 @@ export function collectIntersectingTriangles( a, b ) {
 }
 
 // Add the barycentric interpolated values fro the triangle into the new attribute data
-export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, matrixWorld, normalMatrix, attributeInfo, invert ) {
+export function appendAttributeFromTriangle(
+	triIndex,
+	baryCoordTri,
+	geometry,
+	matrixWorld,
+	normalMatrix,
+	attributeInfo,
+	invert = false,
+) {
 
 	const attributes = geometry.attributes;
 	const indexAttr = geometry.index;
@@ -140,7 +148,7 @@ export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, m
 		const arr = attributeInfo[ key ];
 		if ( ! ( key in attributes ) ) {
 
-			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );
+			throw new Error( `CSG Operations: Attribute ${ key } not available on geometry.` );
 
 		}
 
@@ -186,7 +194,16 @@ export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, m
 }
 
 // Append all the values of the attributes for the triangle onto the new attribute arrays
-export function appendAttributesFromIndices( i0, i1, i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert = false ) {
+export function appendAttributesFromIndices(
+	i0,
+	i1,
+	i2,
+	attributes,
+	matrixWorld,
+	normalMatrix,
+	attributeInfo,
+	invert = false,
+) {
 
 	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
 	appendAttributeFromIndex( i1, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
@@ -313,13 +330,20 @@ function pushBarycoordInterpolatedValues( v0, v1, v2, baryCoordTri, itemSize, at
 }
 
 // Adds the values for the given vertex index onto the new attribute arrays
-function appendAttributeFromIndex( index, attributes, matrixWorld, normalMatrix, info, invert = false ) {
+function appendAttributeFromIndex(
+	index,
+	attributes,
+	matrixWorld,
+	normalMatrix,
+	attributeInfo,
+	invert = false,
+) {
 
-	for ( const key in info ) {
+	for ( const key in attributeInfo ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = info[ key ];
+		const arr = attributeInfo[ key ];
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );

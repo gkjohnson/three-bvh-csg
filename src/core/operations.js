@@ -15,13 +15,18 @@ const _triB = new Triangle();
 const _tri = new Triangle();
 const _barycoordTri = new Triangle();
 
+function getFirstIdFromSet( set ) {
+
+	for ( const id of set ) return id;
+
+}
+
 // runs the given operation against a and b using the splitter and appending data to the
 // typedAttributeData object.
 export function performOperation( a, b, operation, splitter, typedAttributeData, options ) {
 
 	const { useGroups = true } = options;
 	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b );
-	const attributeInfo = typedAttributeData.attributes;
 
 	aIntersections.ids.sort( ( a, b ) => a - b );
 	bIntersections.ids.sort( ( a, b ) => a - b );
@@ -29,81 +34,24 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 	const resultGroups = [];
 	let resultMaterials = null;
 
-	if ( useGroups ) {
+	let groupOffset;
+	groupOffset = useGroups ? 0 : - 1;
+	performWholeTriangleOperations( a, b, aIntersections, operation, false, typedAttributeData, groupOffset );
+	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, typedAttributeData, groupOffset );
 
-		resultMaterials = [];
-		processWithGroups( a, b, aIntersections, false );
-		processWithGroups( b, a, bIntersections, true );
-
-	} else {
-
-		performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeInfo );
-		performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeInfo );
-
-		performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeInfo );
-		performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeInfo );
-
-	}
+	groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
+	performWholeTriangleOperations( b, a, bIntersections, operation, true, typedAttributeData, groupOffset );
+	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, typedAttributeData, groupOffset );
 
 	return {
 		groups: resultGroups,
 		materials: resultMaterials
 	};
 
-	function processWithGroups( a, b, triSet, invert ) {
-
-		const groups = [ ...a.geometry.groups ];
-		if ( groups.length === 0 ) {
-
-			groups.push( {
-				start: 0,
-				count: Infinity,
-				materialIndex: 0
-			} );
-
-		}
-
-		const mats = a.material;
-		groups.sort( ( a, b ) => a.start - b.start );
-
-		let wholeTriangleStartIndex = 0;
-		let splitTriangleStartIndex = 0;
-		for ( let i = 0, l = groups.length; i < l; i ++ ) {
-
-			const group = groups[ i ];
-			const startLength = attributeInfo.position.length / 3;
-			wholeTriangleStartIndex = performWholeTriangleOperations( a, b, triSet, operation, invert, attributeInfo, group, wholeTriangleStartIndex );
-			splitTriangleStartIndex = performSplitTriangleOperations( a, b, triSet, operation, invert, splitter, attributeInfo, group, splitTriangleStartIndex );
-
-			const endLength = attributeInfo.position.length / 3;
-			if ( startLength !== endLength ) {
-
-				if ( Array.isArray( mats ) ) {
-
-					resultMaterials.push( mats[ i ] );
-
-				} else {
-
-					resultMaterials.push( mats );
-
-				}
-
-				resultGroups.push( {
-					start: startLength,
-					count: endLength - startLength,
-					materialIndex: resultMaterials.length - 1,
-				} );
-
-			}
-
-		}
-
-	}
-
 }
 
 // perform triangle splitting and CSG operations on the set of split triangles
-function performSplitTriangleOperations( a, b, intersectionMap, operation, invert, splitter, attributeInfo, group = null, startIndex = 0 ) {
+function performSplitTriangleOperations( a, b, intersectionMap, operation, invert, splitter, attributeInfo, groupOffset = 0 ) {
 
 	// transforms into the local frame of matrix b
 	_matrix
@@ -113,6 +61,7 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 
 	_normalMatrix.getNormalMatrix( a.matrixWorld );
 
+	const groupIndices = a.geometry.groupIndices;
 	const aIndex = a.geometry.index;
 	const aPosition = a.geometry.attributes.position;
 
@@ -123,25 +72,11 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 	const intersectionSet = intersectionMap.intersectionSet;
 
 	// iterate over all split triangle indices
-	const finalIndex = group ? group.start + group.count : Infinity;
-	for ( let i = startIndex, l = splitIds.length; i < l; i ++ ) {
+	for ( let i = 0, l = splitIds.length; i < l; i ++ ) {
 
 		const ia = splitIds[ i ];
-
-		// skip triangles outside of this group
-		if ( group ) {
-
-			if ( ia >= finalIndex ) {
-
-				return i;
-
-			} else if ( ia < group.start ) {
-
-				continue;
-
-			}
-
-		}
+		const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ ia ] + groupOffset;
+		const attrSet = attributeInfo.getGroupSet( groupIndex );
 
 		// get the triangle in the geometry B local frame
 		const ia3 = 3 * ia;
@@ -195,11 +130,11 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 				switch ( action ) {
 
 					case ADD_TRI:
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet );
 						break;
 
 					case INVERT_TRI:
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo, true );
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet, true );
 						break;
 
 				}
@@ -214,8 +149,11 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 
 }
 
-// perform CSG operations on the set of whole triangles
-function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, attributeInfo, group, startIndex = 0 ) {
+// perform CSG operations on the set of whole triangles using a half edge structure
+// at the moment this isn't always faster due to overhead of building the half edge structure
+// and degraded connectivity due to split triangles.
+
+function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, attributeInfo, groupOffset = 0 ) {
 
 	// matrix for transforming into the local frame of geometry b
 	_matrix
@@ -226,39 +164,33 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 	_normalMatrix.getNormalMatrix( a.matrixWorld );
 
 	const bBVH = b.geometry.boundsTree;
+	const groupIndices = a.geometry.groupIndices;
 	const aIndex = a.geometry.index;
 	const aAttributes = a.geometry.attributes;
 	const aPosition = aAttributes.position;
-	const { intersectionSet } = splitTriSet;
 
-	const finalIndex = group ? group.start + group.count : Infinity;
-	for ( let i = startIndex, l = aIndex.count / 3; i < l; i ++ ) {
+	const stack = [];
+	const halfEdges = a.geometry.halfEdges;
+	const traverseSet = new Set();
+	for ( let i = 0, l = aIndex.count / 3; i < l; i ++ ) {
 
-		// if we find the index in the set of triangles that is supposed to be clipped
-		// then ignore it because it will be handled separately
-		if ( i in intersectionSet ) {
+		if ( ! ( i in splitTriSet.intersectionSet ) ) {
 
-			continue;
-
-		}
-
-		// skip triangles outside of this group
-		if ( group ) {
-
-			if ( i >= finalIndex ) {
-
-				return i;
-
-			} else if ( i < group.start ) {
-
-				continue;
-
-			}
+			traverseSet.add( i );
 
 		}
+
+	}
+
+	while ( traverseSet.size > 0 ) {
+
+		const id = getFirstIdFromSet( traverseSet );
+		traverseSet.delete( id );
+
+		stack.push( id );
 
 		// get the vertex indices
-		const i3 = 3 * i;
+		const i3 = 3 * id;
 		const i0 = aIndex.getX( i3 + 0 );
 		const i1 = aIndex.getX( i3 + 1 );
 		const i2 = aIndex.getX( i3 + 2 );
@@ -272,21 +204,44 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 		// get the side and decide if we need to cull the triangle based on the operation
 		const hitSide = getHitSide( _tri, bBVH );
 		const action = getOperationAction( operation, hitSide, invert );
-		switch ( action ) {
+		while ( stack.length > 0 ) {
 
-			case ADD_TRI:
-				appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
-				break;
+			const currId = stack.pop();
+			const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ currId ] + groupOffset;
+			const attrSet = attributeInfo.getGroupSet( groupIndex );
 
-			case INVERT_TRI:
-				appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, invert );
-				break;
+			for ( let i = 0; i < 3; i ++ ) {
+
+				const sid = halfEdges.getSiblingTriangleIndex( currId, i );
+				if ( sid !== - 1 && traverseSet.has( sid ) ) {
+
+					stack.push( sid );
+					traverseSet.delete( sid );
+
+				}
+
+			}
+
+			const i3 = 3 * currId;
+			const i0 = aIndex.getX( i3 + 0 );
+			const i1 = aIndex.getX( i3 + 1 );
+			const i2 = aIndex.getX( i3 + 2 );
+
+			switch ( action ) {
+
+				case ADD_TRI:
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet );
+					break;
+
+				case INVERT_TRI:
+					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invert );
+					break;
+
+			}
 
 		}
 
 	}
-
-	return aIndex.count / 3;
 
 }
 
