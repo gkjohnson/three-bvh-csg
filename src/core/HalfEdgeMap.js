@@ -78,8 +78,7 @@ export class HalfEdgeMap {
 
 			data = new Int32Array( 3 * maxTriCount );
 
-		} 
-
+		}
 
 		data.fill( - 1 );
 
@@ -102,7 +101,6 @@ export class HalfEdgeMap {
 
 			}
 
-
 			for ( let e = 0; e < 3; e ++ ) {
 
 				const nextE = ( e + 1 ) % 3;
@@ -111,7 +109,7 @@ export class HalfEdgeMap {
 
 				const vh0 = hashVertex( _vec0 );
 				const vh1 = hashVertex( _vec1 );
-				
+
 				const reverseHash = `${ vh1 }_${ vh0 }`;
 				if ( map.has( reverseHash ) ) {
 
