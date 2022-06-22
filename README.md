@@ -9,15 +9,15 @@
 An _in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh).
 
 # Roadmap
-- Performance improvements
 - Hierarchical operations
-- Webworker support
 
 # Examples
 
 [Simple CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/simple.html)
 
 [Complex Model CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/geometry.html)
+
+[Multimaterial CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/multimaterial.html)
 
 # Use
 
