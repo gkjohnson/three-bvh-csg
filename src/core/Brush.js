@@ -76,7 +76,7 @@ export class Brush extends Mesh {
 		}
 
 		// save group indices for materials
-		if ( ! geometry.groupsIndices ) {
+		if ( ! geometry.groupIndices ) {
 
 			const triCount = geometry.index.count / 3;
 			const array = new Uint16Array( triCount );
@@ -92,7 +92,7 @@ export class Brush extends Mesh {
 
 			}
 
-			geometry.groupsIndices = array;
+			geometry.groupIndices = array;
 
 		}
 
