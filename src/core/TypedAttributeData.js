@@ -32,35 +32,49 @@ export class TypedAttributeData {
 
 	}
 
+	getGroupSet( index = 0 ) {
+
+		// throw an error if we've never
+		const { groupAttributes } = this;
+		if ( groupAttributes[ index ] ) {
+
+			this.groupCount = Math.max( this.groupCount, index + 1 );
+			return groupAttributes[ index ];
+
+		}
+
+		// add any new group sets required
+		const rootAttrSet = groupAttributes[ 0 ];
+		this.groupCount = Math.max( this.groupCount, index + 1 );
+		while ( index >= groupAttributes.length ) {
+
+			const newAttrSet = {};
+			groupAttributes.push( newAttrSet );
+			for ( const key in rootAttrSet ) {
+
+				newAttrSet[ key ] = new TypeBackedArray( rootAttrSet[ key ].type );
+
+			}
+
+		}
+
+		return groupAttributes[ index ];
+
+	}
+
 	getGroupArray( name, index = 0 ) {
 
 		// throw an error if we've never
 		const { groupAttributes } = this;
-		const referenceAttr = groupAttributes[ 0 ][ name ];
+		const rootAttrSet = groupAttributes[ 0 ];
+		const referenceAttr = rootAttrSet[ name ];
 		if ( ! referenceAttr ) {
 
 			throw new Error( `TypedAttributeData: Attribute with "${ name }" has not been initialized` );
 
 		}
 
-		// add any new group sets required
-		this.groupCount = Math.max( this.groupCount, index + 1 );
-		while ( index >= groupAttributes.length ) {
-
-			groupAttributes.push( {} );
-
-		}
-
-		// initialize the array
-		const attributeSet = groupAttributes[ index ];
-		if ( ! attributeSet[ name ] ) {
-
-			const newAttr = new TypeBackedArray( referenceAttr.type );
-			attributeSet[ name ] = newAttr;
-
-		}
-
-		return attributeSet[ name ];
+		return this.getGroupSet( index )[ name ];
 
 	}
 
@@ -80,7 +94,11 @@ export class TypedAttributeData {
 
 		} else {
 
-			rootSet[ name ] = new TypeBackedArray( type );
+			for ( let i = 0, l = groupAttributes.length; i < l; i ++ ) {
+
+				groupAttributes[ i ][ name ] = new TypeBackedArray( type );
+
+			}
 
 		}
 

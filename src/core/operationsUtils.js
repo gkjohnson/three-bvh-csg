@@ -131,7 +131,6 @@ export function appendAttributeFromTriangle(
 	matrixWorld,
 	normalMatrix,
 	attributeInfo,
-	groupIndex = 0,
 	invert = false,
 ) {
 
@@ -142,11 +141,11 @@ export function appendAttributeFromTriangle(
 	const i1 = indexAttr.getX( i3 + 1 );
 	const i2 = indexAttr.getX( i3 + 2 );
 
-	for ( const key in attributeInfo.groupAttributes[ 0 ] ) {
+	for ( const key in attributeInfo ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = attributeInfo.getGroupArray( key, groupIndex );
+		const arr = attributeInfo[ key ];
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } not available on geometry.` );
@@ -203,13 +202,12 @@ export function appendAttributesFromIndices(
 	matrixWorld,
 	normalMatrix,
 	attributeInfo,
-	groupIndex = 0,
 	invert = false,
 ) {
 
-	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeInfo, groupIndex, invert );
-	appendAttributeFromIndex( i1, attributes, matrixWorld, normalMatrix, attributeInfo, groupIndex, invert );
-	appendAttributeFromIndex( i2, attributes, matrixWorld, normalMatrix, attributeInfo, groupIndex, invert );
+	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
+	appendAttributeFromIndex( i1, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
+	appendAttributeFromIndex( i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
 
 }
 
@@ -338,15 +336,14 @@ function appendAttributeFromIndex(
 	matrixWorld,
 	normalMatrix,
 	attributeInfo,
-	groupIndex = 0,
 	invert = false,
 ) {
 
-	for ( const key in attributeInfo.groupAttributes[ 0 ] ) {
+	for ( const key in attributeInfo ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = attributeInfo.getGroupArray( key, groupIndex );
+		const arr = attributeInfo[ key ];
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );

@@ -76,6 +76,7 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 
 		const ia = splitIds[ i ];
 		const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ ia ] + groupOffset;
+		const attrSet = attributeInfo.getGroupSet( groupIndex );
 
 		// get the triangle in the geometry B local frame
 		const ia3 = 3 * ia;
@@ -129,11 +130,11 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 				switch ( action ) {
 
 					case ADD_TRI:
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo, groupIndex );
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet );
 						break;
 
 					case INVERT_TRI:
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo, groupIndex, true );
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet, true );
 						break;
 
 				}
@@ -207,6 +208,7 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 
 			const currId = stack.pop();
 			const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ currId ] + groupOffset;
+			const attrSet = attributeInfo.getGroupSet( groupIndex );
 
 			for ( let i = 0; i < 3; i ++ ) {
 
@@ -228,11 +230,11 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 			switch ( action ) {
 
 				case ADD_TRI:
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, groupIndex );
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet );
 					break;
 
 				case INVERT_TRI:
-					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, groupIndex, invert );
+					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invert );
 					break;
 
 			}
