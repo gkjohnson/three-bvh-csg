@@ -68,6 +68,13 @@ export function getHitSide( tri, bvh ) {
 
 		}
 
+		// if our current casts meet our requirements then early out
+		if ( minDistance === 0 || count / total > 0.5 || ( i - count + 1 ) / total > 0.5 ) {
+
+			break;
+
+		}
+
 	}
 
 	// if we're right up against another face then we're coplanar
