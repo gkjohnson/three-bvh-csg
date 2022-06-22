@@ -112,8 +112,8 @@ TODO
 -->
 
 # Gotchas
-- All geometry is expected to have all attributes to be interpolated using the same type of array.
-- Geometry on a Brush or an Operation should be unique and not be modified after being set.
+- All geometry are expected to have all attributes being used and of the same type.
+- Geometry on a Brush should be unique and not be modified after being set.
 
 # References
 - [Godot CSG](https://github.com/godotengine/godot/blob/master/modules/csg/csg.cpp)
