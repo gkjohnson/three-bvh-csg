@@ -32,9 +32,8 @@ const brush1 = new Brush( new SphereGeometry() );
 const brush2 = new Brush( new BoxGeometry() );
 
 const result = csgEvaluator.evaluate( brush1, brush2, SUBTRACTION );
-const mesh = new Mesh( result, new MeshStandardMaterial() );
 
-// render the mesh!
+// render the result!
 ```
 
 # API
