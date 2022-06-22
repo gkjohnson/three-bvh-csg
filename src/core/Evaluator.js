@@ -206,18 +206,23 @@ export class Evaluator {
 
 			}
 
-			if ( aGroups.length === 0 ) {
-
-				aGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
-				bGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
-
-			}
-
 			bGroups.forEach( g => {
 
 				g.materialIndex += aMaterials.length;
 
 			} );
+
+		}
+
+		if ( aGroups.length === 0 ) {
+
+			aGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
+
+		}
+
+		if ( bGroups.length === 0 ) {
+
+			bGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
 
 		}
 
