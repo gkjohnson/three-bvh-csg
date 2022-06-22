@@ -9,7 +9,7 @@ import { Brush } from './Brush.js';
 // applies the given set of attribute data to the provided geometry. If the attributes are
 // not large enough to hold the new set of data then new attributes will be created. Otherwise
 // the existing attributes will be used and draw range updated to accommodate the new size.
-function applyToGeometry( geometry, referenceGeometry, attributeInfo ) {
+function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 
 	let needsDisposal = false;
 	let drawRange = - 1;
@@ -47,9 +47,23 @@ function applyToGeometry( geometry, referenceGeometry, attributeInfo ) {
 
 	}
 
-
 	// update the draw range
 	geometry.setDrawRange( 0, drawRange );
+	geometry.clearGroups();
+
+	let groupOffset = 0;
+	for ( let i = 0; i < groupCount; i ++ ) {
+
+		const posCount = attributeInfo.getGroupArray( 'position', i ).length / 3;
+		if ( posCount !== 0 ) {
+
+			const group = groups[ i ];
+			geometry.addGroup( groupOffset, posCount, group.materialIndex );
+			groupOffset += posCount;
+
+		}
+
+	}
 
 	// remove or update the index appropriately
 	if ( geometry.index ) {
@@ -153,16 +167,94 @@ export class Evaluator {
 
 		}
 
-		applyToGeometry( targetGeometry, a.geometry, attributeData );
+		let aGroups = [];
+		let bGroups = [];
+		let aMaterials, bMaterials;
 
-		// targetBrush.material = materials || targetBrush.material;
-		// targetGeometry.clearGroups();
-		// for ( let i = 0, l = groups.length; i < l; i ++ ) {
+		if ( this.useGroups ) {
 
-		// 	const group = groups[ i ];
-		// 	targetGeometry.addGroup( group.start, group.count, group.materialIndex );
+			aGroups = [ ...a.geometry.groups ].map( g => ( { ...g } ) );
+			bGroups = [ ...a.geometry.groups ].map( g => ( { ...g } ) );
 
-		// }
+			if ( Array.isArray( a.material ) ) {
+
+				aMaterials = a.material;
+
+			} else {
+
+				aMaterials = [];
+				a.geometry.groups.forEach( g => {
+
+					aMaterials[ g.materialIndex ] = a.material;
+
+				} );
+
+			}
+
+			if ( Array.isArray( b.material ) ) {
+
+				bMaterials = b.material;
+
+			} else {
+
+				bMaterials = [];
+				bGroups.forEach( g => {
+
+					bMaterials[ g.materialIndex ] = b.material;
+
+				} );
+
+			}
+
+			if ( aGroups.length === 0 ) {
+
+				aGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
+				bGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
+
+			}
+
+			bGroups.forEach( g => {
+
+				g.materialIndex += aMaterials.length;
+
+			} );
+
+		}
+
+		applyToGeometry( targetGeometry, a.geometry, [ ...aGroups, ...bGroups ], attributeData );
+
+		const groups = targetGeometry.groups;
+		if ( this.useGroups && groups.length !== 0 ) {
+
+			const materialMap = new Map();
+			const allMaterials = [ ...aMaterials, ...bMaterials ].map( ( mat, i ) => {
+
+				return groups.find( group => group.materialIndex === i ) ? mat : null;
+
+			} );
+
+			let newIndex = 0;
+			allMaterials.forEach( ( m, i ) => {
+
+				if ( m ) {
+
+					materialMap.set( i, newIndex );
+					newIndex ++;
+
+				}
+
+			} );
+
+			groups.forEach( g => {
+
+				g.materialIndex = materialMap.get( g.materialIndex );
+
+			} );
+
+			targetBrush.material = allMaterials.filter( m => m );
+
+		}
+
 
 		return targetBrush;
 
