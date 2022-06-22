@@ -17,7 +17,7 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 
 	// set the data
 	const attributes = geometry.attributes;
-	for ( const key in attributeInfo.attributes ) {
+	for ( const key in attributeInfo.groupAttributes[ 0 ] ) {
 
 		const requiredLength = attributeInfo.getTotalLength( key, groupCount );
 		const type = attributeInfo.getGroupArray( key, 0 ).type;

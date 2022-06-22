@@ -142,7 +142,7 @@ export function appendAttributeFromTriangle(
 	const i1 = indexAttr.getX( i3 + 1 );
 	const i2 = indexAttr.getX( i3 + 2 );
 
-	for ( const key in attributeInfo.attributes ) {
+	for ( const key in attributeInfo.groupAttributes[ 0 ] ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
@@ -342,7 +342,7 @@ function appendAttributeFromIndex(
 	invert = false,
 ) {
 
-	for ( const key in attributeInfo.attributes ) {
+	for ( const key in attributeInfo.groupAttributes[ 0 ] ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];

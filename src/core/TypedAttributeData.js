@@ -5,26 +5,26 @@ export class TypedAttributeData {
 
 	constructor() {
 
-		this.attributes = {};
+		this.groupAttributes = [ {} ];
 		this.groupCount = 0;
 
 	}
 
 	getType( name ) {
 
-		return this.attributes[ name ].type;
+		return this.groupAttributes[ 0 ][ name ].type;
 
 	}
 
 	getTotalLength( name ) {
 
-		const { groupCount, attributes } = this;
-		const attrList = attributes[ name ];
+		const { groupCount, groupAttributes } = this;
 
 		let length = 0;
 		for ( let i = 0; i < groupCount; i ++ ) {
 
-			length += attrList[ i ].length;
+			const attrSet = groupAttributes[ i ];
+			length += attrSet[ name ].length;
 
 		}
 
@@ -34,35 +34,45 @@ export class TypedAttributeData {
 
 	getGroupArray( name, index = 0 ) {
 
-		const { attributes } = this;
-		if ( ! attributes[ name ] ) {
+		// throw an error if we've never
+		const { groupAttributes } = this;
+		const referenceAttr = groupAttributes[ 0 ][ name ];
+		if ( ! referenceAttr ) {
 
-			throw new Error();
-
-		}
-
-		const groups = attributes[ name ];
-		while ( index >= groups.length ) {
-
-			const ogAttr = groups[ 0 ];
-			const newAttr = new TypeBackedArray( ogAttr.type );
-			groups.push( newAttr );
+			throw new Error( `TypedAttributeData: Attribute with "${ name }" has not been initialized` );
 
 		}
 
+		// add any new group sets required
 		this.groupCount = Math.max( this.groupCount, index + 1 );
+		while ( index >= groupAttributes.length ) {
 
-		return groups[ index ];
+			groupAttributes.push( {} );
+
+		}
+
+		// initialize the array
+		const attributeSet = groupAttributes[ index ];
+		if ( ! attributeSet[ name ] ) {
+
+			const newAttr = new TypeBackedArray( referenceAttr.type );
+			attributeSet[ name ] = newAttr;
+
+		}
+
+		return attributeSet[ name ];
 
 	}
 
 	// initializes an attribute array with the given name, type, and size
 	initializeArray( name, type ) {
 
-		const { attributes } = this;
-		if ( name in attributes ) {
+		const { groupAttributes } = this;
+		const rootSet = groupAttributes[ 0 ];
+		const referenceAttr = rootSet[ name ];
+		if ( referenceAttr ) {
 
-			if ( attributes[ name ][ 0 ].type !== type ) {
+			if ( referenceAttr.type !== type ) {
 
 				throw new Error( `TypedAttributeData: Array ${ name } already initialized with a different type.` );
 
@@ -70,7 +80,7 @@ export class TypedAttributeData {
 
 		} else {
 
-			attributes[ name ] = [ new TypeBackedArray( type ) ];
+			rootSet[ name ] = new TypeBackedArray( type );
 
 		}
 
@@ -80,24 +90,33 @@ export class TypedAttributeData {
 
 		this.groupCount = 0;
 
-		const { attributes } = this;
-		for ( const key in attributes ) {
+		const { groupAttributes } = this;
+		groupAttributes.forEach( attrSet => {
 
-			attributes[ key ].forEach( a => a.clear() );
+			for ( const key in attrSet ) {
 
-		}
+				attrSet[ key ].clear();
+
+			}
+
+
+		} );
 
 	}
 
 	delete( key ) {
 
-		delete this.attributes[ key ];
+		this.groupAttributes.forEach( attrSet => {
+
+			delete attrSet[ key ];
+
+		} );
 
 	}
 
 	reset() {
 
-		this.attributes = {};
+		this.groupAttributes = [];
 
 	}
 
