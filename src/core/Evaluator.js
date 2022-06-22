@@ -167,66 +167,54 @@ export class Evaluator {
 
 		}
 
-		let aGroups = [];
-		let bGroups = [];
+		// structure the groups appropriately
+		const aGroups = [ ...a.geometry.groups ].map( g => ( { ...g } ) );
+		const bGroups = [ ...b.geometry.groups ].map( g => ( { ...g } ) );
+		if ( aGroups.length === 0 ) aGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
+		if ( bGroups.length === 0 ) bGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
+
+		// get the materials
 		let aMaterials, bMaterials;
+		if ( Array.isArray( a.material ) ) {
 
-		if ( this.useGroups ) {
+			aMaterials = a.material;
 
-			aGroups = [ ...a.geometry.groups ].map( g => ( { ...g } ) );
-			bGroups = [ ...a.geometry.groups ].map( g => ( { ...g } ) );
+		} else {
 
-			if ( Array.isArray( a.material ) ) {
+			aMaterials = [];
+			aGroups.forEach( g => {
 
-				aMaterials = a.material;
-
-			} else {
-
-				aMaterials = [];
-				a.geometry.groups.forEach( g => {
-
-					aMaterials[ g.materialIndex ] = a.material;
-
-				} );
-
-			}
-
-			if ( Array.isArray( b.material ) ) {
-
-				bMaterials = b.material;
-
-			} else {
-
-				bMaterials = [];
-				bGroups.forEach( g => {
-
-					bMaterials[ g.materialIndex ] = b.material;
-
-				} );
-
-			}
-
-			bGroups.forEach( g => {
-
-				g.materialIndex += aMaterials.length;
+				aMaterials[ g.materialIndex ] = a.material;
 
 			} );
 
 		}
 
-		if ( aGroups.length === 0 ) {
+		if ( Array.isArray( b.material ) ) {
 
-			aGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
+			bMaterials = b.material;
+
+		} else {
+
+			bMaterials = [];
+			bGroups.forEach( g => {
+
+				bMaterials[ g.materialIndex ] = b.material;
+
+			} );
 
 		}
 
-		if ( bGroups.length === 0 ) {
+		// adjust the material index
+		bGroups.forEach( g => {
 
-			bGroups.push( { start: 0, count: Infinity, materialIndex: 0 } );
+			g.materialIndex += aMaterials.length;
 
-		}
+		} );
 
+		// apply the geometry
 		applyToGeometry( targetGeometry, a.geometry, [ ...aGroups, ...bGroups ], attributeData );
+
 
 		const groups = targetGeometry.groups;
 		if ( this.useGroups && groups.length !== 0 ) {
@@ -259,7 +247,6 @@ export class Evaluator {
 			targetBrush.material = allMaterials.filter( m => m );
 
 		}
-
 
 		return targetBrush;
 
