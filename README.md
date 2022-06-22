@@ -117,4 +117,4 @@ TODO
 
 # References
 - [Godot CSG](https://github.com/godotengine/godot/blob/master/modules/csg/csg.cpp)
-- RealtimeCSG ([Overview](https://www.youtube.com/watch?v=uqaiUMuGlRc), [GCD Presentation](https://www.youtube.com/watch?v=Iqmg4gblreo))
+- RealtimeCSG ([Overview](https://www.youtube.com/watch?v=uqaiUMuGlRc), [GDC Presentation](https://www.youtube.com/watch?v=Iqmg4gblreo))
