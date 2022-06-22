@@ -124,7 +124,16 @@ export function collectIntersectingTriangles( a, b ) {
 }
 
 // Add the barycentric interpolated values fro the triangle into the new attribute data
-export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, matrixWorld, normalMatrix, attributeInfo, invert ) {
+export function appendAttributeFromTriangle(
+	triIndex,
+	baryCoordTri,
+	geometry,
+	matrixWorld,
+	normalMatrix,
+	attributeInfo,
+	groupIndex = 0,
+	invert = false,
+) {
 
 	const attributes = geometry.attributes;
 	const indexAttr = geometry.index;
@@ -137,7 +146,7 @@ export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, m
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = attributeInfo.getGroupArray( key, 0 );
+		const arr = attributeInfo.getGroupArray( key, groupIndex );
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } not available on geometry.` );
@@ -186,11 +195,21 @@ export function appendAttributeFromTriangle( triIndex, baryCoordTri, geometry, m
 }
 
 // Append all the values of the attributes for the triangle onto the new attribute arrays
-export function appendAttributesFromIndices( i0, i1, i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert = false ) {
+export function appendAttributesFromIndices(
+	i0,
+	i1,
+	i2,
+	attributes,
+	matrixWorld,
+	normalMatrix,
+	attributeInfo,
+	groupIndex = 0,
+	invert = false,
+) {
 
-	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
-	appendAttributeFromIndex( i1, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
-	appendAttributeFromIndex( i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
+	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeInfo, groupIndex, invert );
+	appendAttributeFromIndex( i1, attributes, matrixWorld, normalMatrix, attributeInfo, groupIndex, invert );
+	appendAttributeFromIndex( i2, attributes, matrixWorld, normalMatrix, attributeInfo, groupIndex, invert );
 
 }
 
@@ -313,13 +332,21 @@ function pushBarycoordInterpolatedValues( v0, v1, v2, baryCoordTri, itemSize, at
 }
 
 // Adds the values for the given vertex index onto the new attribute arrays
-function appendAttributeFromIndex( index, attributes, matrixWorld, normalMatrix, attributeInfo, invert = false ) {
+function appendAttributeFromIndex(
+	index,
+	attributes,
+	matrixWorld,
+	normalMatrix,
+	attributeInfo,
+	groupIndex = 0,
+	invert = false,
+) {
 
 	for ( const key in attributeInfo.attributes ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = attributeInfo.getGroupArray( key, 0 );
+		const arr = attributeInfo.getGroupArray( key, groupIndex );
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );

@@ -61,7 +61,7 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 
 	_normalMatrix.getNormalMatrix( a.matrixWorld );
 
-	const groupIndices = b.geometry.groupIndices;
+	const groupIndices = a.geometry.groupIndices;
 	const aIndex = a.geometry.index;
 	const aPosition = a.geometry.attributes.position;
 
@@ -129,11 +129,11 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 				switch ( action ) {
 
 					case ADD_TRI:
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo );
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo, groupIndex );
 						break;
 
 					case INVERT_TRI:
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo, true );
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attributeInfo, groupIndex, true );
 						break;
 
 				}
@@ -163,7 +163,7 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 	_normalMatrix.getNormalMatrix( a.matrixWorld );
 
 	const bBVH = b.geometry.boundsTree;
-	const groupIndices = b.geometry.groupIndices;
+	const groupIndices = a.geometry.groupIndices;
 	const aIndex = a.geometry.index;
 	const aAttributes = a.geometry.attributes;
 	const aPosition = aAttributes.position;
@@ -228,11 +228,11 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 			switch ( action ) {
 
 				case ADD_TRI:
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo );
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, groupIndex );
 					break;
 
 				case INVERT_TRI:
-					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, invert );
+					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attributeInfo, groupIndex, invert );
 					break;
 
 			}
