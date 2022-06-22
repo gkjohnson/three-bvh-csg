@@ -75,6 +75,27 @@ export class Brush extends Mesh {
 
 		}
 
+		// save group indices for materials
+		if ( ! geometry.groupsIndices ) {
+
+			const triCount = geometry.index.count / 3;
+			const array = new Uint16Array( triCount );
+			const groups = geometry.groups;
+			for ( let i = 0, l = groups.length; i < l; i ++ ) {
+
+				const { start, count } = groups[ i ];
+				for ( let g = start / 3, lg = ( start + count ) / 3; g < lg; g ++ ) {
+
+					array[ g ] = i;
+
+				}
+
+			}
+
+			geometry.groupsIndices = array;
+
+		}
+
 	}
 
 	disposeCacheData() {
