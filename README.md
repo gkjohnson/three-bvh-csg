@@ -19,6 +19,8 @@ An _in progress_, flexible, memory compact, fast and dynamic CSG implementation 
 
 [Complex Model CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/geometry.html)
 
+[Multimaterial CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/multimaterial.html)
+
 # Use
 
 ```js
