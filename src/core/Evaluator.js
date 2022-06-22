@@ -13,35 +13,40 @@ function applyToGeometry( geometry, referenceGeometry, attributeInfo ) {
 
 	let needsDisposal = false;
 	let drawRange = - 1;
+	const groupCount = attributeInfo.groupCount;
 
 	// set the data
 	const attributes = geometry.attributes;
 	for ( const key in attributeInfo.attributes ) {
 
-		const { array, type, length } = attributeInfo.getGroupArray( key, 0 );
-		const trimmedArray = new type( array.buffer, 0, length );
-
+		const requiredLength = attributeInfo.getTotalLength( key, groupCount );
+		const type = attributeInfo.getGroupArray( key, 0 ).type;
 		let attr = attributes[ key ];
-		if ( ! attr || attr.array.length < length ) {
+		if ( ! attr || attr.array.length < requiredLength ) {
 
 			// create the attribute if it doesn't exist yet
 			const refAttr = referenceGeometry.attributes[ key ];
-			attr = new BufferAttribute( trimmedArray.slice(), refAttr.itemSize, refAttr.normalized );
+			attr = new BufferAttribute( new type( requiredLength ), refAttr.itemSize, refAttr.normalized );
 			geometry.setAttribute( key, attr );
 			needsDisposal = true;
 
-		} else {
+		}
 
-			// set the new array data
-			attr.array.set( trimmedArray, 0 );
-			attr.needsUpdate = true;
+		let offset = 0;
+		for ( let i = 0; i < groupCount; i ++ ) {
+
+			const { array, type, length } = attributeInfo.getGroupArray( key, i );
+			const trimmedArray = new type( array.buffer, 0, length );
+			attr.array.set( trimmedArray, offset );
+			offset += trimmedArray.length;
 
 		}
 
-		drawRange = length / attr.itemSize;
-
+		attr.needsUpdate = true;
+		drawRange = requiredLength / attr.itemSize;
 
 	}
+
 
 	// update the draw range
 	geometry.setDrawRange( 0, drawRange );
@@ -140,7 +145,7 @@ export class Evaluator {
 
 		}
 
-		const { groups, materials } = performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups: this.useGroups } );
+		performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups: this.useGroups } );
 
 		if ( debug.enabled ) {
 
@@ -150,14 +155,14 @@ export class Evaluator {
 
 		applyToGeometry( targetGeometry, a.geometry, attributeData );
 
-		targetBrush.material = materials || targetBrush.material;
-		targetGeometry.clearGroups();
-		for ( let i = 0, l = groups.length; i < l; i ++ ) {
+		// targetBrush.material = materials || targetBrush.material;
+		// targetGeometry.clearGroups();
+		// for ( let i = 0, l = groups.length; i < l; i ++ ) {
 
-			const group = groups[ i ];
-			targetGeometry.addGroup( group.start, group.count, group.materialIndex );
+		// 	const group = groups[ i ];
+		// 	targetGeometry.addGroup( group.start, group.count, group.materialIndex );
 
-		}
+		// }
 
 		return targetBrush;
 

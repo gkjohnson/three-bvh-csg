@@ -6,12 +6,29 @@ export class TypedAttributeData {
 	constructor() {
 
 		this.attributes = {};
+		this.groupCount = 0;
 
 	}
 
 	getType( name ) {
 
 		return this.attributes[ name ].type;
+
+	}
+
+	getTotalLength( name ) {
+
+		const { groupCount, attributes } = this;
+		const attrList = attributes[ name ];
+
+		let length = 0;
+		for ( let i = 0; i < groupCount; i ++ ) {
+
+			length += attrList[ i ].length;
+
+		}
+
+		return length;
 
 	}
 
@@ -32,6 +49,8 @@ export class TypedAttributeData {
 			groups.push( newAttr );
 
 		}
+
+		this.groupCount = Math.max( this.groupCount, index + 1 );
 
 		return groups[ index ];
 
@@ -58,6 +77,8 @@ export class TypedAttributeData {
 	}
 
 	clear() {
+
+		this.groupCount = 0;
 
 		const { attributes } = this;
 		for ( const key in attributes ) {
