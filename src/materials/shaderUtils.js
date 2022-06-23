@@ -142,7 +142,7 @@ export function csgGridShaderMixin( shader ) {
 					float xCont = abs( dot( vec3( 1.0, 0.0, 0.0 ), worldNormal ) );
 
 					vec3 factors = getBlendFactors( worldNormal );
-					factors = smoothstep( vec3( 0.4 ), vec3( 0.6 ), vec3( 1.0 ) - factors );
+					factors = smoothstep( vec3( 0.475 ), vec3( 0.525 ), vec3( 1.0 ) - factors );
 
 					float weight = factors.x + factors.y + factors.z;
 					factors /= weight;
