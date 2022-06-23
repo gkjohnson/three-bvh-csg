@@ -455,10 +455,6 @@ export class TriangleSplitter {
 
 				console.warn( 'TriangleClipper: Coplanar clip not handled' );
 
-			} else {
-
-				tri.updateSide( plane, splittingTriangle, coplanarIndex );
-
 			}
 
 		}
