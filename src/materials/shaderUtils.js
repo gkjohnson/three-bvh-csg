@@ -33,10 +33,13 @@ export function csgGridShaderMixin( shader ) {
 
 	addWorldPosition( shader );
 
-	shader.fragmentShader = /* glsl */`
+	shader.fragmentShader = shader.fragmentShader.replace(
+		/#include <common>/,
+		v =>
+		/* glsl */`
+			${v}
 
 			uniform vec3 checkerboardColor;
-
 			float getCheckerboard( vec2 p, float scale ) {
 
 				p /= scale;
@@ -67,15 +70,15 @@ export function csgGridShaderMixin( shader ) {
 
 			}
 
-			vec3 getFaceColor( vec2 p ) {
+			vec3 getFaceColor( vec2 p, vec3 color ) {
 
 				float checkLarge = getCheckerboard( p, 1.0 );
 				float checkSmall = abs( getCheckerboard( p, 0.1 ) );
 				float lines = getGrid( p, 10.0, 0.5 );
 
 				vec3 checkColor = mix(
-					vec3( 0.7 ) * checkerboardColor,
-					vec3( 1.0 ) * checkerboardColor,
+					vec3( 0.7 ) * color,
+					vec3( 1.0 ) * color,
 					checkSmall * 0.4 + checkLarge * 0.6
 				);
 
@@ -123,12 +126,10 @@ export function csgGridShaderMixin( shader ) {
 					angleBetween( zVec, projY )
 				);
 
-				return vec3( xAngle, yAngle, zAngle ) / ( 0.5 * 3.1415966535 );
+				return vec3( xAngle, yAngle, zAngle ) / ( 0.5 * PI );
 
 			}
-
-			${shader.fragmentShader}
-		`.replace(
+		` ).replace(
 		/#include <normal_fragment_maps>/,
 		v =>
 		/* glsl */`${v}
@@ -147,9 +148,9 @@ export function csgGridShaderMixin( shader ) {
 					factors /= weight;
 
 					vec3 color =
-						getFaceColor( wPosition.yz ) * factors.x +
-						getFaceColor( wPosition.xz ) * factors.y +
-						getFaceColor( wPosition.xy ) * factors.z;
+						getFaceColor( wPosition.yz, diffuse ) * factors.x +
+						getFaceColor( wPosition.xz, diffuse ) * factors.y +
+						getFaceColor( wPosition.xy, diffuse ) * factors.z;
 
 					diffuseColor.rgb = color;
 
