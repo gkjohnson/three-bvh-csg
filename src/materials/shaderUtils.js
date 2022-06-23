@@ -52,12 +52,8 @@ export function TopoLineShaderMixin( shader ) {
 				stride = abs( stride );
 
 				vec2 pWidth = fwidth( p );
-				// vec2 value = smoothstep( 0.5 - pWidth / 2.0, 0.5 + pWidth * 2.0, stride );
-				// float result = value.x * value.y + ( 1.0 - value.x ) * ( 1.0 - value.y );
-
 				vec2 line = smoothstep( 1.0 - pWidth / 2.0, 1.0 + pWidth / 2.0, stride + thickness * pWidth );
 
-				// return stride.x;
 				return max( line.x, line.y );
 
 			}
@@ -65,19 +61,61 @@ export function TopoLineShaderMixin( shader ) {
 			vec3 getFaceColor( vec2 p ) {
 
 				float checkLarge = getCheckerboard( p, 1.0 );
-				float checkSmall = abs( checkLarge - getCheckerboard( p, 0.5 ) );
-				float lines = getGrid( p, 10.0, 1.0 );
+				float checkSmall = abs( getCheckerboard( p, 0.1 ) );
+				float lines = getGrid( p, 10.0, 0.5 );
 
-				vec3 c = mix( vec3( 1.0, 0.6, 0.0 ), vec3( 1.0 ), 0.25 );
+				vec3 c = mix( vec3( 1.0, 0.3, 0.0 ), vec3( 1.0 ), 0.0 );
 				vec3 checkColor = mix(
-					vec3( 0.85 ) * c,
+					vec3( 0.7 ) * c,
 					vec3( 1.0 ) * c,
-					checkSmall * 0.25 + checkLarge * 0.75
+					checkSmall * 0.4 + checkLarge * 0.6
 				);
 
 				vec3 gridColor = vec3( 1.0 );
 
 				return mix( checkColor, gridColor, lines );
+
+			}
+
+			float angleBetween( vec3 a, vec3 b ) {
+
+				return acos( abs( dot( a, b ) ) );
+
+			}
+
+			vec3 planeProject( vec3 norm, vec3 other ) {
+
+				float d = dot( norm, other );
+				return normalize( other - norm * d );
+
+			}
+
+			vec3 getBlendFactors( vec3 norm ) {
+
+				vec3 xVec = vec3( 1.0, 0.0, 0.0 );
+				vec3 yVec = vec3( 0.0, 1.0, 0.0 );
+				vec3 zVec = vec3( 0.0, 0.0, 1.0 );
+
+				vec3 projX = planeProject( xVec, norm );
+				vec3 projY = planeProject( yVec, norm );
+				vec3 projZ = planeProject( zVec, norm );
+
+				float xAngle = max(
+					angleBetween( xVec, projY ),
+					angleBetween( xVec, projZ )
+				);
+
+				float yAngle = max(
+					angleBetween( yVec, projX ),
+					angleBetween( yVec, projZ )
+				);
+
+				float zAngle = max(
+					angleBetween( zVec, projX ),
+					angleBetween( zVec, projY )
+				);
+
+				return vec3( xAngle, yAngle, zAngle ) / ( 0.5 * 3.1415966535 );
 
 			}
 
@@ -94,83 +132,18 @@ export function TopoLineShaderMixin( shader ) {
 					float zCont = abs( dot( vec3( 0.0, 0.0, 1.0 ), worldNormal ) );
 					float xCont = abs( dot( vec3( 1.0, 0.0, 0.0 ), worldNormal ) );
 
+					vec3 factors = getBlendFactors( worldNormal );
+					factors = smoothstep( vec3( 0.4 ), vec3( 0.6 ), vec3( 1.0 ) - factors );
 
-					vec3 color = vec3( 0.0 );
-					if ( yCont > xCont && yCont > zCont ) {
+					float weight = factors.x + factors.y + factors.z;
+					factors /= weight;
 
-						color = getFaceColor( wPosition.xz );
+					vec3 color =
+						getFaceColor( wPosition.yz ) * factors.x +
+						getFaceColor( wPosition.xz ) * factors.y +
+						getFaceColor( wPosition.xy ) * factors.z;
 
-					} else if ( xCont > zCont ) {
-
-						color = getFaceColor( wPosition.yz );
-
-					} else {
-
-						color = getFaceColor( wPosition.xy );
-
-					}
-
-					// float total = xCont + yCont + zCont;
-
-
-
-					// yCont /= total;
-					// zCont /= total;
-					// xCont /= total;
-
-					// xCont = step( 0.7, xCont );
-					// yCont = 0.0;
-					// zCont = 0.0;
-
-					// vec3 color =
-					// 	getFaceColor( wPosition.yz ) * xCont +
-					// 	getFaceColor( wPosition.xz ) * yCont +
-					// 	getFaceColor( wPosition.xy ) * zCont;
-
-					gl_FragColor = vec4( color, 1.0 );
-					// gl_FragColor.a = 1.0;
-
-
-
-					return;
-
-
-
-
-
-
-
-					// // If a face sits exactly on a topo line then bump the delta so we don't divide by zero
-					// float yPosDelta = max( fwidth( wPosition.y ), 0.0001 );
-
-					// // Calculate the fade distance
-					// float fadeFactor = 1.0 - clamp( ( vViewPosition.z - topoFadeStart ) * ( 1.0 / topoFadeDist ), 0.0, 1.0 );
-
-					// // Calculate if this is an emphasized line or not
-					// float lineIndex = mod( wPosition.y + topoLineOffset, topoLineSpacing * float( topoLineEmphasisMod ) );
-					// lineIndex -= topoLineSpacing;
-					// lineIndex = abs( lineIndex );
-					// lineIndex = step( lineIndex, topoLineSpacing * 0.5 );
-
-					// // Compute the emphasis thickness
-					// float emphasized = lineIndex == 0.0 ? 0.0 : 1.0;
-					// float thickness = mix( 0.0, emphasized, fadeFactor );
-
-					// // Compute the added thickness for when lines get close together so we don't get moire
-					// float blend = smoothstep( topoLineSpacing * 0.5, topoLineSpacing, saturate( yPosDelta ) );
-					// thickness += blend + topoLineThickness;
-
-					// float lineFalloff = mod( wPosition.y + topoLineOffset, topoLineSpacing ) / topoLineSpacing;
-					// lineFalloff = max( lineFalloff, 1.0 - lineFalloff ) * 2.0 - 1.0;
-
-					// float topo = smoothstep(
-					// 	1.0,
-					// 	1.0 - yPosDelta * 2.0 / topoLineSpacing,
-					// 	lineFalloff + yPosDelta * thickness / topoLineSpacing
-					// );
-					// topo = mix( 1.0, topo, max( fadeFactor, lineIndex )  );
-
-					// diffuseColor = mix( diffuseColor, vec4( topoLineColor, 1.0 ), 1.0 - topo );
+					diffuseColor.rgb = color;
 
 				}
 				`,
