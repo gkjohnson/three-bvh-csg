@@ -11,6 +11,7 @@ import {
 	EdgesHelper,
 	TriangleSetHelper,
 	logTriangleDefinitions,
+	GridMaterial,
 	ADDITION,
 	SUBTRACTION,
 	INTERSECTION,
@@ -36,6 +37,7 @@ const params = {
 	shadows: true,
 	vertexColors: false,
 	flatShading: false,
+	gridTexture: false,
 	useGroups: true,
 
 	enableDebugTelemetry: true,
@@ -124,8 +126,8 @@ async function init() {
 	csgEvaluator.attributes = [ 'position', 'normal' ];
 
 	// initialize brushes
-	brush1 = new Brush( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial() );
-	brush2 = new Brush( new THREE.BoxBufferGeometry(), new THREE.MeshStandardMaterial() );
+	brush1 = new Brush( new THREE.BoxBufferGeometry(), new GridMaterial() );
+	brush2 = new Brush( new THREE.BoxBufferGeometry(), new GridMaterial() );
 	brush2.position.set( - 0.75, 0.75, 0 );
 	brush2.scale.setScalar( 0.75 );
 
@@ -174,6 +176,13 @@ async function init() {
 	mat.transparent = false;
 	mat.depthWrite = true;
 	materialMap.set( brush2.material, mat );
+
+	materialMap.forEach( ( m1, m2 ) => {
+
+		m1.enableGrid = params.gridTexture;
+		m2.enableGrid = params.gridTexture;
+
+	} );
 
 	// add object displaying the result
 	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( {
@@ -250,7 +259,16 @@ async function init() {
 		needsUpdate = true;
 
 	} );
+	gui.add( params, 'gridTexture' ).onChange( v => {
 
+		materialMap.forEach( ( m1, m2 ) => {
+
+			m1.enableGrid = v;
+			m2.enableGrid = v;
+
+		} );
+
+	} );
 	gui.add( params, 'flatShading' ).onChange( v => {
 
 		brush1.material.flatShading = v;

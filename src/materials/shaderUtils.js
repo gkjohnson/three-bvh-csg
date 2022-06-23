@@ -33,6 +33,8 @@ export function csgGridShaderMixin( shader ) {
 
 	addWorldPosition( shader );
 
+	shader.defines = { CSG_GRID: 1 };
+
 	shader.fragmentShader = shader.fragmentShader.replace(
 		/#include <common>/,
 		v =>
@@ -133,6 +135,7 @@ export function csgGridShaderMixin( shader ) {
 		/#include <normal_fragment_maps>/,
 		v =>
 		/* glsl */`${v}
+				#if CSG_GRID
 				{
 
 					vec3 worldNormal = inverseTransformDirection( normal, viewMatrix );
@@ -148,13 +151,14 @@ export function csgGridShaderMixin( shader ) {
 					factors /= weight;
 
 					vec3 color =
-						getFaceColor( wPosition.yz, diffuse ) * factors.x +
-						getFaceColor( wPosition.xz, diffuse ) * factors.y +
-						getFaceColor( wPosition.xy, diffuse ) * factors.z;
+						getFaceColor( wPosition.yz, diffuseColor.rgb ) * factors.x +
+						getFaceColor( wPosition.xz, diffuseColor.rgb ) * factors.y +
+						getFaceColor( wPosition.xy, diffuseColor.rgb ) * factors.z;
 
 					diffuseColor.rgb = color;
 
 				}
+				#endif
 				`,
 	);
 

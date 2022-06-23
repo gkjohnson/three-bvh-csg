@@ -4,6 +4,7 @@ export * from './core/Operation.js';
 export * from './core/TriangleSplitter.js';
 export * from './core/Evaluator.js';
 export * from './core/HalfEdgeMap.js';
+export * from './materials/GridMaterial.js';
 
 export * from './core/constants.js';
 export * from './core/debugUtils.js';
