@@ -1,3 +1,5 @@
+import { Color } from 'three';
+
 function addWorldPosition( shader ) {
 
 	if ( /varying\s+vec3\s+wPosition/.test( shader.vertexShader ) ) return;
@@ -22,11 +24,18 @@ function addWorldPosition( shader ) {
 
 }
 
-export function TopoLineShaderMixin( shader ) {
+export function csgGridShaderMixin( shader ) {
+
+	shader.uniforms = {
+		...shader.uniforms,
+		checkerboardColor: { value: new Color( 0x111111 ) }
+	};
 
 	addWorldPosition( shader );
 
 	shader.fragmentShader = /* glsl */`
+
+			uniform vec3 checkerboardColor;
 
 			float getCheckerboard( vec2 p, float scale ) {
 
@@ -64,10 +73,9 @@ export function TopoLineShaderMixin( shader ) {
 				float checkSmall = abs( getCheckerboard( p, 0.1 ) );
 				float lines = getGrid( p, 10.0, 0.5 );
 
-				vec3 c = mix( vec3( 1.0, 0.3, 0.0 ), vec3( 1.0 ), 0.0 );
 				vec3 checkColor = mix(
-					vec3( 0.7 ) * c,
-					vec3( 1.0 ) * c,
+					vec3( 0.7 ) * checkerboardColor,
+					vec3( 1.0 ) * checkerboardColor,
 					checkSmall * 0.4 + checkLarge * 0.6
 				);
 
