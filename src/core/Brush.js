@@ -103,6 +103,7 @@ export class Brush extends Mesh {
 		const { geometry } = this;
 		geometry.halfEdges = null;
 		geometry.boundsTree = null;
+		geometry.groupIndices = null;
 
 	}
 

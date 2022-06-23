@@ -8,10 +8,15 @@
 
 ![](./docs/csg-banner.png)
 
-An _in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh). Contributions welcome!
+An flexible, memory compact, fast and dynamic CSG implementation on top of [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh). More than 100 times faster than other BSP-based three.js CSG libraries in complex cases.
+
+Contributions welcome!
 
 # Roadmap
-- Hierarchical operations
+
+- Hierarchical operations [#6](https://github.com/gkjohnson/three-bvh-csg/issues/6)
+- Polygon splitting [#4](https://github.com/gkjohnson/three-bvh-csg/issues/4)
+- Worker Support [#14](https://github.com/gkjohnson/three-bvh-csg/issues/14)
 
 # Examples
 
