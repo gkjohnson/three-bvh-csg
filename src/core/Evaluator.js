@@ -253,18 +253,38 @@ export class Evaluator {
 
 	evaluateHierarchy( root ) {
 
-		let _mesh = new Brush();
 		root.updateMatrixWorld( true );
+
+		const flatTraverse = ( obj, cb ) => {
+
+			const children = obj.children;
+			for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+				const child = children[ i ];
+				if ( child.isGroup ) {
+
+					flatTraverse( child, cb );
+
+				} else {
+
+					cb( child );
+
+				}
+
+			}
+
+		};
+
 
 		const traverse = ( brush ) => {
 
 			const children = brush.children;
 			let didChange = false;
-			for ( let i = 0, l = children.length; i < l; i ++ ) {
+			flatTraverse( brush, child => {
 
-				didChange = traverse( children[ i ] ) || didChange;
+				didChange = traverse( child ) || didChange;
 
-			}
+			} );
 
 			const isDirty = brush.isDirty();
 			if ( isDirty ) {
@@ -275,25 +295,23 @@ export class Evaluator {
 
 			if ( didChange ) {
 
-				_mesh.geometry = brush._cachedGeometry;
-				_mesh.material = null;
-				for ( let i = 0, l = children.length; i < l; i ++ ) {
+				let result;
+				flatTraverse( brush, child => {
 
-					const child = children[ i ];
-					if ( i === 0 ) {
+					if ( ! result ) {
 
-						_mesh = this.evaluate( brush, child, child.operation );
+						result = this.evaluate( brush, child, child.operation );
 
 					} else {
 
-						_mesh = this.evaluate( _mesh, child, child.operation );
+						result = this.evaluate( result, child, child.operation );
 
 					}
 
-				}
+				} );
 
-				brush._cachedGeometry = _mesh.geometry;
-				brush._cachedMaterials = _mesh.material;
+				brush._cachedGeometry = result.geometry;
+				brush._cachedMaterials = result.material;
 				return true;
 
 			} else {

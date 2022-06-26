@@ -133,14 +133,16 @@ async function init() {
 	const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 2, 20 ), gridMat );
 	hole.operation = SUBTRACTION;
 	hole.rotateX( Math.PI / 2 );
-	root.add( hole );
 
 	const hole2 = new Operation( new THREE.BoxBufferGeometry( 1, 3, 2 ), gridMat );
 	hole2.operation = SUBTRACTION;
 	hole2.position.y = - 1.5 - 1e-5;
-	root.add( hole2 );
 
-	transformControls.attach( hole );
+	const holeGroup = new THREE.Group();
+	holeGroup.add( hole, hole2 );
+	root.add( holeGroup );
+
+	transformControls.attach( holeGroup );
 
 	// gui
 	gui = new GUI();
