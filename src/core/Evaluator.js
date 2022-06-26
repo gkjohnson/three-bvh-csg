@@ -1,4 +1,4 @@
-import { BufferAttribute } from 'three';
+import { BufferAttribute, Mesh } from 'three';
 import { TriangleSplitter } from './TriangleSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './OperationDebugData.js';
@@ -253,7 +253,65 @@ export class Evaluator {
 
 	evaluateHierarchy( root ) {
 
-		// TODO
+		const _mesh = new Mesh();
+
+		const traverse = ( brush ) => {
+
+			const children = brush.children;
+			let didChange = false;
+			for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+				didChange = traverse( children[ i ] );
+
+			}
+
+			if ( didChange ) {
+
+				_mesh.geometry = brush._cachedGeometry;
+				_mesh.material = null;
+				for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+					const child = children[ i ];
+					if ( i === 0 ) {
+
+						this.evaluate( brush, child, child.operation, _mesh );
+
+					} else {
+
+						this.evaluate( _mesh, child, child.operation, _mesh );
+
+					}
+
+				}
+
+				brush._cachedGeometry = _mesh._cachedGeometry;
+				brush._cachedMaterials = _mesh._cachedMaterials;
+				if ( brush.isOperation ) {
+
+					brush.updateSiblings();
+
+				}
+
+				return true;
+
+			} else {
+
+				const isDirty = brush.isDirty();
+				if ( isDirty && brush.isOperation ) {
+
+					brush.updateSiblings();
+
+				}
+
+				return isDirty;
+
+			}
+
+		};
+
+		traverse( root );
+
+		return new Brush( root._cachedGeometry, root._cachedMaterials );
 
 	}
 
