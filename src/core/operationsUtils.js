@@ -1,6 +1,6 @@
 import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle, Line3 } from 'three';
 import { IntersectionMap } from './IntersectionMap.js';
-import { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE, PASSTHROUGH } from './constants.js';
+import { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } from './constants.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
@@ -272,8 +272,8 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 			}
 
 			break;
-		case PASSTHROUGH:
-			return ADD_TRI;
+		default:
+			throw new Error( `Unrecognized CSG operation enum "${ operation }".` );
 
 	}
 
