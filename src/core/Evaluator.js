@@ -254,6 +254,7 @@ export class Evaluator {
 	evaluateHierarchy( root ) {
 
 		const _mesh = new Mesh();
+		root.updateMatrixWorld( true );
 
 		const traverse = ( brush ) => {
 
@@ -284,8 +285,8 @@ export class Evaluator {
 
 				}
 
-				brush._cachedGeometry = _mesh._cachedGeometry;
-				brush._cachedMaterials = _mesh._cachedMaterials;
+				brush._cachedGeometry = _mesh.geometry;
+				brush._cachedMaterials = _mesh.material;
 				if ( brush.isOperation ) {
 
 					brush.updateSiblings();

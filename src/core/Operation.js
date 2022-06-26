@@ -6,7 +6,7 @@ export class Operation extends Brush {
 
 	constructor( ...args ) {
 
-		super( args );
+		super( ...args );
 
 		this.isOperation = true;
 		this.operation = ADDITION;
@@ -21,20 +21,37 @@ export class Operation extends Brush {
 
 	updateSiblings() {
 
-		const index = parent.children.indexOf( this );
-		const prev = parent.children.children[ index - 1 ] || null;
-		const next = parent.children.children[ index + 1 ] || null;
-		this._previousSibling = prev;
-		this._nextSibling = next;
+		const parent = this.parent;
+		if ( parent ) {
+
+			const index = parent.children.indexOf( this );
+			const prev = parent.children[ index - 1 ] || null;
+			const next = parent.children[ index + 1 ] || null;
+			this._previousSibling = prev;
+			this._nextSibling = next;
+
+		} else {
+
+			this._previousSibling = null;
+			this._nextSibling = null;
+
+		}
 
 	}
 
 	isDirty() {
 
 		const parent = this.parent;
-		const index = parent.children.indexOf( this );
-		const prev = parent.children.children[ index - 1 ] || null;
-		const next = parent.children.children[ index + 1 ] || null;
+		let prev = null;
+		let next = null;
+
+		if ( parent ) {
+
+			const index = parent.children.indexOf( this );
+			prev = parent.children[ index - 1 ] || null;
+			next = parent.children[ index + 1 ] || null;
+
+		}
 
 		return this.operation !== this._previousOperation ||
 			this._previousSibling !== prev ||
