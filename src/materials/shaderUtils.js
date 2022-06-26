@@ -76,7 +76,7 @@ export function csgGridShaderMixin( shader ) {
 
 				float checkLarge = getCheckerboard( p, 1.0 );
 				float checkSmall = abs( getCheckerboard( p, 0.1 ) );
-				float lines = getGrid( p, 10.0, 0.5 );
+				float lines = getGrid( p, 10.0, 1.0 );
 
 				vec3 checkColor = mix(
 					vec3( 0.7 ) * color,

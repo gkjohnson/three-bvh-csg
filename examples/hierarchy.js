@@ -121,6 +121,8 @@ async function init() {
 	csgEvaluator.attributes = [ 'position', 'normal' ];
 
 	const gridMat = new GridMaterial();
+	gridMat.color.set( 0xffc400 ).convertSRGBToLinear();
+
 	const root = new Operation( new THREE.BoxBufferGeometry( 20, 5, 1 ), gridMat );
 
 	csgEvaluator.useGroups = false;
