@@ -14,49 +14,19 @@ export class Operation extends Brush {
 		this._cachedGeometry = new BufferGeometry();
 		this._cachedMaterials = null;
 		this._previousOperation = null;
-		this._previousSibling = null;
-		this._nextSibling = null;
 
 	}
 
-	updateSiblings() {
+	markUpdated() {
 
-		const parent = this.parent;
-		if ( parent ) {
-
-			const index = parent.children.indexOf( this );
-			const prev = parent.children[ index - 1 ] || null;
-			const next = parent.children[ index + 1 ] || null;
-			this._previousSibling = prev;
-			this._nextSibling = next;
-
-		} else {
-
-			this._previousSibling = null;
-			this._nextSibling = null;
-
-		}
+		super.markUpdated();
+		this._previousOperation = this.operation;
 
 	}
 
 	isDirty() {
 
-		const parent = this.parent;
-		let prev = null;
-		let next = null;
-
-		if ( parent ) {
-
-			const index = parent.children.indexOf( this );
-			prev = parent.children[ index - 1 ] || null;
-			next = parent.children[ index + 1 ] || null;
-
-		}
-
-		return this.operation !== this._previousOperation ||
-			this._previousSibling !== prev ||
-			this._nextSibling !== next ||
-			super.isDirty();
+		return this.operation !== this._previousOperation || super.isDirty();
 
 	}
 

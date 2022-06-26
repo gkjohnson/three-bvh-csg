@@ -262,7 +262,14 @@ export class Evaluator {
 			let didChange = false;
 			for ( let i = 0, l = children.length; i < l; i ++ ) {
 
-				didChange = traverse( children[ i ] );
+				didChange = traverse( children[ i ] ) || didChange;
+
+			}
+
+			const isDirty = brush.isDirty();
+			if ( isDirty ) {
+
+				brush.markUpdated();
 
 			}
 
@@ -275,11 +282,11 @@ export class Evaluator {
 					const child = children[ i ];
 					if ( i === 0 ) {
 
-						_mesh = this.evaluate( brush, child, child.operation, _mesh );
+						_mesh = this.evaluate( brush, child, child.operation );
 
 					} else {
 
-						_mesh = this.evaluate( _mesh, child, child.operation, _mesh );
+						_mesh = this.evaluate( _mesh, child, child.operation );
 
 					}
 
@@ -287,22 +294,9 @@ export class Evaluator {
 
 				brush._cachedGeometry = _mesh.geometry;
 				brush._cachedMaterials = _mesh.material;
-				if ( brush.isOperation ) {
-
-					brush.updateSiblings();
-
-				}
-
 				return true;
 
 			} else {
-
-				const isDirty = brush.isDirty();
-				if ( isDirty && brush.isOperation ) {
-
-					brush.updateSiblings();
-
-				}
 
 				return isDirty;
 

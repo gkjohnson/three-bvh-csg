@@ -17,6 +17,8 @@ window.logTriangleDefinitions = logTriangleDefinitions;
 
 const params = {
 
+	snap: true,
+
 	brush1Shape: 'box',
 	brush1Complexity: 1,
 	brush1Color: '#ffffff',
@@ -45,11 +47,10 @@ const params = {
 
 let renderer, camera, scene, gui, outputContainer;
 let controls, transformControls;
-let resultObject, wireframeResult, light;
-let needsUpdate = true;
+let light;
 let csgEvaluator;
 
-const materialMap = new Map();
+let result, root, gridMat;
 
 init();
 
@@ -105,9 +106,16 @@ async function init() {
 		controls.enabled = ! e.value;
 
 	} );
-	transformControls.addEventListener( 'objectChange', () => {
+	transformControls.addEventListener( 'objectChange', e => {
 
-		needsUpdate = true;
+		if ( params.snap ) {
+
+			const o = transformControls.object;
+			o.position.x = Math.floor( o.position.x * 1e1 ) * 1e-1;
+			o.position.y = Math.floor( o.position.y * 1e1 ) * 1e-1;
+			o.position.z = Math.floor( o.position.z * 1e1 ) * 1e-1;
+
+		}
 
 	} );
 	scene.add( transformControls );
@@ -116,10 +124,10 @@ async function init() {
 	csgEvaluator = new Evaluator();
 	csgEvaluator.attributes = [ 'position', 'normal' ];
 
-	const gridMat = new GridMaterial();
+	gridMat = new GridMaterial();
 	gridMat.color.set( 0xffc400 ).convertSRGBToLinear();
 
-	const root = new Operation( new THREE.BoxBufferGeometry( 20, 5, 1 ), gridMat );
+	root = new Operation( new THREE.BoxBufferGeometry( 10, 5, 1 ), gridMat );
 
 	csgEvaluator.useGroups = false;
 	const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 2, 20 ), gridMat );
@@ -132,46 +140,13 @@ async function init() {
 	hole2.position.y = - 1.5 - 1e-5;
 	root.add( hole2 );
 
-	const res = csgEvaluator.evaluateHierarchy( root );
-	res.material = gridMat;
-	scene.add( res );
-	res.position.z = 5;
-
-	console.log( res );
-	scene.add( root );
-
-
-	// add object displaying the result
-	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( {
-		flatShading: false,
-		polygonOffset: true,
-		polygonOffsetUnits: 0.1,
-		polygonOffsetFactor: 0.1,
-	} ) );
-	resultObject.castShadow = true;
-	resultObject.receiveShadow = true;
-	scene.add( resultObject );
-
-	// add wireframe representation
-	wireframeResult = new THREE.Mesh( resultObject.geometry, new THREE.MeshBasicMaterial( {
-		wireframe: true,
-		color: 0,
-		opacity: 0.15,
-		transparent: true,
-	} ) );
-	scene.add( wireframeResult );
+	transformControls.attach( hole );
 
 	// gui
 	gui = new GUI();
-	gui.add( params, 'operation', { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
-
-		needsUpdate = true;
-
-	} );
-	gui.add( params, 'displayBrushes' );
+	gui.add( params, 'snap' );
 	gui.add( params, 'displayControls' );
 	gui.add( params, 'shadows' );
-	gui.add( params, 'useGroups' ).onChange( () => needsUpdate = true );
 
 	window.addEventListener( 'resize', function () {
 
@@ -208,18 +183,24 @@ function render() {
 
 	requestAnimationFrame( render );
 
-	if ( needsUpdate ) {
+	const startTime = window.performance.now();
 
-		needsUpdate = false;
+	if ( result ) {
 
-		const startTime = window.performance.now();
-
-		const deltaTime = window.performance.now() - startTime;
-		outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
+		result.geometry.dispose();
+		result.parent.remove( result );
 
 	}
 
-	wireframeResult.visible = params.wireframe;
+	result = csgEvaluator.evaluateHierarchy( root );
+	result.material = gridMat;
+	scene.add( result );
+	result.position.z = 5;
+	scene.add( root );
+
+	const deltaTime = window.performance.now() - startTime;
+	outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
+
 
 	light.castShadow = params.shadows;
 
