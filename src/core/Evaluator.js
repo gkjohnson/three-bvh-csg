@@ -253,7 +253,7 @@ export class Evaluator {
 
 	evaluateHierarchy( root ) {
 
-		const _mesh = new Mesh();
+		let _mesh = new Brush();
 		root.updateMatrixWorld( true );
 
 		const traverse = ( brush ) => {
@@ -275,11 +275,11 @@ export class Evaluator {
 					const child = children[ i ];
 					if ( i === 0 ) {
 
-						this.evaluate( brush, child, child.operation, _mesh );
+						_mesh = this.evaluate( brush, child, child.operation, _mesh );
 
 					} else {
 
-						this.evaluate( _mesh, child, child.operation, _mesh );
+						_mesh = this.evaluate( _mesh, child, child.operation, _mesh );
 
 					}
 
