@@ -261,7 +261,7 @@ export class Evaluator {
 			for ( let i = 0, l = children.length; i < l; i ++ ) {
 
 				const child = children[ i ];
-				if ( child.isGroup ) {
+				if ( child.isOperationGroup ) {
 
 					flatTraverse( child, cb );
 
@@ -280,11 +280,12 @@ export class Evaluator {
 
 			const children = brush.children;
 			let didChange = false;
-			flatTraverse( brush, child => {
+			for ( let i = 0, l = children.length; i < l; i ++ ) {
 
+				const child = children[ i ];
 				didChange = traverse( child ) || didChange;
 
-			} );
+			}
 
 			const isDirty = brush.isDirty();
 			if ( isDirty ) {
@@ -293,7 +294,7 @@ export class Evaluator {
 
 			}
 
-			if ( didChange ) {
+			if ( didChange && ! brush.isOperationGroup ) {
 
 				let result;
 				flatTraverse( brush, child => {
@@ -316,7 +317,7 @@ export class Evaluator {
 
 			} else {
 
-				return isDirty;
+				return didChange || isDirty;
 
 			}
 

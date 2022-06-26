@@ -6,6 +6,7 @@ import {
 	Evaluator,
 	logTriangleDefinitions,
 	Operation,
+	OperationGroup,
 	GridMaterial,
 	ADDITION,
 	SUBTRACTION,
@@ -138,7 +139,7 @@ async function init() {
 	hole2.operation = SUBTRACTION;
 	hole2.position.y = - 1.5 - 1e-5;
 
-	const holeGroup = new THREE.Group();
+	const holeGroup = new OperationGroup();
 	holeGroup.add( hole, hole2 );
 	root.add( holeGroup );
 
