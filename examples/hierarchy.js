@@ -2,11 +2,7 @@ import * as THREE from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { MeshBVHVisualizer } from 'three-mesh-bvh';
 import {
-	Brush,
 	Evaluator,
 	logTriangleDefinitions,
 	Operation,
@@ -126,7 +122,7 @@ async function init() {
 	const root = new Operation( new THREE.BoxBufferGeometry( 20, 5, 1 ), gridMat );
 
 	csgEvaluator.useGroups = false;
-	const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 2, 20 ), gridMat) );
+	const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 2, 20 ), gridMat );
 	hole.operation = SUBTRACTION;
 	hole.rotateX( Math.PI / 2 );
 	root.add( hole );
@@ -137,11 +133,11 @@ async function init() {
 	root.add( hole2 );
 
 	const res = csgEvaluator.evaluateHierarchy( root );
-	res.material = gridMat
+	res.material = gridMat;
 	scene.add( res );
 	res.position.z = 5;
 
-	console.log(res)
+	console.log( res );
 	scene.add( root );
 
 

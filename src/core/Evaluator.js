@@ -1,4 +1,4 @@
-import { BufferAttribute, Mesh } from 'three';
+import { BufferAttribute } from 'three';
 import { TriangleSplitter } from './TriangleSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './OperationDebugData.js';
