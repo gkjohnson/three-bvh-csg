@@ -4,13 +4,20 @@ import { BACK_SIDE, FRONT_SIDE, COPLANAR } from './operationsUtils.js';
 
 const EPSILON = 1e-14;
 const COPLANAR_EPSILON = 1e-7;
-const AREA_EPSILON = 1e-8;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _exTriangle = new ExtendedTriangle();
+
+export function isTriDegenerate( tri ) {
+
+	return tri.a.distanceToSquared( tri.b ) < EPSILON ||
+		tri.a.distanceToSquared( tri.c ) < EPSILON ||
+		tri.b.distanceToSquared( tri.c ) < EPSILON;
+
+}
 
 // Triangle with fields used to track whether it falls on the same side of all planes
 // being used to clip it. Side is set to "null" if it cannot be determined
@@ -246,10 +253,15 @@ export class TriangleSplitter {
 			const { a, b, c } = tri;
 
 			// skip the triangle if we don't intersect with it
-			if ( splittingTriangle && ! splittingTriangle.intersectsTriangle( tri, _edge ) ) {
+			if ( splittingTriangle ) {
 
-				tri.updateSide( plane, splittingTriangle, coplanarIndex );
-				continue;
+				if ( ! splittingTriangle.intersectsTriangle( tri, _edge ) || _edge.distance() < 1e-5 ) {
+
+					tri.updateSide( plane, splittingTriangle, coplanarIndex );
+					tri.side = null;
+					continue;
+
+				}
 
 			}
 
@@ -346,17 +358,29 @@ export class TriangleSplitter {
 					nextTri.b.copy( _foundEdge.end );
 					nextTri.c.copy( _foundEdge.start );
 
-					triangles.push( nextTri );
+					if ( ! isTriDegenerate( nextTri ) ) {
+
+						triangles.push( nextTri );
+						nextTri.initFrom( tri );
+						nextTri.updateSide( plane, splittingTriangle, coplanarIndex );
+
+					}
 
 					tri.a.copy( arr[ otherVert1 ] );
 					tri.b.copy( _foundEdge.start );
 					tri.c.copy( _foundEdge.end );
 
-					nextTri.initFrom( tri );
-					nextTri.updateSide( plane, splittingTriangle, coplanarIndex );
+					if ( isTriDegenerate( tri ) ) {
 
-					tri.side = null;
-					tri.updateSide( plane, splittingTriangle, coplanarIndex );
+						triangles.splice( i, 1 );
+						i --;
+						l --;
+
+					} else {
+
+						tri.updateSide( plane, splittingTriangle, coplanarIndex );
+
+					}
 
 				} else {
 
@@ -421,7 +445,7 @@ export class TriangleSplitter {
 					tri.c.copy( _foundEdge.start );
 
 					// don't add degenerate triangles to the list
-					if ( nextTri1.getArea() > AREA_EPSILON ) {
+					if ( ! isTriDegenerate( nextTri1 ) ) {
 
 						triangles.push( nextTri1 );
 						nextTri1.initFrom( tri );
@@ -429,7 +453,7 @@ export class TriangleSplitter {
 
 					}
 
-					if ( nextTri2.getArea() > AREA_EPSILON ) {
+					if ( ! isTriDegenerate( nextTri2 ) ) {
 
 						triangles.push( nextTri2 );
 						nextTri2.initFrom( tri );
@@ -437,7 +461,7 @@ export class TriangleSplitter {
 
 					}
 
-					if ( tri.getArea() < AREA_EPSILON ) {
+					if ( isTriDegenerate( tri ) ) {
 
 						triangles.splice( i, 1 );
 						i --;
