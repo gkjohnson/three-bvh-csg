@@ -251,7 +251,7 @@ export class Evaluator {
 
 	}
 
-	evaluateHierarchy( root ) {
+	evaluateHierarchy( root, target = new Brush() ) {
 
 		root.updateMatrixWorld( true );
 
@@ -325,7 +325,10 @@ export class Evaluator {
 
 		traverse( root );
 
-		return new Brush( root._cachedGeometry, root._cachedMaterials );
+		target.geometry = root._cachedGeometry;
+		target.material = root._cachedMaterials;
+
+		return target;
 
 	}
 
