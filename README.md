@@ -14,6 +14,7 @@ Contributions welcome!
 
 # Roadmap
 
+- Fix triangle splitting / missing triangle issues
 - Hierarchical operations [#6](https://github.com/gkjohnson/three-bvh-csg/issues/6)
 - Polygon splitting [#4](https://github.com/gkjohnson/three-bvh-csg/issues/4)
 - Worker Support [#14](https://github.com/gkjohnson/three-bvh-csg/issues/14)
