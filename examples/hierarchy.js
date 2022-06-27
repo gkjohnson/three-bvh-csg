@@ -139,7 +139,7 @@ async function init() {
 
 		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1, 3, 1 ), gridMat );
 		hole2.operation = SUBTRACTION;
-		hole2.position.y = - 1.5 - 1e-5;
+		hole2.position.y = - 1.5;
 
 		const doorGroup = new OperationGroup();
 		doorGroup.add( hole, hole2 );
