@@ -124,26 +124,77 @@ async function init() {
 	// bunny mesh has no UVs so skip that attribute
 	csgEvaluator = new Evaluator();
 	csgEvaluator.attributes = [ 'position', 'normal' ];
+	csgEvaluator.useGroups = false;
 
 	gridMat = new GridMaterial();
 	gridMat.color.set( 0xffc400 ).convertSRGBToLinear();
 
-	root = new Operation( new THREE.BoxBufferGeometry( 10, 5, 1 ), gridMat );
+	root = new Operation( new THREE.BoxBufferGeometry( 10, 5, 0.5 ), gridMat );
 
-	csgEvaluator.useGroups = false;
-	const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 2, 20 ), gridMat );
-	hole.operation = SUBTRACTION;
-	hole.rotateX( Math.PI / 2 );
+	{
 
-	const hole2 = new Operation( new THREE.BoxBufferGeometry( 1, 3, 2 ), gridMat );
-	hole2.operation = SUBTRACTION;
-	hole2.position.y = - 1.5 - 1e-5;
+		const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 1, 20 ), gridMat );
+		hole.operation = SUBTRACTION;
+		hole.rotateX( Math.PI / 2 );
 
-	const holeGroup = new OperationGroup();
-	holeGroup.add( hole, hole2 );
-	root.add( holeGroup );
+		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1, 3, 1 ), gridMat );
+		hole2.operation = SUBTRACTION;
+		hole2.position.y = - 1.5 - 1e-5;
 
-	transformControls.attach( holeGroup );
+		const doorGroup = new OperationGroup();
+		doorGroup.add( hole, hole2 );
+		root.add( doorGroup );
+		transformControls.attach( doorGroup );
+
+	}
+
+	{
+
+		const hole = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 2 ), gridMat );
+		hole.operation = SUBTRACTION;
+
+		const frame = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 0.2 ), gridMat );
+		frame.operation = ADDITION;
+
+		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1.9, 1.65, 2 ), gridMat );
+		hole2.operation = SUBTRACTION;
+
+		const bar1 = new Operation( new THREE.BoxBufferGeometry( 2, 0.1, 0.1 ), gridMat );
+		bar1.operation = ADDITION;
+
+		const bar2 = new Operation( new THREE.BoxBufferGeometry( 0.1, 2, 0.1 ), gridMat );
+		bar2.operation = ADDITION;
+
+		const windowGroup = new OperationGroup();
+		windowGroup.add( hole, frame, hole2, bar1, bar2 );
+		windowGroup.position.x = - 3;
+		root.add( windowGroup );
+
+	}
+
+	{
+
+		const hole = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 2 ), gridMat );
+		hole.operation = SUBTRACTION;
+
+		const frame = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 0.2 ), gridMat );
+		frame.operation = ADDITION;
+
+		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1.9, 1.65, 2 ), gridMat );
+		hole2.operation = SUBTRACTION;
+
+		const bar1 = new Operation( new THREE.BoxBufferGeometry( 2, 0.1, 0.1 ), gridMat );
+		bar1.operation = ADDITION;
+
+		const bar2 = new Operation( new THREE.BoxBufferGeometry( 0.1, 2, 0.1 ), gridMat );
+		bar2.operation = ADDITION;
+
+		const windowGroup = new OperationGroup();
+		windowGroup.add( hole, frame, hole2, bar1, bar2 );
+		windowGroup.position.x = 3;
+		root.add( windowGroup );
+
+	}
 
 	// gui
 	gui = new GUI();
