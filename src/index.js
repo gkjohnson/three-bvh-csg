@@ -1,6 +1,7 @@
 export * from './core/Brush.js';
 export * from './core/Evaluator.js';
 export * from './core/Operation.js';
+export * from './core/OperationGroup.js';
 export * from './core/TriangleSplitter.js';
 export * from './core/Evaluator.js';
 export * from './core/HalfEdgeMap.js';

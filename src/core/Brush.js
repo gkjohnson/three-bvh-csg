@@ -15,6 +15,12 @@ export class Brush extends Mesh {
 
 	}
 
+	markUpdated() {
+
+		this._previousMatrix.copy( this.matrix );
+
+	}
+
 	isDirty() {
 
 		const { matrix, _previousMatrix } = this;

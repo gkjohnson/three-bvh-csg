@@ -251,9 +251,84 @@ export class Evaluator {
 
 	}
 
-	evaluateHierarchy( root ) {
+	evaluateHierarchy( root, target = new Brush() ) {
 
-		// TODO
+		root.updateMatrixWorld( true );
+
+		const flatTraverse = ( obj, cb ) => {
+
+			const children = obj.children;
+			for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+				const child = children[ i ];
+				if ( child.isOperationGroup ) {
+
+					flatTraverse( child, cb );
+
+				} else {
+
+					cb( child );
+
+				}
+
+			}
+
+		};
+
+
+		const traverse = ( brush ) => {
+
+			const children = brush.children;
+			let didChange = false;
+			for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+				const child = children[ i ];
+				didChange = traverse( child ) || didChange;
+
+			}
+
+			const isDirty = brush.isDirty();
+			if ( isDirty ) {
+
+				brush.markUpdated();
+
+			}
+
+			if ( didChange && ! brush.isOperationGroup ) {
+
+				let result;
+				flatTraverse( brush, child => {
+
+					if ( ! result ) {
+
+						result = this.evaluate( brush, child, child.operation );
+
+					} else {
+
+						result = this.evaluate( result, child, child.operation );
+
+					}
+
+				} );
+
+				brush._cachedGeometry = result.geometry;
+				brush._cachedMaterials = result.material;
+				return true;
+
+			} else {
+
+				return didChange || isDirty;
+
+			}
+
+		};
+
+		traverse( root );
+
+		target.geometry = root._cachedGeometry;
+		target.material = root._cachedMaterials;
+
+		return target;
 
 	}
 
