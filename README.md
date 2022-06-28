@@ -8,7 +8,7 @@
 
 ![](./docs/csg-banner.png)
 
-An _in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh). More than 100 times faster than other BSP-based three.js CSG libraries in complex cases.
+An _experimental, in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh). More than 100 times faster than other BSP-based three.js CSG libraries in complex cases.
 
 Contributions welcome!
 
