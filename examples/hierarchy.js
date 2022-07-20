@@ -10,8 +10,6 @@ import {
 	GridMaterial,
 	ADDITION,
 	SUBTRACTION,
-	INTERSECTION,
-	DIFFERENCE,
 } from '..';
 
 window.logTriangleDefinitions = logTriangleDefinitions;
