@@ -28,9 +28,6 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 	const { useGroups = true } = options;
 	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b );
 
-	aIntersections.ids.sort( ( a, b ) => a - b );
-	bIntersections.ids.sort( ( a, b ) => a - b );
-
 	const resultGroups = [];
 	let resultMaterials = null;
 
