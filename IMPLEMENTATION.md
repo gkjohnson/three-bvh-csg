@@ -1,4 +1,4 @@
-# BVH CSG
+# BVH CSG Implementation
 
 ## Priorities
 
