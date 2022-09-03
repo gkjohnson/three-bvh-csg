@@ -14,7 +14,7 @@
     "benchmark": "node ./benchmark/benchmark.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "npm run build",
-    "types": "npx -p typescript tsc build/index.module.js --declaration --allowJs --emitDeclarationOnly --outDir build"
+    "types": "npx -p typescript tsc -d"
   },
   "files": [
     "src/*",
@@ -58,7 +58,6 @@
     "three-mesh-bvh": "^0.5.14"
   },
   "dependencies": {
-    "@types/node": "^18.7.14",
     "@types/three": "^0.144.0"
   }
 }
