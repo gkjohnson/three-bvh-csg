@@ -9,11 +9,12 @@
   "scripts": {
     "start": "cd examples && parcel serve ./*.html --dist-dir ./dev-bundle/ --no-cache --no-hmr",
     "build-examples": "cd examples && parcel build ./*.html --dist-dir ./bundle/ --public-url . --no-cache --no-content-hash",
-    "build": "rollup -c",
+    "build": "rollup -c && npm run types",
     "lint": "eslint \"./src/**/*.js\" \"./examples/*.js\"",
     "benchmark": "node ./benchmark/benchmark.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "types": "npx -p typescript tsc build/index.module.js --declaration --allowJs --emitDeclarationOnly --outDir build"
   },
   "files": [
     "src/*",
@@ -55,5 +56,9 @@
     "three": "^0.141.0",
     "three-csg-ts": "^3.1.10",
     "three-mesh-bvh": "^0.5.14"
+  },
+  "dependencies": {
+    "@types/node": "^18.7.14",
+    "@types/three": "^0.144.0"
   }
 }
