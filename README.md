@@ -1,5 +1,6 @@
 # three-bvh-csg
 
+[![npm version](https://img.shields.io/npm/v/three-bvh-csg.svg?style=flat-square)](https://www.npmjs.com/package/three-bvh-csg)
 [![lgtm code quality](https://img.shields.io/lgtm/grade/javascript/g/gkjohnson/three-bvh-csg.svg?style=flat-square&label=code-quality)](https://lgtm.com/projects/g/gkjohnson/three-bvh-csg/)
 [![build](https://img.shields.io/github/workflow/status/gkjohnson/three-bvh-csg/Node.js%20CI?style=flat-square&label=build)](https://github.com/gkjohnson/three-bvh-csg/actions)
 [![github](https://flat.badgen.net/badge/icon/github?icon=github&label)](https://github.com/gkjohnson/three-bvh-csg/)
