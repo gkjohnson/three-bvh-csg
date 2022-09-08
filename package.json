@@ -5,12 +5,13 @@
   "main": "build/index.umd.cjs",
   "module": "src/index.js",
   "type": "module",
+  "types": "src/index.d.ts",
   "sideEffects": false,
   "scripts": {
     "start": "cd examples && parcel serve ./*.html --dist-dir ./dev-bundle/ --no-cache --no-hmr",
     "build-examples": "cd examples && parcel build ./*.html --dist-dir ./bundle/ --public-url . --no-cache --no-content-hash",
     "build": "rollup -c",
-    "lint": "eslint \"./src/**/*.js\" \"./examples/*.js\"",
+    "lint": "eslint \"./src/**/*.{js,ts}\" \"./examples/*.js\" && tsc -p tsconfig.json --noEmit",
     "benchmark": "node ./benchmark/benchmark.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "npm run build"
@@ -48,12 +49,15 @@
     "three-mesh-bvh": "^0.5.13"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.36.2",
+    "@typescript-eslint/parser": "^5.36.2",
     "eslint": "^8.16.0",
     "eslint-config-mdcs": "^5.0.0",
     "parcel": "^2.6.0",
     "rollup": "^2.70.0",
     "three": "^0.141.0",
     "three-csg-ts": "^3.1.10",
-    "three-mesh-bvh": "^0.5.14"
+    "three-mesh-bvh": "^0.5.14",
+    "typescript": "^4.8.2"
   }
 }
