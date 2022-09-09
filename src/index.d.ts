@@ -1,4 +1,4 @@
-import { BufferGeometry, EdgesGeometry, Group, InstancedMesh, LineSegments, Mesh, MeshPhongMaterial, Plane, ShaderMaterial, Triangle, Vector3 } from 'three';
+import { BufferGeometry, EdgesGeometry, Group, InstancedMesh, LineSegments, Mesh, MeshPhongMaterial, Plane, Triangle, Vector3 } from 'three';
 
 export class Brush extends Mesh {
 
@@ -106,9 +106,6 @@ export class GridMaterial extends MeshPhongMaterial {
 
   enableGrid: boolean;
 
-  onBeforeCompile( shader: ShaderMaterial ): void;
-  customProgramCacheKey(): boolean;
-
 }
 
 export function getTriangleDefinitions( ...triangles: Triangle[] ): String[];
@@ -172,9 +169,9 @@ export class PointsHelper extends InstancedMesh {
 
 }
 
-// export class HalfEdgeHelper extends EdgesHelper {
+export class HalfEdgeHelper extends EdgesHelper {
 
-//   constructor(geometry?: BufferGeometry, halfEdges?: );
-//   setHalfEdges(geometry: BufferGeometry, halfEdges: ): void;
+  constructor( geometry?: BufferGeometry, halfEdges?: HalfEdgeMap );
+  setHalfEdges( geometry: BufferGeometry, halfEdges: HalfEdgeMap ): void;
 
-// }
+}
