@@ -26,11 +26,11 @@ export class TypedAttributeData {
 
 }
 
-export enum OperationStrategy{} // Is the name correct?
-export const ADDITION: OperationStrategy;
-export const SUBTRACTION: OperationStrategy;
-export const DIFFERENCE: OperationStrategy;
-export const INTERSECTION: OperationStrategy;
+export enum CSGOperation{}
+export const ADDITION: CSGOperation;
+export const SUBTRACTION: CSGOperation;
+export const DIFFERENCE: CSGOperation;
+export const INTERSECTION: CSGOperation;
 
 export class Evaluator {
 
@@ -40,9 +40,9 @@ export class Evaluator {
   useGroups: boolean;
   debug: OperationDebugData;
 
-  evaluate( a: Brush, b: Brush, operation: OperationStrategy, targetBrush?: Brush ): Brush;
+  evaluate( a: Brush, b: Brush, operation: CSGOperation, targetBrush?: Brush ): Brush;
 
-  evaluateHierarchy( root: Brush, target?: Brush ): Brush; // Root is Brush type??
+  evaluateHierarchy( root: Operation, target?: Brush ): Brush;
 
 }
 
