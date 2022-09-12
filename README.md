@@ -13,7 +13,7 @@ An _experimental, in progress_, flexible, memory compact, fast and dynamic CSG i
 
 Contributions welcome!
 
-# Roadmap
+# Roadmap / Help Wanted
 
 - Fix triangle splitting / missing triangle issues [#73](https://github.com/gkjohnson/three-bvh-csg/issues/73) [#68](https://github.com/gkjohnson/three-bvh-csg/issues/68)
 - Polygon splitting & triangulation [#51](https://github.com/gkjohnson/three-bvh-csg/issues/51)
