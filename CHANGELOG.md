@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Typescript definitions for the public API.
 
+### Fixed
+- Return value for GridMaterial.getCustomCacheKey().
+
 ## [0.0.1] - 2022-07-19
 
 Initial experimental version.
