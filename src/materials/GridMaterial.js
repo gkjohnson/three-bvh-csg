@@ -36,7 +36,7 @@ export class GridMaterial extends MeshPhongMaterial {
 
 	customProgramCacheKey() {
 
-		return this.enableGrid;
+		return this.enableGrid.toString();
 
 	}
 
