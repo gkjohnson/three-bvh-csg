@@ -68,14 +68,22 @@ An object with the same interface as `THREE.Mesh` but used to evaluate CSG opera
 > 
 > It is recommended to remove groups from a geometry before creating a brush if multi-material support is not required.
 
-<!--
 ## Operation
 
 _extends Brush_
 
-TODO
+This is an extension of the `Brush` class. With this class is possible to create a mesh and pass the CSG Operation constant to define which operation computes on the mesh. If you don't choose an operation, the default is `ADDITION`. The result is a Mesh whose effect is defined from the operation selected. You can see how it works in the _hierarchy_ example.
 
--->
+```js
+const root = new Operation( new THREE.BoxBufferGeometry(10, 5, 0.5), new GridMaterial() );
+```
+
+
+## OperationGroup
+
+_extends THREE.Group_
+
+A class with the same interface as `THREE.Group` but used to group a list of Operation mesh through the `.add` method inherited from the THREE.Group class. You can create a group starting from single Operation meshes as in the _hierarchy_ example. 
 
 ## Evaluator
 
@@ -100,11 +108,30 @@ evaluate(
 
 Performs the given `operation` on `brushA` with `brushB`. If no target is provided then a new `Brush` will be created with the new geometry. Otherwise the provided Brush will be _modified in place_ and geometry disposed or marked for update as needed.
 
-<!--
+
 ### .evaluateHierarchy
 
-TODO
+```js
+evaluateHierarchy( 
+  root: Opertation, 
+  target = new Brush : Brush | Mesh
+) : Brush | Mesh
+```
 
+The method gets as parameters a root, an Operation mesh and a target if it is provided, otherwise, a new `Brush` will be created. 
+First sets the `updateMatrixWolrd` of the root to true then calls the traverse function with the root parameter to `evaluate` the mesh and its children. 
+
+```js
+evaluate( brush, child, child.operation );
+```
+
+In this case, the arguments passed to `evaluate` is the `root` as `brushA`, the child as `brushB` and the `child.operation` as the operation to apply to the mesh.
+
+## OperationDebugData
+
+This class is used in the constructor of the Evaluator class. When the Evaluator is defined the constructor creates a debug property of type OperationDebugData and it is used to set the debug context, that is `addEdge` and `addIntersectionTriangles` to, for example, an EdgesHelper or a TriangleHelper.
+
+<!--
 ## EvaluatorWorker
 
 _extends Evaluator_
@@ -117,6 +144,62 @@ TODO
 
 TODO
 -->
+
+## GridMaterial
+
+_extends THREE.MeshPhongMaterial_
+
+A material with the same interface as `THREE.MeshPhongMaterial`. It's used to add a grid on the mesh, created by the method `csgGridShaderMixin` passing a shader. Default is enabled but if you want you can disable the grid with
+```js
+gridMat.enableGrid = false;
+```
+
+## Helpers
+<!--
+## PointsHelper
+
+_extends THREE.InstancedMesh_
+
+Helper class 
+
+### .setPoints
+
+```js
+setPoints( points: Vector3 ) : void;
+```
+
+Sets the 
+-->
+
+## EdgesHelper
+
+_extends THREE.LineSegments_
+
+Helper class for generating a line to display the intersection edges. If no edges are provided then an empty array will be passed.
+
+### .setEdges
+
+```js
+setEdges( edges: EdgesGeometry[] ) : void
+```
+
+Sets the geometry of the helper with the points of the intersection of the edges. First gets the points of the edges, disposes of geometry and then sets the attributes for this geometry from an array of points of the edges.
+
+## TriangleSetHelper
+
+_extends THREE.Group_
+
+Helper class for displaying the triangles involved in the meshes intersection. In the _Simple CSG_ example is possible to enable/disable the visibility of the triangles helper via `displayTriangleIntersections` checkbox.
+
+The helper is composed of two meshes, one is a mesh with a MeshPhongMaterial and the other is a mesh with a LineBasicMaterial.
+
+### .setTriangles
+
+```js
+setTriangles( triangles:  Triangle[] ) : void
+```
+
+Sets the geometry of the mesh and the line with the position of the triangles passed as a parameter of the method.
 
 # Gotchas
 - All geometry are expected to have all attributes being used and of the same type.
