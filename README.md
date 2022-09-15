@@ -72,12 +72,29 @@ An object with the same interface as `THREE.Mesh` but used to evaluate CSG opera
 
 _extends Brush_
 
-This is an extension of the `Brush` class. With this class is possible to create a mesh and pass the CSG Operation constant to define which operation computes on the mesh. If you don't choose an operation, the default is `ADDITION`. The result is a Mesh whose effect is defined from the operation selected. You can see how it works in the _hierarchy_ example.
+This is an extension of the `Brush` class. With this class is possible to create a mesh and pass the CSG Operation constant to define which operation computes on the mesh. The result is a Mesh whose effect is defined from the operation selected. You can see how it works in the _hierarchy_ example.
+
+### .operation
 
 ```js
-const root = new Operation( new THREE.BoxBufferGeometry(10, 5, 0.5), new GridMaterial() );
+operation = ADDITION : CSGOperation
 ```
 
+If you don't choose an operation, the default is `ADDITION`. 
+
+### .insertBefore
+
+```js
+insertBefore( brush : Brush )
+```
+Inserts the brush before the operation element that calls the method, in the list of the children of the operation's parent.
+
+### .insertAfter
+
+```js
+insertAfter( brush : Brush )
+```
+Inserts the brush after the operation element that calls the method, in the list of the children of the operation's parent.
 
 ## OperationGroup
 
@@ -101,7 +118,7 @@ Whether to use geometry groups when processing the geometry. If geometry groups 
 evaluate(
 	brushA : Brush,
 	brushB : Brush,
-	operation : Operation,
+	operation : CSGOperation,
 	target = null : Brush | Mesh
 ) : Brush | Mesh
 ```
@@ -131,6 +148,22 @@ In this case, the arguments passed to `evaluate` is the `root` as `brushA`, the 
 
 This class is used in the constructor of the Evaluator class. When the Evaluator is defined the constructor creates a debug property of type OperationDebugData and it is used to set the debug context, that is `addEdge` and `addIntersectionTriangles` to, for example, an EdgesHelper or a TriangleHelper.
 
+### .enabled
+
+```js
+enabled = false : Boolean
+```
+
+Whether the operationDebugData is visible or not. The default is `false`.
+
+### .intersectionEdges
+
+```js
+intersectionEdges = [] : Line3
+```
+
+A list of cloned edges. The default is an empty array.
+
 <!--
 ## EvaluatorWorker
 
@@ -149,18 +182,23 @@ TODO
 
 _extends THREE.MeshPhongMaterial_
 
-A material with the same interface as `THREE.MeshPhongMaterial`. It's used to add a grid on the mesh, created by the method `csgGridShaderMixin` passing a shader. Default is enabled but if you want you can disable the grid with
+A material with the same interface as `THREE.MeshPhongMaterial`. It's used to add a grid on the mesh, created by the method `csgGridShaderMixin` passing a shader. 
+
+### .enableGrid
+
 ```js
-gridMat.enableGrid = false;
+enableGrid = true : Boolean
 ```
+Sets the visibility of the grid on the mesh. The default is true.
+
 
 ## Helpers
-<!--
+
 ## PointsHelper
 
 _extends THREE.InstancedMesh_
 
-Helper class 
+Helper class for generating spheres to display.
 
 ### .setPoints
 
@@ -168,8 +206,8 @@ Helper class
 setPoints( points: Vector3 ) : void;
 ```
 
-Sets the 
--->
+Sets the points, passed as Vector3, and visualize them as spheres.
+
 
 ## EdgesHelper
 
@@ -180,10 +218,16 @@ Helper class for generating a line to display the intersection edges. If no edge
 ### .setEdges
 
 ```js
-setEdges( edges: EdgesGeometry[] ) : void
+setEdges( edges: Line3[] ) : void
 ```
 
-Sets the geometry of the helper with the points of the intersection of the edges. First gets the points of the edges, disposes of geometry and then sets the attributes for this geometry from an array of points of the edges.
+Sets the list of lines to be visualized.
+
+## HalfEdgeMap
+
+_extends EdgesHelper_
+
+This is a helper class that takes the `HalfEdgeMap` object and visualizes the connectivity between triangles.
 
 ## TriangleSetHelper
 
