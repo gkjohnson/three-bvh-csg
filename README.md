@@ -80,13 +80,14 @@ This is an extension of the `Brush` class. With this class is possible to create
 operation = ADDITION : CSGOperation
 ```
 
-If you don't choose an operation, the default is `ADDITION`. 
+The operation to perform on the next brush in processing chain when running `Evaluater.evaluateHierarchy`.
 
 ### .insertBefore
 
 ```js
 insertBefore( brush : Brush )
 ```
+
 Inserts the brush before the operation element that calls the method, in the list of the children of the operation's parent.
 
 ### .insertAfter
@@ -94,6 +95,7 @@ Inserts the brush before the operation element that calls the method, in the lis
 ```js
 insertAfter( brush : Brush )
 ```
+
 Inserts the brush after the operation element that calls the method, in the list of the children of the operation's parent.
 
 ## OperationGroup
@@ -154,7 +156,7 @@ This class is used in the constructor of the Evaluator class. When the Evaluator
 enabled = false : Boolean
 ```
 
-Whether the operationDebugData is visible or not. The default is `false`.
+Whether to collect the debug data during CSG operations which has a performance a memory cost.
 
 ### .intersectionEdges
 
@@ -162,7 +164,7 @@ Whether the operationDebugData is visible or not. The default is `false`.
 intersectionEdges = [] : Line3
 ```
 
-A list of cloned edges. The default is an empty array.
+A list of edges formed by intersecting triangles during the CSG process.
 
 <!--
 ## EvaluatorWorker
@@ -182,14 +184,15 @@ TODO
 
 _extends THREE.MeshPhongMaterial_
 
-A material with the same interface as `THREE.MeshPhongMaterial`. It's used to add a grid on the mesh, created by the method `csgGridShaderMixin` passing a shader. 
+A material with the same interface as `THREE.MeshPhongMaterial`. It adds a stylized grid on the mesh for more easily visualizing mesh topology and measurements.
 
 ### .enableGrid
 
 ```js
 enableGrid = true : Boolean
 ```
-Sets the visibility of the grid on the mesh. The default is true.
+
+Sets the visibility of the grid on the mesh.
 
 
 ## Helpers
@@ -203,22 +206,22 @@ Helper class for generating spheres to display.
 ### .setPoints
 
 ```js
-setPoints( points: Vector3 ) : void;
+setPoints( points : Vector3[] ) : void;
 ```
 
-Sets the points, passed as Vector3, and visualize them as spheres.
+Sets the points, passed as Vector3, and visualizes them as spheres.
 
 
 ## EdgesHelper
 
 _extends THREE.LineSegments_
 
-Helper class for generating a line to display the intersection edges. If no edges are provided then an empty array will be passed.
+Helper class for generating a line to display the provided edges.
 
 ### .setEdges
 
 ```js
-setEdges( edges: Line3[] ) : void
+setEdges( edges : Line3[] ) : void
 ```
 
 Sets the list of lines to be visualized.
@@ -229,11 +232,19 @@ _extends EdgesHelper_
 
 This is a helper class that takes the `HalfEdgeMap` object and visualizes the connectivity between triangles.
 
+### .setHalfEdges
+
+```js
+setHalfEdges( geometry : Geometry, halfEdges : HalfEdgeMap ) : void
+```
+
+Sets the half edge map to visualize along with the associated geometry.
+
 ## TriangleSetHelper
 
 _extends THREE.Group_
 
-Helper class for displaying the triangles involved in the meshes intersection. In the _Simple CSG_ example is possible to enable/disable the visibility of the triangles helper via `displayTriangleIntersections` checkbox.
+Helper class for displaying a set of triangles. In the _Simple CSG_ example is possible to enable/disable the visibility of the triangles helper via `displayTriangleIntersections` checkbox.
 
 The helper is composed of two meshes, one is a mesh with a MeshPhongMaterial and the other is a mesh with a LineBasicMaterial.
 
