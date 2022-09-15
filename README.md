@@ -68,14 +68,39 @@ An object with the same interface as `THREE.Mesh` but used to evaluate CSG opera
 > 
 > It is recommended to remove groups from a geometry before creating a brush if multi-material support is not required.
 
-<!--
 ## Operation
 
 _extends Brush_
 
-TODO
+This is an extension of the `Brush` class. With this class is possible to create a mesh and pass the CSG Operation constant to define which operation computes on the mesh. The result is a Mesh whose effect is defined from the operation selected. You can see how it works in the _hierarchy_ example.
 
--->
+### .operation
+
+```js
+operation = ADDITION : CSGOperation
+```
+
+If you don't choose an operation, the default is `ADDITION`. 
+
+### .insertBefore
+
+```js
+insertBefore( brush : Brush )
+```
+Inserts the brush before the operation element that calls the method, in the list of the children of the operation's parent.
+
+### .insertAfter
+
+```js
+insertAfter( brush : Brush )
+```
+Inserts the brush after the operation element that calls the method, in the list of the children of the operation's parent.
+
+## OperationGroup
+
+_extends THREE.Group_
+
+A class with the same interface as `THREE.Group` but used to group a list of Operation mesh through the `.add` method inherited from the THREE.Group class. You can create a group starting from single Operation meshes as in the _hierarchy_ example. 
 
 ## Evaluator
 
@@ -93,18 +118,53 @@ Whether to use geometry groups when processing the geometry. If geometry groups 
 evaluate(
 	brushA : Brush,
 	brushB : Brush,
-	operation : Operation,
+	operation : CSGOperation,
 	target = null : Brush | Mesh
 ) : Brush | Mesh
 ```
 
 Performs the given `operation` on `brushA` with `brushB`. If no target is provided then a new `Brush` will be created with the new geometry. Otherwise the provided Brush will be _modified in place_ and geometry disposed or marked for update as needed.
 
-<!--
+
 ### .evaluateHierarchy
 
-TODO
+```js
+evaluateHierarchy( 
+  root: Opertation, 
+  target = new Brush : Brush | Mesh
+) : Brush | Mesh
+```
 
+The method gets as parameters a root, an Operation mesh and a target if it is provided, otherwise, a new `Brush` will be created. 
+First sets the `updateMatrixWolrd` of the root to true then calls the traverse function with the root parameter to `evaluate` the mesh and its children. 
+
+```js
+evaluate( brush, child, child.operation );
+```
+
+In this case, the arguments passed to `evaluate` is the `root` as `brushA`, the child as `brushB` and the `child.operation` as the operation to apply to the mesh.
+
+## OperationDebugData
+
+This class is used in the constructor of the Evaluator class. When the Evaluator is defined the constructor creates a debug property of type OperationDebugData and it is used to set the debug context, that is `addEdge` and `addIntersectionTriangles` to, for example, an EdgesHelper or a TriangleHelper.
+
+### .enabled
+
+```js
+enabled = false : Boolean
+```
+
+Whether the operationDebugData is visible or not. The default is `false`.
+
+### .intersectionEdges
+
+```js
+intersectionEdges = [] : Line3
+```
+
+A list of cloned edges. The default is an empty array.
+
+<!--
 ## EvaluatorWorker
 
 _extends Evaluator_
@@ -117,6 +177,73 @@ TODO
 
 TODO
 -->
+
+## GridMaterial
+
+_extends THREE.MeshPhongMaterial_
+
+A material with the same interface as `THREE.MeshPhongMaterial`. It's used to add a grid on the mesh, created by the method `csgGridShaderMixin` passing a shader. 
+
+### .enableGrid
+
+```js
+enableGrid = true : Boolean
+```
+Sets the visibility of the grid on the mesh. The default is true.
+
+
+## Helpers
+
+## PointsHelper
+
+_extends THREE.InstancedMesh_
+
+Helper class for generating spheres to display.
+
+### .setPoints
+
+```js
+setPoints( points: Vector3 ) : void;
+```
+
+Sets the points, passed as Vector3, and visualize them as spheres.
+
+
+## EdgesHelper
+
+_extends THREE.LineSegments_
+
+Helper class for generating a line to display the intersection edges. If no edges are provided then an empty array will be passed.
+
+### .setEdges
+
+```js
+setEdges( edges: Line3[] ) : void
+```
+
+Sets the list of lines to be visualized.
+
+## HalfEdgeMap
+
+_extends EdgesHelper_
+
+This is a helper class that takes the `HalfEdgeMap` object and visualizes the connectivity between triangles.
+
+## TriangleSetHelper
+
+_extends THREE.Group_
+
+Helper class for displaying the triangles involved in the meshes intersection. In the _Simple CSG_ example is possible to enable/disable the visibility of the triangles helper via `displayTriangleIntersections` checkbox.
+
+The helper is composed of two meshes, one is a mesh with a MeshPhongMaterial and the other is a mesh with a LineBasicMaterial.
+
+### .setTriangles
+
+```js
+setTriangles( triangles:  Triangle[] ) : void
+```
+
+Sets the geometry of the mesh and the line with the position of the triangles passed as a parameter of the method.
 
 # Gotchas
 - All geometry are expected to have all attributes being used and of the same type.
