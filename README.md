@@ -20,6 +20,8 @@ Contributions welcome!
 - Hierarchical operations [#6](https://github.com/gkjohnson/three-bvh-csg/issues/6)
 - Worker Support [#14](https://github.com/gkjohnson/three-bvh-csg/issues/14)
 
+[And more!](https://github.com/gkjohnson/three-bvh-csg/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
+
 # Examples
 
 [Simple CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/simple.html)
