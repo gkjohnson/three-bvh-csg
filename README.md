@@ -47,7 +47,7 @@ const result = csgEvaluator.evaluate( brush1, brush2, SUBTRACTION );
 
 ## Constants
 
-### Operations
+### CSGOperations
 
 CSG operations enums for use with `Evaluator`.
 
