@@ -1,4 +1,4 @@
-import { BufferGeometry, EdgesGeometry, Group, InstancedMesh, LineSegments, Mesh, MeshPhongMaterial, Plane, Triangle, Vector3 } from 'three';
+import { BufferGeometry, EdgesGeometry, Group, InstancedMesh, Line3, LineSegments, Mesh, MeshPhongMaterial, Plane, Triangle, Vector3 } from 'three';
 
 export class Brush extends Mesh {
 
@@ -124,9 +124,9 @@ export class TriangleSetHelper extends Group {
 
 export class EdgesHelper extends LineSegments {
 
-  constructor( edges?: EdgesGeometry );
+  constructor( edges?: Line3[] );
 
-  setEdges( edges: EdgesGeometry ): void;
+  setEdges( edges: Line3[] ): void;
 
 }
 
