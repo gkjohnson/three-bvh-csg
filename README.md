@@ -196,7 +196,9 @@ enableGrid = true : Boolean
 Sets the visibility of the grid on the mesh.
 
 
-## Helpers
+## HalfEdgeMap
+
+TODO
 
 ## PointsHelper
 
@@ -227,7 +229,7 @@ setEdges( edges : Line3[] ) : void
 
 Sets the list of lines to be visualized.
 
-## HalfEdgeMap
+## HalfEdgeMapHelper
 
 _extends EdgesHelper_
 
