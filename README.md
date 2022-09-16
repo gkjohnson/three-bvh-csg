@@ -17,7 +17,6 @@ Contributions welcome!
 
 - Fix triangle splitting / missing triangle issues [#73](https://github.com/gkjohnson/three-bvh-csg/issues/73) [#68](https://github.com/gkjohnson/three-bvh-csg/issues/68)
 - Polygon splitting & triangulation [#51](https://github.com/gkjohnson/three-bvh-csg/issues/51)
-- Hierarchical operations [#6](https://github.com/gkjohnson/three-bvh-csg/issues/6)
 - Worker Support [#14](https://github.com/gkjohnson/three-bvh-csg/issues/14)
 
 [And more!](https://github.com/gkjohnson/three-bvh-csg/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
