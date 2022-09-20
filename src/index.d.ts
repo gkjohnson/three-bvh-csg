@@ -18,7 +18,7 @@ export class TypedAttributeData {
   getType( name: String ): string;
   getTotalLength( name: String ): number;
   getGroupSet( index?: number ): Object;
-  getGroupArray( name: string, index?: number ): Array<any>;
+  getGroupArray( name: string, index?: number ): Array<number>;
   initializeArray( name: string, type: string ): void;
   clear(): void;
   delete( key: string ): void;
@@ -137,17 +137,17 @@ export class TriangleIntersectData {
 
   constructor( tri: Triangle );
   addTriangle( index: number, tri: Triangle ): void;
-  getIntersectArray(): Array<any>;
+  getIntersectArray(): Array<Triangle>;
 
 }
 
 export class TriangleIntersectionSets {
 
   addTriangleIntersection( ia: number, tribA: Triangle, ib: number, triB: Triangle ): void;
-  getTrianglesAsArray( id?: number ): Array<any>;
+  getTrianglesAsArray( id?: number ): Array<Triangle>;
   getTriangleIndices(): Array<number>;
   getIntersectionIndices( id: number );
-  getIntersectionsAsArray( id?: number, id2?: number ): Array<any>;
+  getIntersectionsAsArray( id?: number, id2?: number ): Array<Triangle>;
 
 }
 
