@@ -9,9 +9,10 @@
 
 ![](./docs/csg-banner.png)
 
-An _experimental, in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh). More than 100 times faster than other BSP-based three.js CSG libraries in complex cases.
+An _experimental, in progress_, flexible, memory compact, fast and dynamic CSG implementation on top of [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh). More than 100 times faster than other BSP-based three.js CSG libraries in complex cases. Contributions welcome!
 
-Contributions welcome!
+> **Note**
+> All brush geometry must be [two-manifold](https://knowledge.autodesk.com/support/maya-lt/learn-explore/caas/CloudHelp/cloudhelp/2015/ENU/MayaLT/files/Polygons-overview-Twomanifold-vs--nonmanifold-polygonal-geometry-htm.html) - or water tight with no triangle interpenetration.
 
 # Roadmap / Help Wanted
 
@@ -262,6 +263,7 @@ Sets the geometry of the mesh and the line with the position of the triangles pa
 # Gotchas
 - All geometry are expected to have all attributes being used and of the same type.
 - Geometry on a Brush should be unique and not be modified after being set.
+- All geometry must be [two-manifold](https://knowledge.autodesk.com/support/maya-lt/learn-explore/caas/CloudHelp/cloudhelp/2015/ENU/MayaLT/files/Polygons-overview-Twomanifold-vs--nonmanifold-polygonal-geometry-htm.html) - or water tight with no triangle interpenetration.
 
 # References
 - [Godot CSG](https://github.com/godotengine/godot/blob/master/modules/csg/csg.cpp)
