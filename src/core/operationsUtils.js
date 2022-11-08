@@ -18,6 +18,7 @@ const JITTER_EPSILON = 1e-8;
 export const COPLANAR = 0;
 export const BACK_SIDE = - 1;
 export const FRONT_SIDE = 1;
+export const COPLANAR_OPP = 2;
 
 export const INVERT_TRI = 0;
 export const ADD_TRI = 1;
@@ -46,6 +47,7 @@ export function getHitSide( tri, bvh ) {
 	const total = 3;
 	let count = 0;
 	let minDistance = Infinity;
+	let normDot = 0;
 	for ( let i = 0; i < total; i ++ ) {
 
 		// jitter the ray slightly
@@ -68,6 +70,10 @@ export function getHitSide( tri, bvh ) {
 
 		}
 
+		if (minDistance === 0) {
+      normDot = _ray.direction.dot(hit.face.normal);
+    }
+
 		// if our current casts meet our requirements then early out
 		if ( minDistance === 0 || count / total > 0.5 || ( i - count + 1 ) / total > 0.5 ) {
 
@@ -80,7 +86,7 @@ export function getHitSide( tri, bvh ) {
 	// if we're right up against another face then we're coplanar
 	if ( minDistance === 0 ) {
 
-		return COPLANAR;
+		return normDot < 0 ? COPLANAR_OPP : COPLANAR;
 
 	} else {
 
@@ -224,7 +230,7 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 	switch ( operation ) {
 
 		case ADDITION:
-			if ( hitSide === FRONT_SIDE || ( hitSide === COPLANAR && invert ) ) {
+			if ( hitSide === FRONT_SIDE || ( ( hitSide === COPLANAR || hitSide === COPLANAR_OPP ) && invert ) ) {
 
 				return ADD_TRI;
 
@@ -243,7 +249,7 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 
 			} else {
 
-				if ( hitSide === FRONT_SIDE ) {
+				if ( hitSide === FRONT_SIDE || hitSide === COPLANAR_OPP ) {
 
 					return ADD_TRI;
 
@@ -264,7 +270,7 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 			}
 
 		case INTERSECTION:
-			if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR && invert ) ) {
+			if ( hitSide === BACK_SIDE || ( (hitSide === COPLANAR || hitSide === COPLANAR_OPP) && invert ) ) {
 
 				return ADD_TRI;
 
