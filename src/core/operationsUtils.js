@@ -268,7 +268,6 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 
 				return ADD_TRI;
 
-
 			}
 
 			break;
