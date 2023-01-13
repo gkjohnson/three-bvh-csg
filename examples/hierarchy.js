@@ -16,6 +16,7 @@ const params = {
 	snap: true,
 	wireframe: false,
 	displayControls: true,
+	transparentBrushes: true,
 	display: 'OVERLAY',
 
 };
@@ -54,7 +55,7 @@ async function init() {
 
 	// camera setup
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
-	camera.position.set( 1, 2, 4 );
+	camera.position.set( 3, 2, 4 ).multiplyScalar( 2 );
 	camera.far = 100;
 	camera.updateProjectionMatrix();
 
@@ -88,6 +89,7 @@ async function init() {
 	csgEvaluator.useGroups = false;
 
 	brushMat = new GridMaterial();
+	brushMat.side = THREE.DoubleSide;
 	brushMat.polygonOffset = true;
 	brushMat.polygonOffsetFactor = 2;
 	brushMat.polygonOffsetUnits = 1;
@@ -108,23 +110,34 @@ async function init() {
 	wireframeObject.material.color.set( 0xffc400 ).convertSRGBToLinear().multiplyScalar( 0.1 );
 	scene.add( wireframeObject );
 
-	root = new Operation( new THREE.BoxBufferGeometry( 10, 5, 0.5 ), brushMat );
+	root = new Operation( new THREE.BoxBufferGeometry( 10, 5, 5 ), brushMat );
 	scene.add( root );
+
+	{
+
+		const inside = new Operation( new THREE.BoxBufferGeometry( 9, 4.5, 4 ), brushMat );
+		inside.operation = SUBTRACTION;
+		root.add( inside );
+
+	}
 
 	{
 
 		const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 1, 20 ), brushMat );
 		hole.operation = SUBTRACTION;
 		hole.rotateX( Math.PI / 2 );
+		hole.position.y = 0.25
 
-		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1, 3, 1 ), brushMat );
+		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1, 2.5, 1 ), brushMat );
 		hole2.operation = SUBTRACTION;
-		hole2.position.y = - 1.5;
+		hole2.position.y = - 1;
 
 		const doorGroup = new OperationGroup();
+		doorGroup.position.z = 2.2;
 		doorGroup.add( hole, hole2 );
 		root.add( doorGroup );
 		transformControls.attach( doorGroup );
+
 
 	}
 
@@ -148,6 +161,7 @@ async function init() {
 		const windowGroup = new OperationGroup();
 		windowGroup.add( hole, frame, hole2, bar1, bar2 );
 		windowGroup.position.x = - 3;
+		windowGroup.position.z = 2.2;
 		root.add( windowGroup );
 
 	}
@@ -172,6 +186,7 @@ async function init() {
 		const windowGroup = new OperationGroup();
 		windowGroup.add( hole, frame, hole2, bar1, bar2 );
 		windowGroup.position.x = 3;
+		windowGroup.position.z = 2.2;
 		root.add( windowGroup );
 
 	}
@@ -181,6 +196,7 @@ async function init() {
 	gui.add( params, 'wireframe' );
 	gui.add( params, 'snap' );
 	gui.add( params, 'displayControls' );
+	gui.add( params, 'transparentBrushes' );
 	gui.add( params, 'display', [ 'OVERLAY', 'BRUSHES', 'RESULT' ] );
 
 	window.addEventListener( 'resize', function () {
@@ -220,15 +236,13 @@ function render() {
 
 	const startTime = window.performance.now();
 
-	if ( params.display === 'OVERLAY' ) {
+	if ( params.transparentBrushes ) {
 
 		brushMat.depthWrite = false;
 		brushMat.transparent = true;
 		brushMat.opacity = 0.15;
 
-	}
-
-	if ( params.display === 'BRUSHES' ) {
+	} else {
 
 		brushMat.depthWrite = true;
 		brushMat.transparent = false;
