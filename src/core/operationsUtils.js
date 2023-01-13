@@ -14,7 +14,7 @@ const _vec4_1 = new Vector4();
 const _vec4_2 = new Vector4();
 const _edge = new Line3();
 const JITTER_EPSILON = 1e-8;
-
+const OFFSET_EPSILON = 1e-15;
 export const COPLANAR = 0;
 export const BACK_SIDE = - 1;
 export const FRONT_SIDE = 1;
@@ -40,8 +40,11 @@ export function getHitSide( tri, bvh ) {
 	}
 
 	// get the ray the check the triangle for
-	_ray.origin.copy( tri.a ).add( tri.b ).add( tri.c ).multiplyScalar( 1 / 3 );
+	// apply a small epsilon offset to account for floating point error
 	tri.getNormal( _ray.direction );
+	tri
+		.getMidpoint( _ray.origin )
+		.addScaledVector( _ray.direction, OFFSET_EPSILON );
 
 	const total = 3;
 	let count = 0;
@@ -78,7 +81,7 @@ export function getHitSide( tri, bvh ) {
 	}
 
 	// if we're right up against another face then we're coplanar
-	if ( minDistance === 0 ) {
+	if ( minDistance <= OFFSET_EPSILON ) {
 
 		return COPLANAR;
 
