@@ -49,7 +49,7 @@ let controls, transformControls;
 let light;
 let csgEvaluator;
 
-let result, root, gridMat;
+let result, root, gridMat, wireframeObject;
 
 init();
 
@@ -125,7 +125,13 @@ async function init() {
 	csgEvaluator.useGroups = false;
 
 	gridMat = new GridMaterial();
+	gridMat.polygonOffset = true;
+	gridMat.polygonOffsetFactor = 1;
+	gridMat.polygonOffsetUnits = 1;
 	gridMat.color.set( 0xffc400 ).convertSRGBToLinear();
+
+	wireframeObject = new THREE.Mesh( undefined, new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ) );
+	scene.add( wireframeObject );
 
 	root = new Operation( new THREE.BoxBufferGeometry( 10, 5, 0.5 ), gridMat );
 
@@ -196,6 +202,7 @@ async function init() {
 
 	// gui
 	gui = new GUI();
+	gui.add( params, 'wireframe' );
 	gui.add( params, 'snap' );
 	gui.add( params, 'displayControls' );
 	gui.add( params, 'shadows' );
@@ -247,8 +254,13 @@ function render() {
 	result = csgEvaluator.evaluateHierarchy( root );
 	result.material = gridMat;
 	scene.add( result );
+
 	result.position.z = 5;
 	scene.add( root );
+
+	wireframeObject.geometry = result.geometry;
+	wireframeObject.position.z = 5;
+	wireframeObject.visible = params.wireframe;
 
 	const deltaTime = window.performance.now() - startTime;
 	outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
