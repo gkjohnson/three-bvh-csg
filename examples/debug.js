@@ -36,7 +36,7 @@ const params = {
 let renderer, camera, scene, gui, outputContainer;
 let controls;
 let brush1, brush2;
-let resultObject, wireframeResult, light, originalMaterial;
+let resultObject, wireframeResult, light, light2, originalMaterial;
 let edgesHelper, trisHelper;
 let bvhHelper1, bvhHelper2;
 let bunnyGeom;
@@ -67,7 +67,11 @@ async function init() {
 	// lights
 	light = new THREE.DirectionalLight( 0xffffff, 1 );
 	light.position.set( - 1, 2, 3 );
-	scene.add( light, light.target );
+
+	light2 = new THREE.DirectionalLight( 0xffffff, 0.25 );
+	light2.position.set( - 1, 2, 3 ).multiplyScalar( - 1 );
+
+	scene.add( light, light2 );
 	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
 
 	// camera setup
