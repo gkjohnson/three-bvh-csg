@@ -216,8 +216,8 @@ export function appendAttributesFromIndices(
 ) {
 
 	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
-	appendAttributeFromIndex( i1, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
-	appendAttributeFromIndex( i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
+	appendAttributeFromIndex( invert ? i2 : i1, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
+	appendAttributeFromIndex( invert ? i1 : i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
 
 }
 
