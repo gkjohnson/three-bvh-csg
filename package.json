@@ -13,7 +13,7 @@
     "build": "rollup -c",
     "lint": "eslint \"./src/**/*.{js,ts}\" \"./examples/*.js\" && tsc -p tsconfig.json --noEmit",
     "benchmark": "node ./benchmark/benchmark.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cd tests && jest",
     "prepublishOnly": "npm run build"
   },
   "files": [
@@ -49,10 +49,18 @@
     "three-mesh-bvh": "^0.5.13"
   },
   "devDependencies": {
+    "@babel/core": "^7.15.5",
+    "@babel/preset-env": "^7.15.4",
+    "@types/eslint": "^7.28.1",
+    "@types/jest": "^27.0.2",
+    "@types/three": "^0.139.0",
     "@typescript-eslint/eslint-plugin": "^5.36.2",
     "@typescript-eslint/parser": "^5.36.2",
+    "babel-jest": "^27.2.4",
     "eslint": "^8.16.0",
     "eslint-config-mdcs": "^5.0.0",
+    "eslint-plugin-jest": "^23.20.0",
+    "jest": "^27.2.4",
     "parcel": "^2.6.0",
     "rollup": "^2.70.0",
     "three": "^0.141.0",

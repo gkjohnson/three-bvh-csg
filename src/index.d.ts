@@ -175,3 +175,5 @@ export class HalfEdgeHelper extends EdgesHelper {
   setHalfEdges( geometry: BufferGeometry, halfEdges: HalfEdgeMap ): void;
 
 }
+
+export function computeMeshVolume( mesh : Mesh | BufferGeometry ) : Number;
