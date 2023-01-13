@@ -4,7 +4,6 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
 	Evaluator,
-	logTriangleDefinitions,
 	Operation,
 	OperationGroup,
 	GridMaterial,
@@ -12,35 +11,12 @@ import {
 	SUBTRACTION,
 } from '..';
 
-window.logTriangleDefinitions = logTriangleDefinitions;
-
 const params = {
 
 	snap: true,
-
-	brush1Shape: 'box',
-	brush1Complexity: 1,
-	brush1Color: '#ffffff',
-
-	brush2Shape: 'sphere',
-	brush2Complexity: 1,
-	brush2Color: '#E91E63',
-
-	operation: SUBTRACTION,
 	wireframe: false,
-	displayBrushes: true,
 	displayControls: true,
-	shadows: true,
-	vertexColors: false,
-	flatShading: false,
-	gridTexture: false,
-	useGroups: true,
-
-	enableDebugTelemetry: true,
-	displayIntersectionEdges: false,
-	displayTriangleIntersections: false,
-	displayBrush1BVH: false,
-	displayBrush2BVH: false,
+	display: 'OVERLAY',
 
 };
 
@@ -49,7 +25,7 @@ let controls, transformControls;
 let light;
 let csgEvaluator;
 
-let result, root, gridMat, wireframeObject;
+let result, root, brushMat, resultGridMat, wireframeObject;
 
 init();
 
@@ -64,8 +40,6 @@ async function init() {
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.setClearColor( bgColor, 1 );
-	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 	renderer.outputEncoding = THREE.sRGBEncoding;
 	document.body.appendChild( renderer.domElement );
 
@@ -77,17 +51,6 @@ async function init() {
 	light.position.set( - 1, 2, 3 );
 	scene.add( light, light.target );
 	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
-
-	// shadows
-	const shadowCam = light.shadow.camera;
-	light.castShadow = true;
-	light.shadow.mapSize.setScalar( 4096 );
-	light.shadow.bias = 1e-5;
-	light.shadow.normalBias = 1e-2;
-
-	shadowCam.left = shadowCam.bottom = - 2.5;
-	shadowCam.right = shadowCam.top = 2.5;
-	shadowCam.updateProjectionMatrix();
 
 	// camera setup
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
@@ -124,24 +87,37 @@ async function init() {
 	csgEvaluator.attributes = [ 'position', 'normal' ];
 	csgEvaluator.useGroups = false;
 
-	gridMat = new GridMaterial();
-	gridMat.polygonOffset = true;
-	gridMat.polygonOffsetFactor = 1;
-	gridMat.polygonOffsetUnits = 1;
-	gridMat.color.set( 0xffc400 ).convertSRGBToLinear();
+	brushMat = new GridMaterial();
+	brushMat.polygonOffset = true;
+	brushMat.polygonOffsetFactor = 2;
+	brushMat.polygonOffsetUnits = 1;
+	brushMat.opacity = 0.15;
+	brushMat.transparent = true;
+	brushMat.depthWrite = false;
+	brushMat.color.set( 0xffc400 ).convertSRGBToLinear();
 
-	wireframeObject = new THREE.Mesh( undefined, new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ) );
+	resultGridMat = brushMat.clone();
+	resultGridMat.opacity = 1;
+	resultGridMat.transparent = false;
+	resultGridMat.depthWrite = true;
+	resultGridMat.polygonOffsetFactor = 1;
+	resultGridMat.polygonOffsetUnits = 1;
+	resultGridMat.color.set( 0xffffff ).convertSRGBToLinear();
+
+	wireframeObject = new THREE.Mesh( undefined, new THREE.MeshBasicMaterial( { color: 0, wireframe: true } ) );
+	wireframeObject.material.color.set( 0xffc400 ).convertSRGBToLinear().multiplyScalar( 0.1 );
 	scene.add( wireframeObject );
 
-	root = new Operation( new THREE.BoxBufferGeometry( 10, 5, 0.5 ), gridMat );
+	root = new Operation( new THREE.BoxBufferGeometry( 10, 5, 0.5 ), brushMat );
+	scene.add( root );
 
 	{
 
-		const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 1, 20 ), gridMat );
+		const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 1, 20 ), brushMat );
 		hole.operation = SUBTRACTION;
 		hole.rotateX( Math.PI / 2 );
 
-		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1, 3, 1 ), gridMat );
+		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1, 3, 1 ), brushMat );
 		hole2.operation = SUBTRACTION;
 		hole2.position.y = - 1.5;
 
@@ -154,19 +130,19 @@ async function init() {
 
 	{
 
-		const hole = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 2 ), gridMat );
+		const hole = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 2 ), brushMat );
 		hole.operation = SUBTRACTION;
 
-		const frame = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 0.2 ), gridMat );
+		const frame = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 0.2 ), brushMat );
 		frame.operation = ADDITION;
 
-		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1.9, 1.65, 2 ), gridMat );
+		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1.9, 1.65, 2 ), brushMat );
 		hole2.operation = SUBTRACTION;
 
-		const bar1 = new Operation( new THREE.BoxBufferGeometry( 2, 0.1, 0.1 ), gridMat );
+		const bar1 = new Operation( new THREE.BoxBufferGeometry( 2, 0.1, 0.1 ), brushMat );
 		bar1.operation = ADDITION;
 
-		const bar2 = new Operation( new THREE.BoxBufferGeometry( 0.1, 2, 0.1 ), gridMat );
+		const bar2 = new Operation( new THREE.BoxBufferGeometry( 0.1, 2, 0.1 ), brushMat );
 		bar2.operation = ADDITION;
 
 		const windowGroup = new OperationGroup();
@@ -178,19 +154,19 @@ async function init() {
 
 	{
 
-		const hole = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 2 ), gridMat );
+		const hole = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 2 ), brushMat );
 		hole.operation = SUBTRACTION;
 
-		const frame = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 0.2 ), gridMat );
+		const frame = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 0.2 ), brushMat );
 		frame.operation = ADDITION;
 
-		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1.9, 1.65, 2 ), gridMat );
+		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1.9, 1.65, 2 ), brushMat );
 		hole2.operation = SUBTRACTION;
 
-		const bar1 = new Operation( new THREE.BoxBufferGeometry( 2, 0.1, 0.1 ), gridMat );
+		const bar1 = new Operation( new THREE.BoxBufferGeometry( 2, 0.1, 0.1 ), brushMat );
 		bar1.operation = ADDITION;
 
-		const bar2 = new Operation( new THREE.BoxBufferGeometry( 0.1, 2, 0.1 ), gridMat );
+		const bar2 = new Operation( new THREE.BoxBufferGeometry( 0.1, 2, 0.1 ), brushMat );
 		bar2.operation = ADDITION;
 
 		const windowGroup = new OperationGroup();
@@ -205,7 +181,7 @@ async function init() {
 	gui.add( params, 'wireframe' );
 	gui.add( params, 'snap' );
 	gui.add( params, 'displayControls' );
-	gui.add( params, 'shadows' );
+	gui.add( params, 'display', [ 'OVERLAY', 'BRUSHES', 'RESULT' ] );
 
 	window.addEventListener( 'resize', function () {
 
@@ -244,6 +220,22 @@ function render() {
 
 	const startTime = window.performance.now();
 
+	if ( params.display === 'OVERLAY' ) {
+
+		brushMat.depthWrite = false;
+		brushMat.transparent = true;
+		brushMat.opacity = 0.15;
+
+	}
+
+	if ( params.display === 'BRUSHES' ) {
+
+		brushMat.depthWrite = true;
+		brushMat.transparent = false;
+		brushMat.opacity = 1;
+
+	}
+
 	if ( result ) {
 
 		result.geometry.dispose();
@@ -252,24 +244,20 @@ function render() {
 	}
 
 	result = csgEvaluator.evaluateHierarchy( root );
-	result.material = gridMat;
+	result.material = resultGridMat;
 	scene.add( result );
 
-	result.position.z = 5;
-	scene.add( root );
-
 	wireframeObject.geometry = result.geometry;
-	wireframeObject.position.z = 5;
 	wireframeObject.visible = params.wireframe;
 
 	const deltaTime = window.performance.now() - startTime;
 	outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
 
-
-	light.castShadow = params.shadows;
-
 	transformControls.enabled = params.displayControls;
 	transformControls.visible = params.displayControls;
+
+	result.visible = params.display !== 'BRUSHES';
+	root.visible = params.display !== 'RESULT';
 
 	renderer.render( scene, camera );
 
