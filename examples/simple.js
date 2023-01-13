@@ -126,8 +126,8 @@ async function init() {
 	csgEvaluator.attributes = [ 'position', 'normal' ];
 
 	// initialize brushes
-	brush1 = new Brush( new THREE.BoxBufferGeometry(), new GridMaterial() );
-	brush2 = new Brush( new THREE.BoxBufferGeometry(), new GridMaterial() );
+	brush1 = new Brush( new THREE.BoxGeometry(), new GridMaterial() );
+	brush2 = new Brush( new THREE.BoxGeometry(), new GridMaterial() );
 	brush2.position.set( - 0.75, 0.75, 0 );
 	brush2.scale.setScalar( 0.75 );
 
@@ -367,23 +367,23 @@ function updateBrush( brush, type, complexity ) {
 	switch ( type ) {
 
 		case 'sphere':
-			brush.geometry = new THREE.SphereBufferGeometry(
+			brush.geometry = new THREE.SphereGeometry(
 				1,
 				Math.round( THREE.MathUtils.lerp( 5, 32, complexity ) ),
 				Math.round( THREE.MathUtils.lerp( 5, 16, complexity ) )
 			);
 			break;
 		case 'box':
-			brush.geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+			brush.geometry = new THREE.BoxGeometry( 1, 1, 1 );
 			break;
 		case 'cylinder':
-			brush.geometry = new THREE.CylinderBufferGeometry(
+			brush.geometry = new THREE.CylinderGeometry(
 				0.5, 0.5, 1,
 				Math.round( THREE.MathUtils.lerp( 5, 32, complexity ) ),
 			);
 			break;
 		case 'torus':
-			brush.geometry = new THREE.TorusBufferGeometry(
+			brush.geometry = new THREE.TorusGeometry(
 				0.6,
 				0.2,
 				Math.round( THREE.MathUtils.lerp( 4, 16, complexity ) ),
@@ -391,7 +391,7 @@ function updateBrush( brush, type, complexity ) {
 			);
 			break;
 		case 'torus knot':
-			brush.geometry = new THREE.TorusKnotBufferGeometry(
+			brush.geometry = new THREE.TorusKnotGeometry(
 				0.6,
 				0.2,
 				Math.round( THREE.MathUtils.lerp( 16, 64, complexity ) ),

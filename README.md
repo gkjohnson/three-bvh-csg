@@ -68,7 +68,7 @@ _extends THREE.Mesh_
 An object with the same interface as `THREE.Mesh` but used to evaluate CSG operations. Once a brush is created the geometry should not be modified.
 
 > **Note**
-> 
+>
 > It is recommended to remove groups from a geometry before creating a brush if multi-material support is not required.
 
 ## Operation
@@ -105,7 +105,7 @@ Inserts the brush after the operation element that calls the method, in the list
 
 _extends THREE.Group_
 
-A class with the same interface as `THREE.Group` but used to group a list of Operation mesh through the `.add` method inherited from the THREE.Group class. You can create a group starting from single Operation meshes as in the _hierarchy_ example. 
+A class with the same interface as `THREE.Group` but used to group a list of Operation mesh through the `.add` method inherited from the THREE.Group class. You can create a group starting from single Operation meshes as in the _hierarchy_ example.
 
 ## Evaluator
 
@@ -134,14 +134,14 @@ Performs the given `operation` on `brushA` with `brushB`. If no target is provid
 ### .evaluateHierarchy
 
 ```js
-evaluateHierarchy( 
-  root: Opertation, 
+evaluateHierarchy(
+  root: Opertation,
   target = new Brush : Brush | Mesh
 ) : Brush | Mesh
 ```
 
-The method gets as parameters a root, an Operation mesh and a target if it is provided, otherwise, a new `Brush` will be created. 
-First sets the `updateMatrixWolrd` of the root to true then calls the traverse function with the root parameter to `evaluate` the mesh and its children. 
+The method gets as parameters a root, an Operation mesh and a target if it is provided, otherwise, a new `Brush` will be created.
+First sets the `updateMatrixWolrd` of the root to true then calls the traverse function with the root parameter to `evaluate` the mesh and its children.
 
 ```js
 evaluate( brush, child, child.operation );
@@ -202,6 +202,30 @@ Sets the visibility of the grid on the mesh.
 
 TODO
 
+### constructor
+
+```js
+constructor( geometry : BufferGeometry = null )
+```
+
+### .getSiblingTriangleIndex
+
+```js
+getSiblingTriangleIndex( triIndex : Number, edgeIndex : 0 | 1 | 2 ) : Number
+```
+
+### .getSiblingEdgeIndex
+
+```js
+getSiblingEdgeIndex( triIndex : Number, edgeIndex : 0 | 1 | 2 ) : Number
+```
+
+### .updateFrom
+
+```js
+updateFrom( geometry : BufferGeometry ) : void
+```
+
 ## PointsHelper
 
 _extends THREE.InstancedMesh_
@@ -260,6 +284,16 @@ setTriangles( triangles:  Triangle[] ) : void
 ```
 
 Sets the geometry of the mesh and the line with the position of the triangles passed as a parameter of the method.
+
+## Functions
+
+### computeMeshVolume
+
+```js
+computeMeshVolume( mesh : Mesh | BufferGeometry ) : Number
+```
+
+Computes the volume of the given mesh in world space.
 
 # Gotchas
 - All geometry are expected to have all attributes being used and of the same type.
