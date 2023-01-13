@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Typescript definitions for the public API.
+- Support for geometries with negated scales.
 
 ### Fixed
 - Return value for GridMaterial.getCustomCacheKey().
+- Made coplanar face intersections more robust.
 
 ## [0.0.1] - 2022-07-19
 
