@@ -293,7 +293,7 @@ Sets the geometry of the mesh and the line with the position of the triangles pa
 computeMeshVolume( mesh : Mesh | BufferGeometry ) : Number
 ```
 
-Computes the volume of the given mesh in world space.
+Computes the volume of the given mesh in world space. The world matrix is expected to be updated before calling this function.
 
 # Gotchas
 - All geometry are expected to have all attributes being used and of the same type.
