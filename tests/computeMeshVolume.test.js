@@ -39,9 +39,10 @@ describe( 'computeMeshVolume', () => {
 
 	} );
 
-
 	it( 'should compute the volume of a sphere.', () => {
 
+		// sphere won't be completely accurate to a smooth sphere so we have a higher
+		// precision tolerance here.
 		const mesh = new Mesh( new SphereGeometry( 1, 100, 100 ) );
 		const volume = computeMeshVolume( mesh );
 		expect( volume ).toBeCloseTo( Math.PI * 4 / 3, 2 );
