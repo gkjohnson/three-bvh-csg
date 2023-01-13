@@ -202,11 +202,6 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 		// get the side and decide if we need to cull the triangle based on the operation
 		const hitSide = getHitSide( _tri, bBVH );
 		const action = getOperationAction( operation, hitSide, invert );
-		if ( action === SKIP_TRI ) {
-
-			continue;
-
-		}
 
 		while ( stack.length > 0 ) {
 
@@ -223,6 +218,12 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 					traverseSet.delete( sid );
 
 				}
+
+			}
+
+			if ( action === SKIP_TRI ) {
+
+				continue;
 
 			}
 
