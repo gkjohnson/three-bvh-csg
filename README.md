@@ -29,6 +29,8 @@ An _experimental, in progress_, flexible, memory compact, fast and dynamic CSG i
 
 [Multimaterial CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/multimaterial.html)
 
+[Hierarchical Operations](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/hierarchy.html)
+
 # Use
 
 ```js
