@@ -126,7 +126,7 @@ async function init() {
 		const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 1, 20 ), brushMat );
 		hole.operation = SUBTRACTION;
 		hole.rotateX( Math.PI / 2 );
-		hole.position.y = 0.25
+		hole.position.y = 0.25;
 
 		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1, 2.5, 1 ), brushMat );
 		hole2.operation = SUBTRACTION;
