@@ -13,3 +13,5 @@ export * from './objects/TriangleSetHelper.js';
 export * from './objects/EdgesHelper.js';
 export * from './objects/PointsHelper.js';
 export * from './objects/HalfEdgeHelper.js';
+
+export * from './utils/computeMeshVolume.js';
