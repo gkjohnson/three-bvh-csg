@@ -5,7 +5,7 @@ import {
 	appendAttributeFromTriangle,
 	appendAttributesFromIndices,
 	getOperationAction,
-	SKIP_TRI, ADD_TRI, INVERT_TRI,
+	SKIP_TRI, INVERT_TRI,
 } from './operationsUtils.js';
 
 const _matrix = new Matrix4();

@@ -13,11 +13,14 @@ const _vec4_0 = new Vector4();
 const _vec4_1 = new Vector4();
 const _vec4_2 = new Vector4();
 const _edge = new Line3();
+const _normal = new Vector3();
 const JITTER_EPSILON = 1e-8;
 const OFFSET_EPSILON = 1e-15;
-export const COPLANAR = 0;
+
 export const BACK_SIDE = - 1;
 export const FRONT_SIDE = 1;
+export const COPLANAR_OPPOSITE = - 2;
+export const COPLANAR_ALIGNED = 2;
 
 export const INVERT_TRI = 0;
 export const ADD_TRI = 1;
@@ -40,7 +43,8 @@ export function getHitSide( tri, bvh ) {
 	}
 
 	// get the ray the check the triangle for
-	tri.getNormal( _ray.direction );
+	tri.getNormal( _normal );
+	_ray.direction.copy( _normal );
 	tri.getMidpoint( _ray.origin );
 
 	const total = 3;
@@ -72,8 +76,15 @@ export function getHitSide( tri, bvh ) {
 
 		}
 
+		// if we're right up against another face then we're coplanar
+		if ( minDistance <= OFFSET_EPSILON ) {
+
+			return hit.face.normal.dot( _normal ) > 0 ? COPLANAR_ALIGNED : COPLANAR_OPPOSITE;
+
+		}
+
 		// if our current casts meet our requirements then early out
-		if ( minDistance <= OFFSET_EPSILON || count / total > 0.5 || ( i - count + 1 ) / total > 0.5 ) {
+		if ( count / total > 0.5 || ( i - count + 1 ) / total > 0.5 ) {
 
 			break;
 
@@ -81,16 +92,7 @@ export function getHitSide( tri, bvh ) {
 
 	}
 
-	// if we're right up against another face then we're coplanar
-	if ( minDistance <= OFFSET_EPSILON ) {
-
-		return COPLANAR;
-
-	} else {
-
-		return count / total > 0.5 ? BACK_SIDE : FRONT_SIDE;
-
-	}
+	return count / total > 0.5 ? BACK_SIDE : FRONT_SIDE;
 
 }
 
@@ -228,7 +230,8 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 	switch ( operation ) {
 
 		case ADDITION:
-			if ( hitSide === FRONT_SIDE || ( hitSide === COPLANAR && invert ) ) {
+
+			if ( hitSide === FRONT_SIDE || ( hitSide === COPLANAR_ALIGNED && ! invert ) ) {
 
 				return ADD_TRI;
 
@@ -247,7 +250,7 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 
 			} else {
 
-				if ( hitSide === FRONT_SIDE ) {
+				if ( hitSide === FRONT_SIDE || hitSide === COPLANAR_OPPOSITE ) {
 
 					return ADD_TRI;
 
@@ -257,6 +260,7 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 
 			break;
 		case DIFFERENCE:
+
 			if ( hitSide === BACK_SIDE ) {
 
 				return INVERT_TRI;
@@ -269,7 +273,7 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 
 			break;
 		case INTERSECTION:
-			if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR && invert ) ) {
+			if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR_ALIGNED && ! invert ) ) {
 
 				return ADD_TRI;
 

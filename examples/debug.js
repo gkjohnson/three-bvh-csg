@@ -156,8 +156,8 @@ async function init() {
 	// add wireframe representation
 	wireframeResult = new THREE.Mesh( resultObject.geometry, new THREE.MeshBasicMaterial( {
 		wireframe: true,
-		color: 0,
-		opacity: 0.15,
+		color: 0xffffff,
+		opacity: 1,
 		transparent: true,
 	} ) );
 	scene.add( wireframeResult );
