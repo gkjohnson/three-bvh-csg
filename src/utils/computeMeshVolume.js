@@ -18,7 +18,7 @@ export function computeMeshVolume( mesh ) {
 	} else {
 
 		geometry = mesh.geometry;
-		matrix = Math.abs( mesh.matrixWorld.determinant() - 1.0 ) < 1e15 ? null : mesh.matrixWorld;
+		matrix = Math.abs( mesh.matrixWorld.determinant() - 1.0 ) < 1e-15 ? null : mesh.matrixWorld;
 
 	}
 
