@@ -115,7 +115,7 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach
-			const hitSide = getHitSide( clippedTri, bBVH, invert );
+			const hitSide = getHitSide( clippedTri, bBVH );
 			// let hitSide = clippedTri.side;
 			// if ( true || hitSide === null ) {
 
@@ -200,7 +200,7 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 		_tri.c.fromBufferAttribute( aPosition, i2 ).applyMatrix4( _matrix );
 
 		// get the side and decide if we need to cull the triangle based on the operation
-		const hitSide = getHitSide( _tri, bBVH, invert );
+		const hitSide = getHitSide( _tri, bBVH );
 		const action = getOperationAction( operation, hitSide, invert );
 		if ( action === SKIP_TRI ) {
 

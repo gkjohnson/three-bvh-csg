@@ -30,7 +30,7 @@ export function setDebugContext( debugData ) {
 
 }
 
-export function getHitSide( tri, bvh, invert = false ) {
+export function getHitSide( tri, bvh ) {
 
 	// random function that returns [ - 0.5, 0.5 ];
 	function rand() {
@@ -40,11 +40,8 @@ export function getHitSide( tri, bvh, invert = false ) {
 	}
 
 	// get the ray the check the triangle for
-	// apply a small epsilon offset to account for floating point error
 	tri.getNormal( _ray.direction );
-	tri
-		.getMidpoint( _ray.origin )
-		.addScaledVector( _ray.direction, invert ? OFFSET_EPSILON : - OFFSET_EPSILON );
+	tri.getMidpoint( _ray.origin );
 
 	const total = 3;
 	let count = 0;
@@ -55,6 +52,10 @@ export function getHitSide( tri, bvh, invert = false ) {
 		_ray.direction.x += rand() * JITTER_EPSILON;
 		_ray.direction.y += rand() * JITTER_EPSILON;
 		_ray.direction.z += rand() * JITTER_EPSILON;
+
+		// and invert it so we can account for floating point error by checking both directions
+		// to catch coplanar distances
+		_ray.direction.multiplyScalar( - 1 );
 
 		// check if the ray hit the backside
 		const hit = bvh.raycastFirst( _ray, DoubleSide );
@@ -72,7 +73,7 @@ export function getHitSide( tri, bvh, invert = false ) {
 		}
 
 		// if our current casts meet our requirements then early out
-		if ( minDistance === 0 || count / total > 0.5 || ( i - count + 1 ) / total > 0.5 ) {
+		if ( minDistance <= OFFSET_EPSILON || count / total > 0.5 || ( i - count + 1 ) / total > 0.5 ) {
 
 			break;
 
