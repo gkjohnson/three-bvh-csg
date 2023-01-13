@@ -10,7 +10,7 @@ export function computeMeshVolume( mesh ) {
 	// grab the matrix and the geometry
 	let geometry;
 	let matrix;
-	if ( mesh.isGeometry ) {
+	if ( mesh.isBufferGeometry ) {
 
 		geometry = mesh;
 		matrix = null;
