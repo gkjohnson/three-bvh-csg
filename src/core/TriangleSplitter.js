@@ -1,6 +1,6 @@
 import { Triangle, Line3, Vector3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
-import { BACK_SIDE, FRONT_SIDE, COPLANAR } from './operationsUtils.js';
+import { BACK_SIDE, FRONT_SIDE } from './operationsUtils.js';
 
 const EPSILON = 1e-14;
 const COPLANAR_EPSILON = 1e-7;
@@ -71,7 +71,8 @@ class CullableTriangle extends Triangle {
 				this.coplanarCount ++;
 				if ( this.coplanarCount === 3 ) {
 
-					this.side = COPLANAR;
+					// this.side = COPLANAR;
+					throw new Error( 'NOT SUPPORTED' );
 
 				}
 
