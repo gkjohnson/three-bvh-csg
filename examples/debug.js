@@ -90,7 +90,7 @@ async function init() {
 	// brush2.scale.setScalar( 0.75 );
 
 	brush1.scale.set( 0.5, 5, 0.5 );
-	brush2.scale.set( 0.5, - 5, 0.5 );
+	brush2.scale.set( 0.5, 5, 0.5 );
 	brush2.rotation.x = Math.PI / 2;
 
 	// initialize materials
