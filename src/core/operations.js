@@ -50,13 +50,17 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 // perform triangle splitting and CSG operations on the set of split triangles
 function performSplitTriangleOperations( a, b, intersectionMap, operation, invert, splitter, attributeInfo, groupOffset = 0 ) {
 
+	const invertedGeometry = a.matrixWorld.determinant() < 0;
+
 	// transforms into the local frame of matrix b
 	_matrix
 		.copy( b.matrixWorld )
 		.invert()
 		.multiply( a.matrixWorld );
 
-	_normalMatrix.getNormalMatrix( a.matrixWorld );
+	_normalMatrix
+		.getNormalMatrix( a.matrixWorld )
+		.multiplyScalar( invertedGeometry ? - 1 : 1 );
 
 	const groupIndices = a.geometry.groupIndices;
 	const aIndex = a.geometry.index;
@@ -125,17 +129,9 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 				_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
 				_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
 				_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
-				switch ( action ) {
 
-					case ADD_TRI:
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet );
-						break;
-
-					case INVERT_TRI:
-						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet, true );
-						break;
-
-				}
+				const invertTri = action === INVERT_TRI;
+				appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet, invertedGeometry !== invertTri );
 
 			}
 
@@ -153,13 +149,17 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 
 function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, attributeInfo, groupOffset = 0 ) {
 
+	const invertedGeometry = a.matrixWorld.determinant() < 0;
+
 	// matrix for transforming into the local frame of geometry b
 	_matrix
 		.copy( b.matrixWorld )
 		.invert()
 		.multiply( a.matrixWorld );
 
-	_normalMatrix.getNormalMatrix( a.matrixWorld );
+	_normalMatrix
+		.getNormalMatrix( a.matrixWorld )
+		.multiplyScalar( invertedGeometry ? - 1 : 1 );
 
 	const bBVH = b.geometry.boundsTree;
 	const groupIndices = a.geometry.groupIndices;
@@ -202,6 +202,12 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 		// get the side and decide if we need to cull the triangle based on the operation
 		const hitSide = getHitSide( _tri, bBVH );
 		const action = getOperationAction( operation, hitSide, invert );
+		if ( action === SKIP_TRI ) {
+
+			continue;
+
+		}
+
 		while ( stack.length > 0 ) {
 
 			const currId = stack.pop();
@@ -224,18 +230,8 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 			const i0 = aIndex.getX( i3 + 0 );
 			const i1 = aIndex.getX( i3 + 1 );
 			const i2 = aIndex.getX( i3 + 2 );
-
-			switch ( action ) {
-
-				case ADD_TRI:
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet );
-					break;
-
-				case INVERT_TRI:
-					appendAttributesFromIndices( i2, i1, i0, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invert );
-					break;
-
-			}
+			const invertTri = action === INVERT_TRI;
+			appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
 
 		}
 
