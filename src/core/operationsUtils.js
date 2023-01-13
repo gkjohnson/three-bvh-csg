@@ -267,6 +267,7 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 
 			}
 
+			break;
 		case INTERSECTION:
 			if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR && invert ) ) {
 
