@@ -30,7 +30,7 @@ export function setDebugContext( debugData ) {
 
 }
 
-export function getHitSide( tri, bvh ) {
+export function getHitSide( tri, bvh, invert = false ) {
 
 	// random function that returns [ - 0.5, 0.5 ];
 	function rand() {
@@ -44,7 +44,7 @@ export function getHitSide( tri, bvh ) {
 	tri.getNormal( _ray.direction );
 	tri
 		.getMidpoint( _ray.origin )
-		.addScaledVector( _ray.direction, OFFSET_EPSILON );
+		.addScaledVector( _ray.direction, invert ? OFFSET_EPSILON : - OFFSET_EPSILON );
 
 	const total = 3;
 	let count = 0;
