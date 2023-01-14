@@ -138,7 +138,6 @@ async function init() {
 		root.add( doorGroup );
 		transformControls.attach( doorGroup );
 
-
 	}
 
 	{

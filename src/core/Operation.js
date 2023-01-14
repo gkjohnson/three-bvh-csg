@@ -36,8 +36,6 @@ export class Operation extends Brush {
 		const index = parent.children.indexOf( this );
 		parent.children.splice( index, 0, brush );
 
-		// TODO: throw event
-
 	}
 
 	insertAfter( brush ) {
@@ -45,8 +43,6 @@ export class Operation extends Brush {
 		const parent = this.parent;
 		const index = parent.children.indexOf( this );
 		parent.children.splice( index + 1, 0, brush );
-
-		// TODO: throw event
 
 	}
 

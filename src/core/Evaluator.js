@@ -276,7 +276,7 @@ export class Evaluator {
 		};
 
 
-		const traverse = ( brush ) => {
+		const traverse = brush => {
 
 			const children = brush.children;
 			let didChange = false;
