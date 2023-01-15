@@ -112,7 +112,7 @@ export function collectIntersectingTriangles( a, b ) {
 
 		intersectsTriangles( triangleA, triangleB, ia, ib ) {
 
-			if ( triangleA.intersectsTriangle( triangleB, _edge ) && _edge.distance() > 1e-5 ) {
+			if ( triangleA.intersectsTriangle( triangleB, _edge, true ) && _edge.distance() > 1e-5 ) {
 
 				aIntersections.add( ia, ib );
 				bIntersections.add( ib, ia );
