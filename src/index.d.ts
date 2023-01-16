@@ -95,10 +95,10 @@ export class TriangleSplitter {
 
 export class HalfEdgeMap {
 
-  constructor( geometry?: BufferGeometry );
+  constructor();
   getSiblingTriangleIndex( triIndex: number, edgeIndex: number ): number;
   getSiblingEdgeIndex( triIndex: number, edgeIndex: number ): number;
-  updateFrom( geomtry: BufferGeometry ): void;
+  updateFrom( geometry: BufferGeometry ): void;
 
 }
 

@@ -77,7 +77,8 @@ export class Brush extends Mesh {
 		// generate half edges
 		if ( ! geometry.halfEdges ) {
 
-			geometry.halfEdges = new HalfEdgeMap( geometry );
+			geometry.halfEdges = new HalfEdgeMap();
+			geometry.halfEdges.updateFrom( geometry );
 
 		}
 

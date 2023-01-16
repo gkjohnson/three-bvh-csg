@@ -16,18 +16,12 @@ function hashVertex( v ) {
 
 export class HalfEdgeMap {
 
-	constructor( geometry = null ) {
+	constructor() {
 
 		this.data = null;
 		this.unmatchedEdges = null;
 		this.matchedEdges = null;
 		this.useDrawRange = true;
-
-		if ( geometry ) {
-
-			this.updateFrom( geometry );
-
-		}
 
 	}
 
@@ -45,7 +39,7 @@ export class HalfEdgeMap {
 
 	}
 
-	updateFrom( geometry ) {
+	updateFrom( geometry, unmatchedEdgeSet = null ) {
 
 		// runs on the assumption that there is a 1 : 1 match of edges
 		const map = new Map();
@@ -121,6 +115,12 @@ export class HalfEdgeMap {
 					unmatchedEdges --;
 					matchedEdges ++;
 
+					if ( unmatchedEdgeSet ) {
+
+						unmatchedEdgeSet.delete( otherIndex );
+
+					}
+
 				} else {
 
 					// save the triangle and triangle edge index captured in one value
@@ -129,6 +129,12 @@ export class HalfEdgeMap {
 					const hash = `${ vh0 }_${ vh1 }`;
 					map.set( hash, i3 + e );
 					unmatchedEdges ++;
+
+					if ( unmatchedEdgeSet ) {
+
+						unmatchedEdgeSet.add( i3 + e );
+
+					}
 
 				}
 
