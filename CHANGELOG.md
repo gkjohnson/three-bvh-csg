@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Made coplanar face intersections more robust.
 - Case where coplanar faces were not handled properly with the `DIFFERENCE` operation.
 - Handle `COPLANAR` cases more robustly.
+- Improved half edge precision.
 
 ## [0.0.2] - 2022-09-15
 ### Fixed
