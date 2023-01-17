@@ -169,20 +169,6 @@ intersectionEdges = [] : Line3
 
 A list of edges formed by intersecting triangles during the CSG process.
 
-<!--
-## EvaluatorWorker
-
-_extends Evaluator_
-
-### .evaluate
-
-TODO
-
-### .evaluateHierarchy
-
-TODO
--->
-
 ## GridMaterial
 
 _extends THREE.MeshPhongMaterial_
@@ -197,16 +183,9 @@ enableGrid = true : Boolean
 
 Sets the visibility of the grid on the mesh.
 
-
 ## HalfEdgeMap
 
-TODO
-
-### constructor
-
-```js
-constructor( geometry : BufferGeometry = null )
-```
+Stores the relationship between triangles and edges in the mesh.
 
 ### .getSiblingTriangleIndex
 

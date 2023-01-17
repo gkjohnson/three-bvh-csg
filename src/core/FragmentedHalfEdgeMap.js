@@ -138,6 +138,23 @@ export class FragmentedHalfEdgeMap {
 	constructor() {
 
 		this.edgeMap = null;
+		this.matchedEdges = 0;
+		this.unmatchedEdges = 0;
+
+	}
+
+	*getSiblingIndices( triIndex, edgeIndex, target = {} ) {
+
+		const set = this.edgeMap.get( 3 * triIndex + edgeIndex );
+		for ( const value of set ) {
+
+			const e = value % 3;
+			const t = ( value - e ) / 3;
+			target.edgeIndex = e;
+			target.triIndex = t;
+			yield target;
+
+		}
 
 	}
 
@@ -201,6 +218,7 @@ export class FragmentedHalfEdgeMap {
 
 			}
 
+			// push the edge distances onto the ray set so they can be used later
 			const list = edgeDistanceMap.get( hash );
 			let start = _vec.subVectors( _line.start, _distanceRay.origin ).dot( _distanceRay.direction );
 			let end = _vec.subVectors( _line.end, _distanceRay.origin ).dot( _distanceRay.direction );
@@ -220,16 +238,24 @@ export class FragmentedHalfEdgeMap {
 
 		}
 
+		// sort the edges in ascending order
+		for ( const [ _, value ] of edgeDistanceMap ) {
+
+			const { reverseHash, edges } = value;
+			edges.sort( ( a, b ) => a.start - b.start );
+
+		}
+
+		// try to find accumulated matching edges
+		const connections = new EdgeMap();
 		for ( const [ _, value ] of edgeDistanceMap ) {
 
 			const { reverseHash, edges } = value;
 			const otherEdges = edgeDistanceMap.get( reverseHash ).edges;
-			edges.sort( ( a, b ) => a.start - b.start );
-			otherEdges.sort( ( a, b ) => a.start - b.start );
-
 			for ( let i = 0; i < edges.length; i ++ ) {
 
-				const fullyMatched = removeOverlap(	edges[ i ], otherEdges );
+				// find matches - remove the element if it's been full matched
+				const fullyMatched = removeOverlap(	edges[ i ], otherEdges, connections );
 				if ( fullyMatched ) {
 
 					edges.splice( i, 1 );
@@ -242,6 +268,9 @@ export class FragmentedHalfEdgeMap {
 
 		}
 
+		this.matchedEdges = connections.size;
+		this.unmatchedEdges = unmatchedEdgeSet.size - connections.size;
+		this.edgeMap = connections;
 
 	}
 
