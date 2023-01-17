@@ -1,4 +1,4 @@
-const HASH_MULTIPLIER = ( 1 + 1e-10 ) * 1e5;
+const HASH_MULTIPLIER = ( 1 + 1e-7 ) * 1e6;
 
 export function hashNumber( v ) {
 

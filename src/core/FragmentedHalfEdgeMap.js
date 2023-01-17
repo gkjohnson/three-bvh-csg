@@ -2,7 +2,7 @@ import { Ray, Line3, Vector3 } from 'three';
 import { HalfEdgeMap } from './HalfEdgeMap.js';
 import { hashRay } from '../utils/hashUtils.js';
 
-const EPSILON = 1e-10;
+const EPSILON = 1e-4;
 const _ray = new Ray();
 const _reverseRay = new Ray();
 const _distanceRay = new Ray();
@@ -20,40 +20,43 @@ function toNormalizedRay( v0, v1, targetRay ) {
 
 }
 
-function removeOverlap( arr, a, connectionMap = null ) {
+function removeOverlap( otherArr, arr, index, eps = EPSILON, connectionMap = null ) {
 
-	for ( let i = 0; i < arr.length; i ++ ) {
+	const a = arr[ index ];
+	for ( let i = 0; i < otherArr.length; i ++ ) {
 
-		const b = arr[ i ];
+		const b = otherArr[ i ];
 		if ( a.end < b.start ) {
 
+			// all of "A" comes before "B"
 			continue;
 
 		} else if ( a.start > b.end ) {
 
+			// all of "A" comes after "B"
 			continue;
 
-		} else if ( a.start < b.start ) {
+		} else if ( a.start <= b.start ) {
 
 			if ( a.end > b.end ) {
 
-				console.log( 'NOPE', a, b, b.end - b.start <= EPSILON)
+				// "A" extends over "B" on both ends
+				arr.splice( index + 1, 0, {
 
-				// a extends over b on both ends
-				// should never get here if our mesh is formed correctly
+					index: a.index,
+					start: b.end,
+					end: a.end,
+
+				} );
+				a.end = b.start;
 				b.start = b.end;
-				b.ADJUSTED = b.end - b.start;
-				b.__T = 1
-
 
 			} else {
 
+				// "A" extends over the first section of "B"
 				const tmp = a.end;
 				a.end = b.start;
 				b.start = tmp;
-				b.ADJUSTED = b.end - b.start;
-				a.ADJUSTED = a.end - a.start;
-				b.__T = 2
 
 			}
 
@@ -61,29 +64,21 @@ function removeOverlap( arr, a, connectionMap = null ) {
 
 			if ( b.end > a.end ) {
 
-				// b is longer than a
-				const toInsert = {
+				// "B" extends over "A" on both ends
+				otherArr.splice( i + 1, 0, {
 					index: b.index,
 					start: a.end,
 					end: b.end,
-				};
-
+				} );
 				b.end = a.start;
 				a.start = a.end;
-				arr.splice( i, 0, toInsert );
-				b.ADJUSTED = b.end - b.start;
-				a.ADJUSTED = a.end - a.start;
-				b.__T = 3
-
 
 			} else {
 
-				const tmp = a.end;
-				a.end = b.start;
-				b.start = tmp;
-				b.ADJUSTED = b.end - b.start;
-				a.ADJUSTED = a.end - a.start;
-				b.__T = 4
+				// "B" extends over the first section of "A"
+				const tmp = b.end;
+				b.end = a.start;
+				a.start = tmp;
 
 			}
 
@@ -91,22 +86,13 @@ function removeOverlap( arr, a, connectionMap = null ) {
 
 			a.start = a.end;
 			b.start = b.end;
-			b.ADJUSTED = true;
-			a.ADJUSTED = true;
-			b.__T = 5
 
 		}
 
-		if ( b.end - b.start <= EPSILON ) {
+		if ( b.end - b.start <= eps ) {
 
-			const res = arr.splice( i, 1 );
+			const res = otherArr.splice( i, 1 );
 			i --;
-
-			console.log( res );
-
-		} else {
-
-			b.SKIP_EDELETE = true;
 
 		}
 
@@ -116,7 +102,7 @@ function removeOverlap( arr, a, connectionMap = null ) {
 
 		}
 
-		if ( a.end - a.start <= EPSILON ) {
+		if ( a.end - a.start <= eps ) {
 
 			return true;
 
@@ -124,7 +110,7 @@ function removeOverlap( arr, a, connectionMap = null ) {
 
 	}
 
-	return a.end - a.start <= EPSILON;
+	return a.end - a.start <= eps;
 
 }
 
@@ -158,6 +144,7 @@ export class FragmentedHalfEdgeMap {
 		this.edgeMap = null;
 		this.matchedEdges = 0;
 		this.unmatchedEdges = 0;
+		this.epsilon = EPSILON;
 
 	}
 
@@ -177,7 +164,6 @@ export class FragmentedHalfEdgeMap {
 	}
 
 	updateFrom( geometry, unmatchedEdgeSet = null ) {
-
 
 		const { attributes } = geometry;
 		const indexAttr = geometry.index;
@@ -232,7 +218,6 @@ export class FragmentedHalfEdgeMap {
 				edgeDistanceMap.set( hash, {
 					reverseHash,
 					ray: _distanceRay.clone(),
-					ogRay: _ray.clone(),
 					edges: [],
 				} );
 
@@ -254,7 +239,6 @@ export class FragmentedHalfEdgeMap {
 				index: value,
 				start,
 				end,
-				line: _line.clone(),
 			} );
 
 		}
@@ -262,7 +246,7 @@ export class FragmentedHalfEdgeMap {
 		// sort the edges in ascending order
 		for ( const [ _, value ] of edgeDistanceMap ) {
 
-			const { edges, ray, ogRay } = value;
+			const { edges } = value;
 			edges.sort( ( a, b ) => a.start - b.start );
 
 		}
@@ -282,14 +266,13 @@ export class FragmentedHalfEdgeMap {
 			for ( let i = 0; i < edges.length; i ++ ) {
 
 				// find matches - remove the element if it's been full matched
-				const fullyMatched = removeOverlap( otherEdges, edges[ i ], connections );
+				const fullyMatched = removeOverlap( otherEdges, edges, i, this.epsilon, connections );
 				if ( fullyMatched ) {
 
 					edges.splice( i, 1 );
 					i --;
 
 				}
-
 
 			}
 
