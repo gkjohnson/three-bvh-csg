@@ -2,20 +2,31 @@ import { Ray, Line3, Vector3 } from 'three';
 import { HalfEdgeMap } from './HalfEdgeMap.js';
 
 const EPSILON = 1e-10;
+const HASH_MULTIPLIER = ( 1 + 1e-10 ) * 1e2;
 const _ray = new Ray();
 const _reverseRay = new Ray();
 const _distanceRay = new Ray();
 const _line = new Line3();
 const _vec = new Vector3();
 
-function toNormalizedRay( v0, v1, ray ) {
+function toNormalizedRay( v0, v1, targetRay ) {
 
-	ray.direction.subVectors( v1, v0 ).normalize();
-	ray.origin
+	targetRay.direction.subVectors( v1, v0 ).normalize();
+	targetRay.origin
 		.copy( v0 )
-		.addScaledVector( ray.direction, - v0.dot( targetRay.direction ) );
+		.addScaledVector( targetRay.direction, - v0.dot( targetRay.direction ) );
 
-	return ray;
+	return targetRay;
+
+}
+
+function hashVertex( v ) {
+
+	const x = ~ ~ ( v.x * HASH_MULTIPLIER );
+	const y = ~ ~ ( v.y * HASH_MULTIPLIER );
+	const z = ~ ~ ( v.z * HASH_MULTIPLIER );
+
+	return `${ x },${ y },${ z }`;
 
 }
 
@@ -36,6 +47,7 @@ function removeOverlap( arr, a, connectionMap = null ) {
 	for ( let i = 0; i < arr.length; i ++ ) {
 
 		const b = arr[ i ];
+		console.log( a, b );
 		if ( a.end < b.start ) {
 
 			continue;
@@ -82,6 +94,11 @@ function removeOverlap( arr, a, connectionMap = null ) {
 				b.start = tmp;
 
 			}
+
+		} else if ( a.start === b.start && a.end === b.end ) {
+
+			a.start = a.end;
+			b.start = b.end;
 
 		}
 
@@ -197,7 +214,8 @@ export class FragmentedHalfEdgeMap {
 
 			const hash = hashRay( _ray );
 			const reverseHash = hashRay( _reverseRay );
-			if ( edgeDistanceMap.has( hash ) ) {
+
+			if ( edgeDistanceMap.has( reverseHash ) ) {
 
 				_distanceRay.copy( edgeDistanceMap.get( reverseHash ).ray );
 
@@ -211,8 +229,8 @@ export class FragmentedHalfEdgeMap {
 			if ( ! edgeDistanceMap.has( hash ) ) {
 
 				edgeDistanceMap.set( hash, {
-					ray: _ray.clone(),
-					inverseHash: hashRay( _reverseRay ),
+					reverseHash,
+					ray: _distanceRay.clone(),
 					edges: [],
 				} );
 
@@ -241,7 +259,7 @@ export class FragmentedHalfEdgeMap {
 		// sort the edges in ascending order
 		for ( const [ _, value ] of edgeDistanceMap ) {
 
-			const { reverseHash, edges } = value;
+			const { edges } = value;
 			edges.sort( ( a, b ) => a.start - b.start );
 
 		}
@@ -251,11 +269,17 @@ export class FragmentedHalfEdgeMap {
 		for ( const [ _, value ] of edgeDistanceMap ) {
 
 			const { reverseHash, edges } = value;
+			if ( ! edgeDistanceMap.has( reverseHash ) ) {
+
+				continue;
+
+			}
+
 			const otherEdges = edgeDistanceMap.get( reverseHash ).edges;
 			for ( let i = 0; i < edges.length; i ++ ) {
 
 				// find matches - remove the element if it's been full matched
-				const fullyMatched = removeOverlap(	edges[ i ], otherEdges, connections );
+				const fullyMatched = removeOverlap( otherEdges, edges[ i ], connections );
 				if ( fullyMatched ) {
 
 					edges.splice( i, 1 );
