@@ -1,18 +1,7 @@
 import { Vector3 } from 'three';
+import { hashVertex } from '../utils/hashUtils.js';
 
 const _vertices = [ new Vector3(), new Vector3(), new Vector3() ];
-
-function hashNumber( v ) {
-
-	return ~ ~ ( v * 1e4 );
-
-}
-
-function hashVertex( v ) {
-
-	return `${ hashNumber( v.x ) },${ hashNumber( v.y ) },${ hashNumber( v.z ) }`;
-
-}
 
 export class HalfEdgeMap {
 
