@@ -1,8 +1,8 @@
 import { Ray, Line3, Vector3 } from 'three';
 import { HalfEdgeMap } from './HalfEdgeMap.js';
+import { hashRay } from '../utils/hashUtils.js';
 
 const EPSILON = 1e-10;
-const HASH_MULTIPLIER = ( 1 + 1e-10 ) * 1e2;
 const _ray = new Ray();
 const _reverseRay = new Ray();
 const _distanceRay = new Ray();
@@ -20,55 +20,40 @@ function toNormalizedRay( v0, v1, targetRay ) {
 
 }
 
-function hashVertex( v ) {
-
-	const x = ~ ~ ( v.x * HASH_MULTIPLIER );
-	const y = ~ ~ ( v.y * HASH_MULTIPLIER );
-	const z = ~ ~ ( v.z * HASH_MULTIPLIER );
-
-	return `${ x },${ y },${ z }`;
-
-}
-
-function hashEdge( v0, v1 ) {
-
-	return `${ hashVertex( v0 ) }_${ hashVertex( v1 ) }`;
-
-}
-
-function hashRay( ray ) {
-
-	return hashEdge( ray.origin, ray.direction );
-
-}
-
 function removeOverlap( arr, a, connectionMap = null ) {
 
 	for ( let i = 0; i < arr.length; i ++ ) {
 
 		const b = arr[ i ];
-		console.log( a, b );
 		if ( a.end < b.start ) {
 
 			continue;
 
 		} else if ( a.start > b.end ) {
 
-			break;
+			continue;
 
 		} else if ( a.start < b.start ) {
 
 			if ( a.end > b.end ) {
 
+				console.log( 'NOPE', a, b, b.end - b.start <= EPSILON)
+
 				// a extends over b on both ends
 				// should never get here if our mesh is formed correctly
 				b.start = b.end;
+				b.ADJUSTED = b.end - b.start;
+				b.__T = 1
+
 
 			} else {
 
 				const tmp = a.end;
 				a.end = b.start;
 				b.start = tmp;
+				b.ADJUSTED = b.end - b.start;
+				a.ADJUSTED = a.end - a.start;
+				b.__T = 2
 
 			}
 
@@ -86,12 +71,19 @@ function removeOverlap( arr, a, connectionMap = null ) {
 				b.end = a.start;
 				a.start = a.end;
 				arr.splice( i, 0, toInsert );
+				b.ADJUSTED = b.end - b.start;
+				a.ADJUSTED = a.end - a.start;
+				b.__T = 3
+
 
 			} else {
 
 				const tmp = a.end;
 				a.end = b.start;
 				b.start = tmp;
+				b.ADJUSTED = b.end - b.start;
+				a.ADJUSTED = a.end - a.start;
+				b.__T = 4
 
 			}
 
@@ -99,13 +91,22 @@ function removeOverlap( arr, a, connectionMap = null ) {
 
 			a.start = a.end;
 			b.start = b.end;
+			b.ADJUSTED = true;
+			a.ADJUSTED = true;
+			b.__T = 5
 
 		}
 
 		if ( b.end - b.start <= EPSILON ) {
 
-			arr.splice( i, 1 );
+			const res = arr.splice( i, 1 );
 			i --;
+
+			console.log( res );
+
+		} else {
+
+			b.SKIP_EDELETE = true;
 
 		}
 
@@ -177,16 +178,16 @@ export class FragmentedHalfEdgeMap {
 
 	updateFrom( geometry, unmatchedEdgeSet = null ) {
 
+
+		const { attributes } = geometry;
+		const indexAttr = geometry.index;
+		const posAttr = attributes.position;
 		if ( ! unmatchedEdgeSet ) {
 
 			unmatchedEdgeSet = new Set();
 			new HalfEdgeMap().updateFrom( geometry, unmatchedEdgeSet );
 
 		}
-
-		const { attributes } = geometry;
-		const indexAttr = geometry.index;
-		const posAttr = attributes.position;
 
 		// get the edge distances
 		const edgeDistanceMap = new Map();
@@ -231,6 +232,7 @@ export class FragmentedHalfEdgeMap {
 				edgeDistanceMap.set( hash, {
 					reverseHash,
 					ray: _distanceRay.clone(),
+					ogRay: _ray.clone(),
 					edges: [],
 				} );
 
@@ -252,6 +254,7 @@ export class FragmentedHalfEdgeMap {
 				index: value,
 				start,
 				end,
+				line: _line.clone(),
 			} );
 
 		}
@@ -259,7 +262,7 @@ export class FragmentedHalfEdgeMap {
 		// sort the edges in ascending order
 		for ( const [ _, value ] of edgeDistanceMap ) {
 
-			const { edges } = value;
+			const { edges, ray, ogRay } = value;
 			edges.sort( ( a, b ) => a.start - b.start );
 
 		}
@@ -268,7 +271,7 @@ export class FragmentedHalfEdgeMap {
 		const connections = new EdgeMap();
 		for ( const [ _, value ] of edgeDistanceMap ) {
 
-			const { reverseHash, edges } = value;
+			const { reverseHash, edges, TOTAL } = value;
 			if ( ! edgeDistanceMap.has( reverseHash ) ) {
 
 				continue;
@@ -292,8 +295,24 @@ export class FragmentedHalfEdgeMap {
 
 		}
 
-		this.matchedEdges = connections.size;
-		this.unmatchedEdges = unmatchedEdgeSet.size - connections.size;
+		const stillUnmatchedEdgeSet = new Set();
+		for ( const [ _, value ] of edgeDistanceMap ) {
+
+			const { edges } = value;
+			if ( edges.length !== 0 ) {
+
+				edges.forEach( e => {
+
+					stillUnmatchedEdgeSet.add( e.index );
+
+				} );
+
+			}
+
+		}
+
+		this.unmatchedEdges = stillUnmatchedEdgeSet.size;
+		this.matchedEdges = unmatchedEdgeSet.size - stillUnmatchedEdgeSet.size;
 		this.edgeMap = connections;
 
 	}
