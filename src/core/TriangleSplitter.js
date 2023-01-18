@@ -256,7 +256,7 @@ export class TriangleSplitter {
 			// skip the triangle if we don't intersect with it
 			if ( splittingTriangle ) {
 
-				if ( ! splittingTriangle.intersectsTriangle( tri, _edge ) || _edge.distance() < 1e-5 ) {
+				if ( ! splittingTriangle.intersectsTriangle( tri, _edge ) ) {
 
 					tri.updateSide( plane, splittingTriangle, coplanarIndex );
 					tri.side = null;
