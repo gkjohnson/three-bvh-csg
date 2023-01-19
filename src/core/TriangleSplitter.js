@@ -19,86 +19,6 @@ export function isTriDegenerate( tri ) {
 
 }
 
-// Triangle with fields used to track whether it falls on the same side of all planes
-// being used to clip it. Side is set to "null" if it cannot be determined
-class CullableTriangle extends Triangle {
-
-	constructor( ...args ) {
-
-		super( ...args );
-		this.side = null;
-		this.originalSide = null;
-		this.coplanarCount = 0;
-
-	}
-
-	init() {
-
-		this.side = null;
-		this.originalSide = null;
-		this.coplanarCount = 0;
-
-	}
-
-	initFrom( other ) {
-
-		this.side = other.side;
-		this.originalSide = other.originalSide;
-		this.coplanarCount = other.coplanarCount;
-
-	}
-
-	updateSide( plane, triangle = null, coplanarIndex = - 1 ) {
-
-		if ( this.originalSide !== null && this.side === null ) {
-
-			return;
-
-		}
-
-		// get center and find the side of the plane we're on
-		_vec
-			.copy( this.a )
-			.add( this.b )
-			.add( this.c )
-			.multiplyScalar( 1 / 3 );
-
-		const foundSide = plane.distanceToPoint( _vec ) < 0 ? BACK_SIDE : FRONT_SIDE;
-		if ( triangle && coplanarIndex !== - 1 ) {
-
-			if ( foundSide === FRONT_SIDE ) {
-
-				this.coplanarCount ++;
-				if ( this.coplanarCount === 3 ) {
-
-					// this.side = COPLANAR;
-					throw new Error( 'NOT SUPPORTED' );
-
-				}
-
-			}
-
-		} else {
-
-			if ( this.originalSide === null ) {
-
-				this.originalSide = foundSide;
-				this.side = foundSide;
-
-			}
-
-			if ( foundSide !== this.side ) {
-
-				this.side = null;
-
-			}
-
-		}
-
-	}
-
-}
-
 // A pool of triangles to avoid unnecessary triangle creation
 class TrianglePool {
 
@@ -113,13 +33,11 @@ class TrianglePool {
 
 		if ( this._index >= this._pool.length ) {
 
-			this._pool.push( new CullableTriangle() );
+			this._pool.push( new Triangle() );
 
 		}
 
-		const result = this._pool[ this._index ++ ];
-		result.init();
-		return result;
+		return this._pool[ this._index ++ ];
 
 	}
 
@@ -258,8 +176,6 @@ export class TriangleSplitter {
 
 				if ( ! splittingTriangle.intersectsTriangle( tri, _edge, true ) ) {
 
-					tri.updateSide( plane, splittingTriangle, coplanarIndex );
-					tri.side = null;
 					continue;
 
 				}
@@ -373,8 +289,6 @@ export class TriangleSplitter {
 					if ( ! isTriDegenerate( nextTri ) ) {
 
 						triangles.push( nextTri );
-						nextTri.initFrom( tri );
-						nextTri.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
@@ -387,10 +301,6 @@ export class TriangleSplitter {
 						triangles.splice( i, 1 );
 						i --;
 						l --;
-
-					} else {
-
-						tri.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
@@ -460,16 +370,12 @@ export class TriangleSplitter {
 					if ( ! isTriDegenerate( nextTri1 ) ) {
 
 						triangles.push( nextTri1 );
-						nextTri1.initFrom( tri );
-						nextTri1.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
 					if ( ! isTriDegenerate( nextTri2 ) ) {
 
 						triangles.push( nextTri2 );
-						nextTri2.initFrom( tri );
-						nextTri2.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
@@ -478,10 +384,6 @@ export class TriangleSplitter {
 						triangles.splice( i, 1 );
 						i --;
 						l --;
-
-					} else {
-
-						tri.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
