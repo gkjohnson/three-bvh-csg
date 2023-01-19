@@ -114,6 +114,14 @@ export function collectIntersectingTriangles( a, b ) {
 
 			if ( triangleA.intersectsTriangle( triangleB, _edge, true ) ) {
 
+				// if the edge distance is zero (and not from being coplanar) then exit early and don't include the
+				// triangle in the set of intersecting triangles
+				if ( _edge.distanceSq() === 0 && triangleA.plane.normal.dot( triangleB.plane.normal ) < 1.0 - 1e-10 ) {
+
+					return false;
+
+				}
+
 				aIntersections.add( ia, ib );
 				bIntersections.add( ib, ia );
 
