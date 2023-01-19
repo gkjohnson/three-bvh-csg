@@ -112,7 +112,10 @@ export function collectIntersectingTriangles( a, b ) {
 
 		intersectsTriangles( triangleA, triangleB, ia, ib ) {
 
-			if ( triangleA.intersectsTriangle( triangleB, _edge, true ) ) {
+			if ( triangleA.intersectsTriangle( triangleB, _edge, true ) && _edge.distanceSq() > 0 ) {
+
+				// NOTE: we ignore all coplanar triangle intersections here and rely on edges of sibling triangles
+				// to cause the clipping.
 
 				aIntersections.add( ia, ib );
 				bIntersections.add( ib, ia );
