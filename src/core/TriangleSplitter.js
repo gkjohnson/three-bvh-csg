@@ -3,7 +3,7 @@ import { ExtendedTriangle } from 'three-mesh-bvh';
 import { BACK_SIDE, FRONT_SIDE } from './operationsUtils.js';
 
 const EPSILON = 1e-14;
-const COPLANAR_EPSILON = 1e-7;
+const COPLANAR_EPSILON = 1e-10;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
@@ -16,86 +16,6 @@ export function isTriDegenerate( tri ) {
 	return tri.a.distanceToSquared( tri.b ) < EPSILON ||
 		tri.a.distanceToSquared( tri.c ) < EPSILON ||
 		tri.b.distanceToSquared( tri.c ) < EPSILON;
-
-}
-
-// Triangle with fields used to track whether it falls on the same side of all planes
-// being used to clip it. Side is set to "null" if it cannot be determined
-class CullableTriangle extends Triangle {
-
-	constructor( ...args ) {
-
-		super( ...args );
-		this.side = null;
-		this.originalSide = null;
-		this.coplanarCount = 0;
-
-	}
-
-	init() {
-
-		this.side = null;
-		this.originalSide = null;
-		this.coplanarCount = 0;
-
-	}
-
-	initFrom( other ) {
-
-		this.side = other.side;
-		this.originalSide = other.originalSide;
-		this.coplanarCount = other.coplanarCount;
-
-	}
-
-	updateSide( plane, triangle = null, coplanarIndex = - 1 ) {
-
-		if ( this.originalSide !== null && this.side === null ) {
-
-			return;
-
-		}
-
-		// get center and find the side of the plane we're on
-		_vec
-			.copy( this.a )
-			.add( this.b )
-			.add( this.c )
-			.multiplyScalar( 1 / 3 );
-
-		const foundSide = plane.distanceToPoint( _vec ) < 0 ? BACK_SIDE : FRONT_SIDE;
-		if ( triangle && coplanarIndex !== - 1 ) {
-
-			if ( foundSide === FRONT_SIDE ) {
-
-				this.coplanarCount ++;
-				if ( this.coplanarCount === 3 ) {
-
-					// this.side = COPLANAR;
-					throw new Error( 'NOT SUPPORTED' );
-
-				}
-
-			}
-
-		} else {
-
-			if ( this.originalSide === null ) {
-
-				this.originalSide = foundSide;
-				this.side = foundSide;
-
-			}
-
-			if ( foundSide !== this.side ) {
-
-				this.side = null;
-
-			}
-
-		}
-
-	}
 
 }
 
@@ -113,13 +33,11 @@ class TrianglePool {
 
 		if ( this._index >= this._pool.length ) {
 
-			this._pool.push( new CullableTriangle() );
+			this._pool.push( new Triangle() );
 
 		}
 
-		const result = this._pool[ this._index ++ ];
-		result.init();
-		return result;
+		return this._pool[ this._index ++ ];
 
 	}
 
@@ -256,10 +174,8 @@ export class TriangleSplitter {
 			// skip the triangle if we don't intersect with it
 			if ( splittingTriangle ) {
 
-				if ( ! splittingTriangle.intersectsTriangle( tri, _edge ) || _edge.distance() < 1e-5 ) {
+				if ( ! splittingTriangle.intersectsTriangle( tri, _edge, true ) ) {
 
-					tri.updateSide( plane, splittingTriangle, coplanarIndex );
-					tri.side = null;
 					continue;
 
 				}
@@ -269,7 +185,6 @@ export class TriangleSplitter {
 			let intersects = 0;
 			let vertexSplitEnd = - 1;
 			let positiveSide = 0;
-			let onPlane = 0;
 			let coplanarEdge = false;
 			const arr = [ a, b, c ];
 			for ( let t = 0; t < 3; t ++ ) {
@@ -283,26 +198,32 @@ export class TriangleSplitter {
 				// so we can use that information to determine whether to split later.
 				const startDist = plane.distanceToPoint( _edge.start );
 				const endDist = plane.distanceToPoint( _edge.end );
-				if ( Math.abs( startDist ) < EPSILON ) {
+				if ( Math.abs( startDist ) < COPLANAR_EPSILON && Math.abs( endDist ) < COPLANAR_EPSILON ) {
 
-					onPlane ++;
+					coplanarEdge = true;
+					break;
 
-				} else if ( startDist > 0 ) {
+				}
+
+				// we only don't consider this an intersection if the start points hits the plane
+				if ( Math.abs( startDist ) < COPLANAR_EPSILON ) {
+
+					continue;
+
+				}
+
+				if ( startDist > 0 ) {
 
 					positiveSide ++;
 
 				}
 
-				if ( Math.abs( startDist ) < COPLANAR_EPSILON && Math.abs( endDist ) < COPLANAR_EPSILON ) {
-
-					coplanarEdge = true;
-
-				}
-
 				// double check the end point since the "intersectLine" function sometimes does not
 				// return it as an intersection (see issue #28)
+				// Because we ignore the start point intersection above we have to make sure we check the end
+				// point intersection here.
 				let didIntersect = ! ! plane.intersectLine( _edge, _vec );
-				if ( ! didIntersect && Math.abs( endDist ) < EPSILON ) {
+				if ( ! didIntersect && Math.abs( endDist ) < COPLANAR_EPSILON ) {
 
 					_vec.copy( _edge.end );
 					didIntersect = true;
@@ -337,11 +258,17 @@ export class TriangleSplitter {
 
 			}
 
+			if ( coplanarEdge ) {
+
+				continue;
+
+			}
+
 			// skip splitting if:
 			// - we have two points on the plane then the plane intersects the triangle exactly on an edge
 			// - the plane does not intersect on 2 points
 			// - the intersection edge is too small
-			if ( ! coplanarEdge && onPlane < 2 && intersects === 2 && _foundEdge.distance() > COPLANAR_EPSILON ) {
+			if ( intersects === 2 && _foundEdge.distance() > COPLANAR_EPSILON ) {
 
 				if ( vertexSplitEnd !== - 1 ) {
 
@@ -362,8 +289,6 @@ export class TriangleSplitter {
 					if ( ! isTriDegenerate( nextTri ) ) {
 
 						triangles.push( nextTri );
-						nextTri.initFrom( tri );
-						nextTri.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
@@ -376,10 +301,6 @@ export class TriangleSplitter {
 						triangles.splice( i, 1 );
 						i --;
 						l --;
-
-					} else {
-
-						tri.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
@@ -449,16 +370,12 @@ export class TriangleSplitter {
 					if ( ! isTriDegenerate( nextTri1 ) ) {
 
 						triangles.push( nextTri1 );
-						nextTri1.initFrom( tri );
-						nextTri1.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
 					if ( ! isTriDegenerate( nextTri2 ) ) {
 
 						triangles.push( nextTri2 );
-						nextTri2.initFrom( tri );
-						nextTri2.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 
@@ -467,10 +384,6 @@ export class TriangleSplitter {
 						triangles.splice( i, 1 );
 						i --;
 						l --;
-
-					} else {
-
-						tri.updateSide( plane, splittingTriangle, coplanarIndex );
 
 					}
 

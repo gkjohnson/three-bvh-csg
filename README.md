@@ -13,6 +13,9 @@ An _experimental, in progress_, flexible, memory compact, fast and dynamic CSG i
 > **Note**
 > All brush geometry must be [two-manifold](https://knowledge.autodesk.com/support/maya-lt/learn-explore/caas/CloudHelp/cloudhelp/2015/ENU/MayaLT/files/Polygons-overview-Twomanifold-vs--nonmanifold-polygonal-geometry-htm.html) - or water tight with no triangle interpenetration.
 
+> **Warning**
+> Due to numerical precision and corner cases resulting geometry may not be correctly completely two-manifold.
+
 # Roadmap / Help Wanted
 
 - Fix triangle splitting / missing triangle issues [#73](https://github.com/gkjohnson/three-bvh-csg/issues/73) [#68](https://github.com/gkjohnson/three-bvh-csg/issues/68)
