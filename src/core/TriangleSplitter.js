@@ -3,7 +3,7 @@ import { ExtendedTriangle } from 'three-mesh-bvh';
 import { BACK_SIDE, FRONT_SIDE } from './operationsUtils.js';
 
 const EPSILON = 1e-14;
-const COPLANAR_EPSILON = 1e-7;
+const COPLANAR_EPSILON = 1e-10;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
@@ -269,7 +269,6 @@ export class TriangleSplitter {
 			let intersects = 0;
 			let vertexSplitEnd = - 1;
 			let positiveSide = 0;
-			let onPlane = 0;
 			let coplanarEdge = false;
 			const arr = [ a, b, c ];
 			for ( let t = 0; t < 3; t ++ ) {
@@ -283,26 +282,32 @@ export class TriangleSplitter {
 				// so we can use that information to determine whether to split later.
 				const startDist = plane.distanceToPoint( _edge.start );
 				const endDist = plane.distanceToPoint( _edge.end );
-				if ( Math.abs( startDist ) < EPSILON ) {
+				if ( Math.abs( startDist ) < COPLANAR_EPSILON && Math.abs( endDist ) < COPLANAR_EPSILON ) {
 
-					onPlane ++;
+					coplanarEdge = true;
+					break;
 
-				} else if ( startDist > 0 ) {
+				}
+
+				// we only don't consider this an intersection if the start points hits the plane
+				if ( Math.abs( startDist ) < COPLANAR_EPSILON ) {
+
+					continue;
+
+				}
+
+				if ( startDist > 0 ) {
 
 					positiveSide ++;
 
 				}
 
-				if ( Math.abs( startDist ) < COPLANAR_EPSILON && Math.abs( endDist ) < COPLANAR_EPSILON ) {
-
-					coplanarEdge = true;
-
-				}
-
 				// double check the end point since the "intersectLine" function sometimes does not
 				// return it as an intersection (see issue #28)
+				// Because we ignore the start point intersection above we have to make sure we check the end
+				// point intersection here.
 				let didIntersect = ! ! plane.intersectLine( _edge, _vec );
-				if ( ! didIntersect && Math.abs( endDist ) < EPSILON ) {
+				if ( ! didIntersect && Math.abs( endDist ) < COPLANAR_EPSILON ) {
 
 					_vec.copy( _edge.end );
 					didIntersect = true;
@@ -337,11 +342,17 @@ export class TriangleSplitter {
 
 			}
 
+			if ( coplanarEdge ) {
+
+				continue;
+
+			}
+
 			// skip splitting if:
 			// - we have two points on the plane then the plane intersects the triangle exactly on an edge
 			// - the plane does not intersect on 2 points
 			// - the intersection edge is too small
-			if ( ! coplanarEdge && onPlane < 2 && intersects === 2 && _foundEdge.distance() > COPLANAR_EPSILON ) {
+			if ( intersects === 2 && _foundEdge.distance() > COPLANAR_EPSILON ) {
 
 				if ( vertexSplitEnd !== - 1 ) {
 
