@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 ### Fixed
 - Case where very thin triangles would not be clipped.
+- Simplified clipping logic and removed case where clipping could cause a log from unexpected scenario.
 
 ## [0.0.3] - 2023-01-17
 ### Added
