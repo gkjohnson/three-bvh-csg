@@ -75,7 +75,6 @@ async function init() {
 	renderer.setClearColor( bgColor, 1 );
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-	renderer.outputEncoding = THREE.sRGBEncoding;
 	document.body.appendChild( renderer.domElement );
 
 	// scene setup
@@ -153,7 +152,7 @@ async function init() {
 	brush2.material.side = THREE.DoubleSide;
 	brush2.material.premultipliedAlpha = true;
 	brush2.material.roughness = 0.25;
-	brush2.material.color.set( 0xE91E63 ).convertSRGBToLinear();
+	brush2.material.color.set( 0xE91E63 );
 
 	brush1.receiveShadow = true;
 	brush2.receiveShadow = true;
@@ -207,11 +206,11 @@ async function init() {
 
 	// helpers
 	edgesHelper = new EdgesHelper();
-	edgesHelper.color.set( 0xE91E63 ).convertSRGBToLinear();
+	edgesHelper.color.set( 0xE91E63 );
 	scene.add( edgesHelper );
 
 	trisHelper = new TriangleSetHelper();
-	trisHelper.color.set( 0x00BCD4 ).convertSRGBToLinear();
+	trisHelper.color.set( 0x00BCD4 );
 	scene.add( trisHelper );
 
 	bvhHelper1 = new MeshBVHVisualizer( brush1, 20 );
@@ -299,8 +298,8 @@ async function init() {
 	} );
 	brush1Folder.addColor( params, 'brush1Color' ).onChange( v => {
 
-		brush1.material.color.set( v ).convertSRGBToLinear();
-		materialMap.get( brush1.material ).color.set( v ).convertSRGBToLinear();
+		brush1.material.color.set( v );
+		materialMap.get( brush1.material ).color.set( v );
 
 	} );
 
@@ -317,8 +316,8 @@ async function init() {
 	} );
 	brush2Folder.addColor( params, 'brush2Color' ).onChange( v => {
 
-		brush2.material.color.set( v ).convertSRGBToLinear();
-		materialMap.get( brush2.material ).color.set( v ).convertSRGBToLinear();
+		brush2.material.color.set( v );
+		materialMap.get( brush2.material ).color.set( v );
 
 	} );
 

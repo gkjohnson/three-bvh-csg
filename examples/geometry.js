@@ -54,7 +54,6 @@ async function init() {
 	renderer.setClearColor( bgColor, 1 );
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-	renderer.outputEncoding = THREE.sRGBEncoding;
 	document.body.appendChild( renderer.domElement );
 
 	// scene setup
@@ -87,7 +86,7 @@ async function init() {
 
 	// floor
 	const floor = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial( { opacity: 0.05 } ) );
-	floor.material.color.set( 0xE0F7FA ).convertSRGBToLinear();
+	floor.material.color.set( 0xE0F7FA );
 	floor.rotation.x = - Math.PI / 2;
 	floor.scale.setScalar( 10 );
 	floor.position.y = - 0.5;
@@ -132,7 +131,7 @@ async function init() {
 	bunnyBrush.material.polygonOffsetUnits = 0.1;
 	bunnyBrush.material.side = THREE.DoubleSide;
 	bunnyBrush.material.premultipliedAlpha = true;
-	bunnyBrush.material.color.set( 0xE0F7FA ).convertSRGBToLinear();
+	bunnyBrush.material.color.set( 0xE0F7FA );
 
 	material.opacity = 0.15;
 	material.transparent = true;
@@ -143,7 +142,7 @@ async function init() {
 	material.side = THREE.DoubleSide;
 	material.premultipliedAlpha = true;
 	material.roughness = 0.25;
-	material.color.set( 0x4DD0E1 ).convertSRGBToLinear();
+	material.color.set( 0x4DD0E1 );
 
 	// create solid material equivalents
 	let mat;
@@ -178,7 +177,7 @@ async function init() {
 		opacity: 0.15,
 		transparent: true,
 	} ) );
-	wireframeResult.material.color.set( 0x001516 ).convertSRGBToLinear();
+	wireframeResult.material.color.set( 0x001516 );
 	scene.add( wireframeResult );
 
 	// gui

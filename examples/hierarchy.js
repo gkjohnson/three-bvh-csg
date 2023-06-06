@@ -41,7 +41,6 @@ async function init() {
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.setClearColor( bgColor, 1 );
-	renderer.outputEncoding = THREE.sRGBEncoding;
 	document.body.appendChild( renderer.domElement );
 
 	// scene setup
@@ -96,7 +95,7 @@ async function init() {
 	brushMat.opacity = 0.15;
 	brushMat.transparent = true;
 	brushMat.depthWrite = false;
-	brushMat.color.set( 0xffc400 ).convertSRGBToLinear();
+	brushMat.color.set( 0xffc400 );
 
 	resultGridMat = brushMat.clone();
 	resultGridMat.opacity = 1;
@@ -104,10 +103,10 @@ async function init() {
 	resultGridMat.depthWrite = true;
 	resultGridMat.polygonOffsetFactor = 1;
 	resultGridMat.polygonOffsetUnits = 1;
-	resultGridMat.color.set( 0xffffff ).convertSRGBToLinear();
+	resultGridMat.color.set( 0xffffff );
 
 	wireframeObject = new THREE.Mesh( undefined, new THREE.MeshBasicMaterial( { color: 0, wireframe: true } ) );
-	wireframeObject.material.color.set( 0xffc400 ).convertSRGBToLinear().multiplyScalar( 0.1 );
+	wireframeObject.material.color.set( 0xffc400 ).multiplyScalar( 0.1 );
 	scene.add( wireframeObject );
 
 	root = new Operation( new THREE.BoxBufferGeometry( 10, 5, 5 ), brushMat );

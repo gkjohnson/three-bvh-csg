@@ -24,7 +24,6 @@ async function init() {
 	renderer.setClearColor( bgColor, 1 );
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-	renderer.outputEncoding = THREE.sRGBEncoding;
 	document.body.appendChild( renderer.domElement );
 
 	// scene setup
@@ -57,7 +56,7 @@ async function init() {
 
 	// floor
 	const floor = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial( { opacity: 0.05 } ) );
-	floor.material.color.set( 0xE0F7FA ).convertSRGBToLinear();
+	floor.material.color.set( 0xE0F7FA );
 	floor.rotation.x = - Math.PI / 2;
 	floor.scale.setScalar( 10 );
 	floor.position.y = - 0.75;
@@ -69,9 +68,9 @@ async function init() {
 	const greenMaterial = new THREE.MeshStandardMaterial( { roughness: 0.25 } );
 	const blueMaterial = new THREE.MeshStandardMaterial( { roughness: 0.25 } );
 
-	redMaterial.color.set( 0xFF1744 ).convertSRGBToLinear();
-	greenMaterial.color.set( 0x76FF03 ).convertSRGBToLinear();
-	blueMaterial.color.set( 0x2979FF ).convertSRGBToLinear();
+	redMaterial.color.set( 0xFF1744 );
+	greenMaterial.color.set( 0x76FF03 );
+	blueMaterial.color.set( 0x2979FF );
 
 	// basic pieces
 	const cylinder1 = new Brush( new THREE.CylinderBufferGeometry( 0.5, 0.5, 6, 45 ), blueMaterial );
@@ -110,7 +109,7 @@ async function init() {
 		opacity: 0.15,
 		transparent: true,
 	} ) );
-	wireframeResult.material.color.set( 0x001516 ).convertSRGBToLinear();
+	wireframeResult.material.color.set( 0x001516 );
 	wireframeResult.visible = false;
 	scene.add( wireframeResult );
 

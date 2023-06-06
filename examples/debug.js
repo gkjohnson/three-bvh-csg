@@ -58,7 +58,6 @@ async function init() {
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.setClearColor( bgColor, 1 );
-	renderer.outputEncoding = THREE.sRGBEncoding;
 	document.body.appendChild( renderer.domElement );
 
 	// scene setup
@@ -116,7 +115,7 @@ async function init() {
 	brush2.material.side = THREE.DoubleSide;
 	brush2.material.premultipliedAlpha = true;
 	brush2.material.roughness = 0.25;
-	brush2.material.color.set( 0xE91E63 ).convertSRGBToLinear();
+	brush2.material.color.set( 0xE91E63 );
 
 	scene.add( brush1, brush2 );
 
@@ -164,11 +163,11 @@ async function init() {
 
 	// helpers
 	edgesHelper = new EdgesHelper();
-	edgesHelper.color.set( 0x00ff00 ).convertSRGBToLinear();
+	edgesHelper.color.set( 0x00ff00 );
 	scene.add( edgesHelper );
 
 	trisHelper = new TriangleSetHelper();
-	trisHelper.color.set( 0x00BCD4 ).convertSRGBToLinear();
+	trisHelper.color.set( 0x00BCD4 );
 	scene.add( trisHelper );
 
 	bvhHelper1 = new MeshBVHVisualizer( brush1, 20 );
