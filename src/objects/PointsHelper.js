@@ -1,4 +1,4 @@
-import { InstancedMesh, BufferGeometry, MeshBasicMaterial, Matrix4 } from 'three';
+import { InstancedMesh, SphereGeometry, MeshBasicMaterial, Matrix4 } from 'three';
 
 const _matrix = new Matrix4();
 export class PointsHelper extends InstancedMesh {
@@ -11,7 +11,7 @@ export class PointsHelper extends InstancedMesh {
 
 	constructor( count = 1000, points = [] ) {
 
-		super( new BufferGeometry( 0.025 ), new MeshBasicMaterial(), count );
+		super( new SphereGeometry( 0.025 ), new MeshBasicMaterial(), count );
 		this.frustumCulled = false;
 		this.setPoints( points );
 
