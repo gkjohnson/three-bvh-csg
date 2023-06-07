@@ -1,6 +1,6 @@
 {
   "name": "three-bvh-csg",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A fast, flexible, dynamic CSG implementation on top of three-mesh-bvh",
   "main": "build/index.umd.cjs",
   "module": "src/index.js",
