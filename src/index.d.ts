@@ -153,7 +153,7 @@ export class TriangleIntersectionSets {
 
 export class OperationDebugData {
 
-  intersectionEdges: Line[];
+  intersectionEdges: Line3[];
   enabled: boolean;
 
   addIntersectingTriangles( ia: number, triA: Triangle, ib: number, triB: Triangle ): void;
