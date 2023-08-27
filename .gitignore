@@ -105,3 +105,4 @@ dist
 
 .parcel-cache
 examples/dev-bundle
+build
