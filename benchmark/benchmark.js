@@ -2,109 +2,74 @@ import {
 	MeshNormalMaterial,
 	SphereGeometry,
 } from 'three';
+import {
+	Brush,
+	Evaluator,
+	SUBTRACTION,
+} from '../src/index.js';
 import { CSG } from 'three-csg-ts';
 import CSG2 from './lib/three-csgmesh/three-csg.js';
-import { Brush, Evaluator, SUBTRACTION } from '../src/index.js';
+import {
+	bench,
+	beforeEach,
+	suite,
+} from './lib/bench/bench.js';
 
-const ITERATIONS = 5;
+// TODO: add comparison / improvement percent?
+suite( 'Library Comparison', () => {
 
-// warm up the script. The first iterations seem to always be slow
-{
+	let sphere1,
+		sphere2,
+		result,
+		evaluator,
+		bsp1,
+		bsp2;
 
-	const sphere1 = new Brush( new SphereGeometry( 1, 50, 50 ), new MeshNormalMaterial( ) );
-	const sphere2 = new Brush( new SphereGeometry( 1, 50, 50 ) );
-	sphere2.position.y = 1;
+	beforeEach( () => {
 
-	// Make sure the .matrix of each mesh is current
-	sphere1.updateMatrixWorld();
-	sphere2.updateMatrixWorld();
+		evaluator = new Evaluator();
+		result = new Brush();
+		sphere1 = new Brush( new SphereGeometry( 1, 50, 50 ), new MeshNormalMaterial( ) );
+		sphere2 = new Brush( new SphereGeometry( 1, 50, 50 ) );
+		sphere2.position.y = 1;
+		sphere1.updateMatrixWorld();
+		sphere2.updateMatrixWorld();
 
-	const evaluator = new Evaluator();
-	const result = new Brush();
-	for ( let i = 0; i < ITERATIONS; i ++ ) {
+		bsp1 = CSG2.fromMesh( sphere1 );
+		bsp2 = CSG2.fromMesh( sphere2 );
 
-		evaluator.evaluate( sphere1, sphere2, SUBTRACTION, result );
+	} );
 
-	}
+	bench( 'three-bvh-csg', () => evaluator.evaluate( sphere1, sphere2, SUBTRACTION, result ) );
 
-}
+	bench( 'three-bvh-csg w/ rebuild',
+		() => {
 
-// Make 2 meshes..
-const sphere1 = new Brush( new SphereGeometry( 1, 50, 50 ), new MeshNormalMaterial( ) );
-const sphere2 = new Brush( new SphereGeometry( 1, 50, 50 ) );
-sphere2.position.y = 1;
+			sphere1.disposeCacheData();
+			sphere2.disposeCacheData();
 
-// Make sure the .matrix of each mesh is current
-sphere1.updateMatrixWorld();
-sphere2.updateMatrixWorld();
-
-console.log( 'Benchmark' );
-console.log( `\tpolygons per mesh : ${ sphere1.geometry.index.count / 3 }` );
-console.log( `\titerations        : ${ ITERATIONS }` );
+		},
+		() => evaluator.evaluate( sphere1, sphere2, SUBTRACTION, result )
+	);
 
 
-let start, delta;
-let evalTime;
+	bench( 'three-csg-ts', () => CSG.subtract( sphere1, sphere2 ) );
 
-{
+	bench( 'three-csg', () => {
 
-	const evaluator = new Evaluator();
-	start = performance.now();
-	const result = new Brush();
-	for ( let i = 0; i < ITERATIONS; i ++ ) {
+		const bspResult = bsp1.subtract( bsp2 );
+		CSG2.toMesh( bspResult, sphere1.matrix, sphere1.material );
 
-		const meshResult = evaluator.evaluate( sphere1, sphere2, SUBTRACTION, result );
+	} );
 
-	}
+	bench( 'three-csg w/ rebuild', () => {
 
-	delta = performance.now() - start;
+		const bsp1 = CSG2.fromMesh( sphere1 );
+		const bsp2 = CSG2.fromMesh( sphere2 );
+		const bspResult = bsp1.subtract( bsp2 );
+		CSG2.toMesh( bspResult, sphere1.matrix, sphere1.material );
 
-	console.log( '\nthree-bvh-csg' );
-	console.log( `\ttotal   : ${ delta.toFixed( 2 ) }ms` );
-	console.log( `\taverage : ${ ( delta / ITERATIONS ).toFixed( 2 ) }ms` );
+	} );
 
-	evalTime = delta;
-
-}
-
-{
-
-	start = performance.now();
-	for ( let i = 0; i < ITERATIONS; i ++ ) {
-
-		// Perform CSG operations
-		// The result is a Mesh that you can add to your scene...
-		const meshResult = CSG.subtract( sphere1, sphere2 );
-
-	}
-
-	delta = performance.now() - start;
-
-	console.log( '\nthree-csg-ts' );
-	console.log( `\ttotal       : ${ delta.toFixed( 2 ) }ms` );
-	console.log( `\taverage     : ${ ( delta / ITERATIONS ).toFixed( 2 ) }ms` );
-	console.log( `\timprovement : ${ ( 100 - 100 * evalTime / delta ).toFixed( 2 ) }%` );
-
-}
-
-{
-
-	const bspA = CSG2.fromMesh( sphere1 );
-	const bspB = CSG2.fromMesh( sphere2 );
-	start = performance.now();
-	for ( let i = 0; i < ITERATIONS; i ++ ) {
-
-		const bspResult = bspA.subtract( bspB );
-		const meshResult = CSG2.toMesh( bspResult, sphere1.matrix, sphere1.material );
-
-	}
-
-	delta = performance.now() - start;
-
-	console.log( '\nTHREE-CSGMesh' );
-	console.log( `\ttotal   : ${ delta.toFixed( 2 ) }ms` );
-	console.log( `\taverage : ${ ( delta / ITERATIONS ).toFixed( 2 ) }ms` );
-	console.log( `\timprovement : ${ ( 100 - 100 * evalTime / delta ).toFixed( 2 ) }%` );
-
-}
+} );
 
