@@ -54,10 +54,10 @@ function init() {
 	scene = new THREE.Scene();
 	scene.fog = new THREE.Fog( 0xffca28, 20, 60 );
 
-	const light = new THREE.DirectionalLight( 0xffffff, 1 );
+	const light = new THREE.DirectionalLight( 0xffffff, 3.5 );
 	light.position.set( - 1, 2, 3 );
 	scene.add( light );
-	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
+	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.35 ) );
 
 	// camera setup
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
