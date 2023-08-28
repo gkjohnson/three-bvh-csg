@@ -1,5 +1,6 @@
 import { Vector3 } from 'three';
 import { hashVertex } from '../utils/hashUtils.js';
+import { getTriCount } from './utils.js';
 
 const _vertices = [ new Vector3(), new Vector3(), new Vector3() ];
 
@@ -45,10 +46,11 @@ export class HalfEdgeMap {
 		const posAttr = attributes.position;
 
 		// get the potential number of triangles
-		let triCount = indexAttr ? indexAttr.count / 3 : posAttr.count / 3;
+		let triCount = getTriCount( geometry );
 		const maxTriCount = triCount;
 
 		// get the real number of triangles from the based on the draw range
+		// TODO: remove use of draw range?
 		let offset = 0;
 		if ( this.useDrawRange ) {
 
@@ -76,6 +78,7 @@ export class HalfEdgeMap {
 		let matchedEdges = 0;
 		for ( let i = 0; i < triCount; i ++ ) {
 
+			// TODO: perf improvement by avoiding accessor functions?
 			const i3 = 3 * i + offset;
 			for ( let e = 0; e < 3; e ++ ) {
 

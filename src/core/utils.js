@@ -58,3 +58,9 @@ export function ensureIndex( geo, options ) {
 	}
 
 }
+
+export function getTriCount( geo ) {
+
+	return ( geo.index ? geo.index.count : geo.attributes.position.count ) / 3;
+
+}
