@@ -65,7 +65,7 @@ export class Brush extends Mesh {
 		// generate bounds tree
 		if ( ! geometry.boundsTree ) {
 
-			geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3 } );
+			geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3, indirect: true } );
 			if ( geometry.halfEdges ) {
 
 				geometry.halfEdges.updateFrom( geometry );
@@ -84,7 +84,7 @@ export class Brush extends Mesh {
 		// save group indices for materials
 		if ( ! geometry.groupIndices ) {
 
-			const triCount = geometry.index.count / 3;
+			const triCount = ( geometry.index ? geometry.index.count : geometry.attributes.position.count ) / 3;
 			const array = new Uint16Array( triCount );
 			const groups = geometry.groups;
 			for ( let i = 0, l = groups.length; i < l; i ++ ) {
