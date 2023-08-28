@@ -30,9 +30,9 @@ async function init() {
 	scene = new THREE.Scene();
 
 	// lights
-	light = new THREE.DirectionalLight( 0xffffff, 1 );
+	light = new THREE.DirectionalLight( 0xffffff, 3.5 );
 	light.position.set( 1, 2, 1 );
-	scene.add( light, new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
+	scene.add( light, new THREE.AmbientLight( 0xb0bec5, 0.35 ) );
 
 	// shadows
 	const shadowCam = light.shadow.camera;
