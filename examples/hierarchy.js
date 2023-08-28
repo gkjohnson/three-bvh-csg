@@ -109,12 +109,12 @@ async function init() {
 	wireframeObject.material.color.set( 0xffc400 ).multiplyScalar( 0.1 );
 	scene.add( wireframeObject );
 
-	root = new Operation( new THREE.BoxBufferGeometry( 10, 5, 5 ), brushMat );
+	root = new Operation( new THREE.BoxGeometry( 10, 5, 5 ), brushMat );
 	scene.add( root );
 
 	{
 
-		const inside = new Operation( new THREE.BoxBufferGeometry( 9, 4.5, 4 ), brushMat );
+		const inside = new Operation( new THREE.BoxGeometry( 9, 4.5, 4 ), brushMat );
 		inside.operation = SUBTRACTION;
 		root.add( inside );
 
@@ -122,12 +122,12 @@ async function init() {
 
 	{
 
-		const hole = new Operation( new THREE.CylinderBufferGeometry( 0.5, 0.5, 1, 20 ), brushMat );
+		const hole = new Operation( new THREE.CylinderGeometry( 0.5, 0.5, 1, 20 ), brushMat );
 		hole.operation = SUBTRACTION;
 		hole.rotateX( Math.PI / 2 );
 		hole.position.y = 0.25;
 
-		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1, 2.5, 1 ), brushMat );
+		const hole2 = new Operation( new THREE.BoxGeometry( 1, 2.5, 1 ), brushMat );
 		hole2.operation = SUBTRACTION;
 		hole2.position.y = - 1;
 
@@ -141,19 +141,19 @@ async function init() {
 
 	{
 
-		const hole = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 2 ), brushMat );
+		const hole = new Operation( new THREE.BoxGeometry( 2, 1.75, 2 ), brushMat );
 		hole.operation = SUBTRACTION;
 
-		const frame = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 0.2 ), brushMat );
+		const frame = new Operation( new THREE.BoxGeometry( 2, 1.75, 0.2 ), brushMat );
 		frame.operation = ADDITION;
 
-		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1.9, 1.65, 2 ), brushMat );
+		const hole2 = new Operation( new THREE.BoxGeometry( 1.9, 1.65, 2 ), brushMat );
 		hole2.operation = SUBTRACTION;
 
-		const bar1 = new Operation( new THREE.BoxBufferGeometry( 2, 0.1, 0.1 ), brushMat );
+		const bar1 = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brushMat );
 		bar1.operation = ADDITION;
 
-		const bar2 = new Operation( new THREE.BoxBufferGeometry( 0.1, 2, 0.1 ), brushMat );
+		const bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brushMat );
 		bar2.operation = ADDITION;
 
 		const windowGroup = new OperationGroup();
@@ -166,19 +166,19 @@ async function init() {
 
 	{
 
-		const hole = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 2 ), brushMat );
+		const hole = new Operation( new THREE.BoxGeometry( 2, 1.75, 2 ), brushMat );
 		hole.operation = SUBTRACTION;
 
-		const frame = new Operation( new THREE.BoxBufferGeometry( 2, 1.75, 0.2 ), brushMat );
+		const frame = new Operation( new THREE.BoxGeometry( 2, 1.75, 0.2 ), brushMat );
 		frame.operation = ADDITION;
 
-		const hole2 = new Operation( new THREE.BoxBufferGeometry( 1.9, 1.65, 2 ), brushMat );
+		const hole2 = new Operation( new THREE.BoxGeometry( 1.9, 1.65, 2 ), brushMat );
 		hole2.operation = SUBTRACTION;
 
-		const bar1 = new Operation( new THREE.BoxBufferGeometry( 2, 0.1, 0.1 ), brushMat );
+		const bar1 = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brushMat );
 		bar1.operation = ADDITION;
 
-		const bar2 = new Operation( new THREE.BoxBufferGeometry( 0.1, 2, 0.1 ), brushMat );
+		const bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brushMat );
 		bar2.operation = ADDITION;
 
 		const windowGroup = new OperationGroup();

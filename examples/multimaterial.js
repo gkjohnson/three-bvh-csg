@@ -55,7 +55,7 @@ async function init() {
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	// floor
-	const floor = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial( { opacity: 0.05 } ) );
+	const floor = new THREE.Mesh( new THREE.PlaneGeometry(), new THREE.ShadowMaterial( { opacity: 0.05 } ) );
 	floor.material.color.set( 0xE0F7FA );
 	floor.rotation.x = - Math.PI / 2;
 	floor.scale.setScalar( 10 );
@@ -73,21 +73,21 @@ async function init() {
 	blueMaterial.color.set( 0x2979FF );
 
 	// basic pieces
-	const cylinder1 = new Brush( new THREE.CylinderBufferGeometry( 0.5, 0.5, 6, 45 ), blueMaterial );
+	const cylinder1 = new Brush( new THREE.CylinderGeometry( 0.5, 0.5, 6, 45 ), blueMaterial );
 	cylinder1.updateMatrixWorld();
 
-	const cylinder2 = new Brush( new THREE.CylinderBufferGeometry( 0.5, 0.5, 6, 45 ), blueMaterial );
+	const cylinder2 = new Brush( new THREE.CylinderGeometry( 0.5, 0.5, 6, 45 ), blueMaterial );
 	cylinder2.rotation.x = Math.PI / 2;
 	cylinder2.updateMatrixWorld();
 
-	const cylinder3 = new Brush( new THREE.CylinderBufferGeometry( 0.5, 0.5, 6, 45 ), blueMaterial );
+	const cylinder3 = new Brush( new THREE.CylinderGeometry( 0.5, 0.5, 6, 45 ), blueMaterial );
 	cylinder3.rotation.z = Math.PI / 2;
 	cylinder3.updateMatrixWorld();
 
-	const sphere = new Brush( new THREE.SphereBufferGeometry( 1, 50, 50 ), greenMaterial );
+	const sphere = new Brush( new THREE.SphereGeometry( 1, 50, 50 ), greenMaterial );
 	sphere.updateMatrixWorld();
 
-	const box = new Brush( new THREE.BoxBufferGeometry( 1.5, 1.5, 1.5 ), redMaterial );
+	const box = new Brush( new THREE.BoxGeometry( 1.5, 1.5, 1.5 ), redMaterial );
 	box.updateMatrixWorld();
 
 	// processing

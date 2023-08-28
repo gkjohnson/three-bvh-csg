@@ -85,7 +85,7 @@ async function init() {
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	// floor
-	const floor = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.ShadowMaterial( { opacity: 0.05 } ) );
+	const floor = new THREE.Mesh( new THREE.PlaneGeometry(), new THREE.ShadowMaterial( { opacity: 0.05 } ) );
 	floor.material.color.set( 0xE0F7FA );
 	floor.rotation.x = - Math.PI / 2;
 	floor.scale.setScalar( 10 );
@@ -115,7 +115,7 @@ async function init() {
 
 	for ( let i = 0; i < 50; i ++ ) {
 
-		const b = new Brush( new THREE.SphereBufferGeometry( 1, 15, 15 ), material );
+		const b = new Brush( new THREE.SphereGeometry( 1, 15, 15 ), material );
 		b.receiveShadow = true;
 		scene.add( b );
 		brushes.push( b );
