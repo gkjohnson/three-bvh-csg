@@ -14,12 +14,13 @@ import {
 	beforeEach,
 	suite,
 } from './lib/bench/bench.js';
+import { generateGroupGeometry } from './utils.js';
 
 // TODO: add comparison / improvement percent?
 suite( 'Library Comparison', () => {
 
-	let sphere1,
-		sphere2,
+	let brush1,
+		brush2,
 		result,
 		evaluator,
 		bsp1,
@@ -29,47 +30,76 @@ suite( 'Library Comparison', () => {
 
 		evaluator = new Evaluator();
 		result = new Brush();
-		sphere1 = new Brush( new SphereGeometry( 1, 50, 50 ), new MeshNormalMaterial( ) );
-		sphere2 = new Brush( new SphereGeometry( 1, 50, 50 ) );
-		sphere2.position.y = 1;
-		sphere1.updateMatrixWorld();
-		sphere2.updateMatrixWorld();
 
-		bsp1 = CSG2.fromMesh( sphere1 );
-		bsp2 = CSG2.fromMesh( sphere2 );
+		brush1 = new Brush( new SphereGeometry( 1, 50, 50 ), new MeshNormalMaterial( ) );
+		brush2 = new Brush( new SphereGeometry( 1, 50, 50 ) );
+		brush1.updateMatrixWorld();
+
+		brush2.position.y = 1;
+		brush2.updateMatrixWorld();
+
+		bsp1 = CSG2.fromMesh( brush1 );
+		bsp2 = CSG2.fromMesh( brush2 );
 
 	} );
 
-	bench( 'three-bvh-csg', () => evaluator.evaluate( sphere1, sphere2, SUBTRACTION, result ) );
+	bench( 'three-bvh-csg', () => evaluator.evaluate( brush1, brush2, SUBTRACTION, result ) );
 
 	bench( 'three-bvh-csg w/ rebuild',
 		() => {
 
-			sphere1.disposeCacheData();
-			sphere2.disposeCacheData();
+			brush1.disposeCacheData();
+			brush2.disposeCacheData();
 
 		},
-		() => evaluator.evaluate( sphere1, sphere2, SUBTRACTION, result )
+		() => evaluator.evaluate( brush1, brush2, SUBTRACTION, result )
 	);
 
 
-	bench( 'three-csg-ts', () => CSG.subtract( sphere1, sphere2 ) );
+	bench( 'three-csg-ts', () => CSG.subtract( brush1, brush2 ) );
 
 	bench( 'three-csg', () => {
 
 		const bspResult = bsp1.subtract( bsp2 );
-		CSG2.toMesh( bspResult, sphere1.matrix, sphere1.material );
+		CSG2.toMesh( bspResult, brush1.matrix, brush1.material );
 
 	} );
 
 	bench( 'three-csg w/ rebuild', () => {
 
-		const bsp1 = CSG2.fromMesh( sphere1 );
-		const bsp2 = CSG2.fromMesh( sphere2 );
+		const bsp1 = CSG2.fromMesh( brush1 );
+		const bsp2 = CSG2.fromMesh( brush2 );
 		const bspResult = bsp1.subtract( bsp2 );
-		CSG2.toMesh( bspResult, sphere1.matrix, sphere1.material );
+		CSG2.toMesh( bspResult, brush1.matrix, brush1.material );
 
 	} );
 
 } );
 
+suite( 'General', () => {
+
+	let brush1,
+		brush2,
+		evaluator,
+		result;
+
+	beforeEach( () => {
+
+		evaluator = new Evaluator();
+		result = new Brush();
+
+		brush1 = new Brush( generateGroupGeometry( 100 ) );
+		brush1.updateMatrixWorld( true );
+		brush1.prepareGeometry();
+
+		brush2 = new Brush( generateGroupGeometry( 100 ) );
+		brush2.position.y = 1;
+		brush2.rotation.set( Math.PI / 2, 0, Math.PI / 2 );
+		brush2.updateMatrixWorld( true );
+		brush2.prepareGeometry();
+
+	} );
+
+	bench( 'Subtract w/ Groups', () => evaluator.evaluate( brush1, brush2, SUBTRACTION, result ) );
+
+} );
