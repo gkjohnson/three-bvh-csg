@@ -1,7 +1,7 @@
 import { Mesh, Matrix4 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import { HalfEdgeMap } from './HalfEdgeMap.js';
-import { areSharedArrayBuffersSupported, convertToSharedArrayBuffer } from './utils.js';
+import { areSharedArrayBuffersSupported, convertToSharedArrayBuffer, ensureIndex } from './utils.js';
 
 export class Brush extends Mesh {
 
@@ -45,7 +45,8 @@ export class Brush extends Mesh {
 		// generate shared array buffers
 		const geometry = this.geometry;
 		const attributes = geometry.attributes;
-		if ( areSharedArrayBuffersSupported() ) {
+		const useSharedArrayBuffer = areSharedArrayBuffersSupported();
+		if ( useSharedArrayBuffer ) {
 
 			for ( const key in attributes ) {
 
@@ -65,7 +66,9 @@ export class Brush extends Mesh {
 		// generate bounds tree
 		if ( ! geometry.boundsTree ) {
 
-			geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3, indirect: true } );
+			geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3, indirect: true, useSharedArrayBuffer } );
+			ensureIndex( geometry, { useSharedArrayBuffer } );
+
 			if ( geometry.halfEdges ) {
 
 				geometry.halfEdges.updateFrom( geometry );
@@ -84,7 +87,7 @@ export class Brush extends Mesh {
 		// save group indices for materials
 		if ( ! geometry.groupIndices ) {
 
-			const triCount = ( geometry.index ? geometry.index.count : geometry.attributes.position.count ) / 3;
+			const triCount = geometry.index.count / 3;
 			const array = new Uint16Array( triCount );
 			const groups = geometry.groups;
 			for ( let i = 0, l = groups.length; i < l; i ++ ) {

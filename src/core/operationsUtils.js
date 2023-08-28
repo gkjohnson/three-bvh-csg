@@ -122,8 +122,10 @@ export function collectIntersectingTriangles( a, b ) {
 
 				}
 
-				aIntersections.add( ia, ib );
-				bIntersections.add( ib, ia );
+				let va = a.geometry.boundsTree.resolveTriangleIndex( ia );
+				let vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
+				aIntersections.add( va, vb );
+				bIntersections.add( vb, va );
 
 				if ( _debugContext ) {
 
