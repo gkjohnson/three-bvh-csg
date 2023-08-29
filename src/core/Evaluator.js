@@ -1,9 +1,9 @@
 import { BufferAttribute } from 'three';
 import { TriangleSplitter } from './TriangleSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
-import { OperationDebugData } from './OperationDebugData.js';
-import { performOperation } from './operations.js';
-import { setDebugContext } from './operationsUtils.js';
+import { OperationDebugData } from './debug/OperationDebugData.js';
+import { performOperation } from './operations/operations.js';
+import { setDebugContext } from './operations/operationsUtils.js';
 import { Brush } from './Brush.js';
 
 // applies the given set of attribute data to the provided geometry. If the attributes are

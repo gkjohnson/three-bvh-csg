@@ -1,6 +1,6 @@
 import { BufferGeometry } from 'three';
-import { Brush } from './Brush.js';
-import { ADDITION } from './constants.js';
+import { Brush } from '../Brush.js';
+import { ADDITION } from '../constants.js';
 
 export class Operation extends Brush {
 
