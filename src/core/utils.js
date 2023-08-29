@@ -59,8 +59,14 @@ export function ensureIndex( geo, options ) {
 
 }
 
+export function getVertexCount( geo ) {
+
+	return geo.index ? geo.index.count : geo.attributes.position.count;
+
+}
+
 export function getTriCount( geo ) {
 
-	return ( geo.index ? geo.index.count : geo.attributes.position.count ) / 3;
+	return getVertexCount( geo ) / 3;
 
 }
