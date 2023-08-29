@@ -31,6 +31,13 @@ export class TypedAttributeData {
 
 	}
 
+	getCount( index ) {
+
+		const pos = this.getGroupAttrArray( 'position', index );
+		return pos.length / pos.itemSize;
+
+	}
+
 	// returns the total length required for all groups for the given attribute
 	getTotalLength( name ) {
 
@@ -61,15 +68,19 @@ export class TypedAttributeData {
 		}
 
 		// add any new group sets required
-		const rootAttrSet = groupAttributes[ 0 ];
+		const refAttrSet = groupAttributes[ 0 ];
 		this.groupCount = Math.max( this.groupCount, index + 1 );
 		while ( index >= groupAttributes.length ) {
 
 			const newAttrSet = {};
 			groupAttributes.push( newAttrSet );
-			for ( const key in rootAttrSet ) {
+			for ( const key in refAttrSet ) {
 
-				newAttrSet[ key ] = new TypeBackedArray( rootAttrSet[ key ].type );
+				const refAttr = refAttrSet[ key ];
+				const newAttr = new TypeBackedArray( refAttr.type );
+				newAttr.itemSize = refAttr.itemSize;
+				newAttr.normalized = refAttr.normalized;
+				newAttrSet[ key ] = newAttr;
 
 			}
 

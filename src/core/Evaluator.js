@@ -3,27 +3,64 @@ import { TriangleSplitter } from './TriangleSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
-import { setDebugContext } from './operations/operationsUtils.js';
 import { Brush } from './Brush.js';
 
-// applies the given set of attribute data to the provided geometry. If the attributes are
-// not large enough to hold the new set of data then new attributes will be created. Otherwise
-// the existing attributes will be used and draw range updated to accommodate the new size.
-function applyToGeometry( geometry, groups, attributeInfo ) {
+// initialize the target geometry and attribute data to be based on
+// the given reference geometry
+function prepareAttributesData( referenceGeometry, targetGeometry, attributeData, relevantAttributes ) {
+
+	// initialize and clear unused data from the attribute buffers and vice versa
+	const aAttributes = referenceGeometry.attributes;
+	for ( let i = 0, l = relevantAttributes.length; i < l; i ++ ) {
+
+		const key = relevantAttributes[ i ];
+		const aAttr = aAttributes[ key ];
+		attributeData.initializeArray( key, aAttr.array.constructor, aAttr.itemSize, aAttr.normalized );
+
+	}
+
+	for ( const key in attributeData.attributes ) {
+
+		if ( ! relevantAttributes.includes( key ) ) {
+
+			attributeData.delete( key );
+
+		}
+
+	}
+
+	for ( const key in targetGeometry.attributes ) {
+
+		if ( ! relevantAttributes.includes( key ) ) {
+
+			targetGeometry.deleteAttribute( key );
+			targetGeometry.dispose();
+
+		}
+
+	}
+
+	attributeData.clear();
+
+}
+
+// Assigns the given tracked attribute data to the geometry and returns whether the
+// geometry needs to be disposed of.
+function assignBufferData( geometry, attributeData ) {
 
 	let needsDisposal = false;
 	let drawRange = - 1;
-	const groupCount = attributeInfo.groupCount;
+	const groupCount = attributeData.groupCount;
 
 	// set the data
 	const attributes = geometry.attributes;
-	const referenceAttrSet = attributeInfo.groupAttributes[ 0 ];
+	const referenceAttrSet = attributeData.groupAttributes[ 0 ];
 	for ( const key in referenceAttrSet ) {
 
-		const requiredLength = attributeInfo.getTotalLength( key );
-		const type = attributeInfo.getType( key );
-		const itemSize = attributeInfo.getItemSize( key );
-		const normalized = attributeInfo.getNormalized( key );
+		const requiredLength = attributeData.getTotalLength( key );
+		const type = attributeData.getType( key );
+		const itemSize = attributeData.getItemSize( key );
+		const normalized = attributeData.getNormalized( key );
 		let geoAttr = attributes[ key ];
 		if ( ! geoAttr || geoAttr.array.length < requiredLength ) {
 
@@ -38,7 +75,7 @@ function applyToGeometry( geometry, groups, attributeInfo ) {
 		let offset = 0;
 		for ( let i = 0; i < groupCount; i ++ ) {
 
-			const { array, type, length } = attributeInfo.groupAttributes[ i ][ key ];
+			const { array, type, length } = attributeData.groupAttributes[ i ][ key ];
 			const trimmedArray = new type( array.buffer, 0, length );
 			geoAttr.array.set( trimmedArray, offset );
 			offset += trimmedArray.length;
@@ -47,25 +84,6 @@ function applyToGeometry( geometry, groups, attributeInfo ) {
 
 		geoAttr.needsUpdate = true;
 		drawRange = requiredLength / geoAttr.itemSize;
-
-	}
-
-	// update the draw range
-	geometry.setDrawRange( 0, drawRange );
-	geometry.clearGroups();
-
-	// initialize the groups
-	let groupOffset = 0;
-	for ( let i = 0; i < groupCount; i ++ ) {
-
-		const posCount = attributeInfo.getGroupAttrArray( 'position', i ).length / 3;
-		if ( posCount !== 0 ) {
-
-			const group = groups[ i ];
-			geometry.addGroup( groupOffset, posCount, group.materialIndex );
-			groupOffset += posCount;
-
-		}
 
 	}
 
@@ -90,6 +108,10 @@ function applyToGeometry( geometry, groups, attributeInfo ) {
 
 	}
 
+	// update the draw range
+	geometry.setDrawRange( 0, drawRange );
+	geometry.clearGroups();
+
 	// remove the bounds tree if it exists because its now out of date
 	// TODO: can we have this dispose in the same way that a brush does?
 	// TODO: why are half edges and group indices not removed here?
@@ -98,6 +120,29 @@ function applyToGeometry( geometry, groups, attributeInfo ) {
 	if ( needsDisposal ) {
 
 		geometry.dispose();
+
+	}
+
+}
+
+// applies the given set of attribute data to the provided geometry. If the attributes are
+// not large enough to hold the new set of data then new attributes will be created. Otherwise
+// the existing attributes will be used and draw range updated to accommodate the new size.
+function applyToGeometry( geometry, groups, attributeData ) {
+
+	// initialize the groups
+	let groupOffset = 0;
+	const groupCount = attributeData.groupCount;
+	for ( let i = 0; i < groupCount; i ++ ) {
+
+		const posCount = attributeData.getCount( i );
+		if ( posCount !== 0 ) {
+
+			const group = groups[ i ];
+			geometry.addGroup( groupOffset, posCount, group.materialIndex );
+			groupOffset += posCount;
+
+		}
 
 	}
 
@@ -150,6 +195,7 @@ export class Evaluator {
 		a.prepareGeometry();
 		b.prepareGeometry();
 
+		const targetGeometry = targetBrush.geometry;
 		const {
 			triangleSplitter,
 			attributeData,
@@ -158,73 +204,25 @@ export class Evaluator {
 			debug,
 		} = this;
 
-		// initialize and clear unused data from the attribute buffers and vice versa
-		const targetGeometry = targetBrush.geometry;
-		const aAttributes = a.geometry.attributes;
-		for ( let i = 0, l = attributes.length; i < l; i ++ ) {
-
-			const key = attributes[ i ];
-			const attr = aAttributes[ key ];
-			attributeData.initializeArray( key, attr.array.constructor, attr.itemSize, attr.normalized );
-
-		}
-
-		for ( const key in attributeData.attributes ) {
-
-			if ( ! attributes.includes( key ) ) {
-
-				attributeData.delete( key );
-
-			}
-
-		}
-
-		for ( const key in targetGeometry.attributes ) {
-
-			if ( ! attributes.includes( key ) ) {
-
-				targetGeometry.deleteAttribute( key );
-				targetGeometry.dispose();
-
-			}
-
-		}
-
-		attributeData.clear();
-
-		// initialize the debug context
-		if ( debug.enabled ) {
-
-			debug.reset();
-			setDebugContext( debug );
-
-		}
+		prepareAttributesData( a.geometry, targetGeometry, attributeData, attributes );
 
 		// run the operation to fill the list of attribute data
 		// TODO: we can do this in more steps here and fill the data a second time for
 		// the sibling geometry piece
+		debug.init();
 		performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups } );
-
-		if ( debug.enabled ) {
-
-			setDebugContext( null );
-
-		}
+		debug.complete();
 
 		// get the materials and group ranges
 		const aGroups = this.getGroupRanges( a.geometry );
-		const bGroups = this.getGroupRanges( b.geometry );
 		const aMaterials = getMaterialList( aGroups, a.material );
+
+		const bGroups = this.getGroupRanges( b.geometry );
 		const bMaterials = getMaterialList( bGroups, b.material );
-
-		// adjust the material index
-		bGroups.forEach( g => {
-
-			g.materialIndex += aMaterials.length;
-
-		} );
+		bGroups.forEach( g => g.materialIndex += aMaterials.length );
 
 		// apply groups and attribute data to the geometry
+		assignBufferData( targetGeometry, attributeData );
 		applyToGeometry( targetGeometry, [ ...aGroups, ...bGroups ], attributeData );
 
 		// generate the minimum set of materials needed for the list of groups and adjust the groups

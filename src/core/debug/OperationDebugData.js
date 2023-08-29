@@ -1,4 +1,5 @@
 import { Triangle } from 'three';
+import { setDebugContext } from '../operations/operationsUtils.js';
 
 class TriangleIntersectData {
 
@@ -193,6 +194,27 @@ export class OperationDebugData {
 		this.triangleIntersectsA.reset();
 		this.triangleIntersectsB.reset();
 		this.intersectionEdges = [];
+
+	}
+
+	init() {
+
+		if ( this.enabled ) {
+
+			this.reset();
+			setDebugContext( this );
+
+		}
+
+	}
+
+	complete() {
+
+		if ( this.enabled ) {
+
+			setDebugContext( null );
+
+		}
 
 	}
 
