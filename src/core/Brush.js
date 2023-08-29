@@ -66,8 +66,8 @@ export class Brush extends Mesh {
 		// generate bounds tree
 		if ( ! geometry.boundsTree ) {
 
-			geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3, indirect: true, useSharedArrayBuffer } );
 			ensureIndex( geometry, { useSharedArrayBuffer } );
+			geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3, indirect: true, useSharedArrayBuffer } );
 
 		}
 

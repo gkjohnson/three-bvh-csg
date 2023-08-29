@@ -17,34 +17,37 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 
 	// set the data
 	const attributes = geometry.attributes;
-	const rootAttrSet = attributeInfo.groupAttributes[ 0 ];
-	for ( const key in rootAttrSet ) {
+	const referenceAttrSet = attributeInfo.groupAttributes[ 0 ];
+	for ( const key in referenceAttrSet ) {
 
 		const requiredLength = attributeInfo.getTotalLength( key );
 		const type = attributeInfo.getType( key );
-		let attr = attributes[ key ];
-		if ( ! attr || attr.array.length < requiredLength ) {
+		let geoAttr = attributes[ key ];
+		if ( ! geoAttr || geoAttr.array.length < requiredLength ) {
 
+			// TODO: store the itemSize and normalized values in the the TypedAttributeData object, instead,
+			// so the reference geometry is not needed here.
 			// create the attribute if it doesn't exist yet
-			const refAttr = referenceGeometry.attributes[ key ];
-			attr = new BufferAttribute( new type( requiredLength ), refAttr.itemSize, refAttr.normalized );
-			geometry.setAttribute( key, attr );
+			const refGeoAttr = referenceGeometry.attributes[ key ];
+			geoAttr = new BufferAttribute( new type( requiredLength ), refGeoAttr.itemSize, refGeoAttr.normalized );
+			geometry.setAttribute( key, geoAttr );
 			needsDisposal = true;
 
 		}
 
+		// assign the data to the geometry attribute buffers
 		let offset = 0;
 		for ( let i = 0; i < groupCount; i ++ ) {
 
 			const { array, type, length } = attributeInfo.groupAttributes[ i ][ key ];
 			const trimmedArray = new type( array.buffer, 0, length );
-			attr.array.set( trimmedArray, offset );
+			geoAttr.array.set( trimmedArray, offset );
 			offset += trimmedArray.length;
 
 		}
 
-		attr.needsUpdate = true;
-		drawRange = requiredLength / attr.itemSize;
+		geoAttr.needsUpdate = true;
+		drawRange = requiredLength / geoAttr.itemSize;
 
 	}
 
@@ -52,6 +55,7 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 	geometry.setDrawRange( 0, drawRange );
 	geometry.clearGroups();
 
+	// initialize the groups
 	let groupOffset = 0;
 	for ( let i = 0; i < groupCount; i ++ ) {
 
@@ -89,6 +93,7 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 
 	// remove the bounds tree if it exists because its now out of date
 	// TODO: can we have this dispose in the same way that a brush does?
+	// TODO: why are half edges and group indices not removed here?
 	geometry.boundsTree = null;
 
 	if ( needsDisposal ) {
@@ -101,6 +106,7 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 
 }
 
+// Returns the list of materials used for the given set of groups
 function getMaterialList( groups, materials ) {
 
 	let result = materials;
@@ -132,12 +138,28 @@ export class Evaluator {
 
 	}
 
+	getGroupRanges( geometry ) {
+
+		return ! this.useGroups || geometry.groups.length === 0 ?
+			[ { start: 0, count: Infinity, materialIndex: 0 } ] :
+			geometry.groups.map( group => ( { ...group } ) );
+
+	}
+
 	evaluate( a, b, operation, targetBrush = new Brush() ) {
 
 		a.prepareGeometry();
 		b.prepareGeometry();
 
-		const { triangleSplitter, attributeData, attributes, useGroups, debug } = this;
+		const {
+			triangleSplitter,
+			attributeData,
+			attributes,
+			useGroups,
+			debug,
+		} = this;
+
+		// initialize and clear unused data from the attribute buffers and vice versa
 		const targetGeometry = targetBrush.geometry;
 		const aAttributes = a.geometry.attributes;
 		for ( let i = 0, l = attributes.length; i < l; i ++ ) {
@@ -171,6 +193,7 @@ export class Evaluator {
 
 		attributeData.clear();
 
+		// initialize the debug context
 		if ( debug.enabled ) {
 
 			debug.reset();
@@ -178,6 +201,9 @@ export class Evaluator {
 
 		}
 
+		// run the operation to fill the list of attribute data
+		// TODO: we can do this in more steps here and fill the data a second time for
+		// the sibling geometry piece
 		performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups } );
 
 		if ( debug.enabled ) {
@@ -186,16 +212,9 @@ export class Evaluator {
 
 		}
 
-		// structure the groups appropriately
-		const aGroups = ! useGroups || a.geometry.groups.length === 0 ?
-			[ { start: 0, count: Infinity, materialIndex: 0 } ] :
-			a.geometry.groups.map( group => ( { ...group } ) );
-
-		const bGroups = ! useGroups || b.geometry.groups.length === 0 ?
-			[ { start: 0, count: Infinity, materialIndex: 0 } ] :
-			b.geometry.groups.map( group => ( { ...group } ) );
-
-		// get the materials
+		// get the materials and group ranges
+		const aGroups = this.getGroupRanges( a.geometry );
+		const bGroups = this.getGroupRanges( b.geometry );
 		const aMaterials = getMaterialList( aGroups, a.material );
 		const bMaterials = getMaterialList( bGroups, b.material );
 
@@ -251,6 +270,7 @@ export class Evaluator {
 
 	}
 
+	// TODO: fix
 	evaluateHierarchy( root, target = new Brush() ) {
 
 		root.updateMatrixWorld( true );
