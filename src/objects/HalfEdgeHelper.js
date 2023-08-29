@@ -1,5 +1,6 @@
 import { Line3, Triangle, Vector3, Plane } from 'three';
 import { EdgesHelper } from './EdgesHelper.js';
+import { getTriCount } from '../core/utils.js';
 
 const _tri1 = new Triangle();
 const _tri2 = new Triangle();
@@ -66,7 +67,7 @@ export class HalfEdgeHelper extends EdgesHelper {
 
 		const vertKeys = [ 'a', 'b', 'c' ];
 		const edges = [];
-		const triCount = indexAttr ? indexAttr.count / 3 : posAttr.count / 3;
+		const triCount = getTriCount( geometry );
 		for ( let triIndex = 0; triIndex < triCount; triIndex ++ ) {
 
 			getTriangle( geometry, triIndex, _tri1 );

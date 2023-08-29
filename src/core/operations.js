@@ -7,6 +7,7 @@ import {
 	getOperationAction,
 	SKIP_TRI, INVERT_TRI,
 } from './operationsUtils.js';
+import { getTriCount } from './utils.js';
 
 const _matrix = new Matrix4();
 const _normalMatrix = new Matrix3();
@@ -163,7 +164,8 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 	const stack = [];
 	const halfEdges = a.geometry.halfEdges;
 	const traverseSet = new Set();
-	for ( let i = 0, l = aIndex.count / 3; i < l; i ++ ) {
+	const triCount = getTriCount( a.geometry );
+	for ( let i = 0, l = triCount; i < l; i ++ ) {
 
 		if ( ! ( i in splitTriSet.intersectionSet ) ) {
 
