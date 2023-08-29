@@ -88,7 +88,17 @@ export class TypedAttributeData {
 
 			if ( referenceAttr.type !== type ) {
 
-				throw new Error( `TypedAttributeData: Array ${ name } already initialized with a different type.` );
+				for ( let i = 0, l = groupAttributes.length; i < l; i ++ ) {
+
+					groupAttributes[ i ][ name ].setType( type );
+
+				}
+
+				// } else {
+
+				// 	throw new Error( `TypedAttributeData: Array ${ name } already initialized with a different type.` );
+
+				// }
 
 			}
 
