@@ -9,7 +9,7 @@ import { Brush } from './Brush.js';
 // applies the given set of attribute data to the provided geometry. If the attributes are
 // not large enough to hold the new set of data then new attributes will be created. Otherwise
 // the existing attributes will be used and draw range updated to accommodate the new size.
-function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
+function applyToGeometry( geometry, groups, attributeInfo ) {
 
 	let needsDisposal = false;
 	let drawRange = - 1;
@@ -22,14 +22,13 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 
 		const requiredLength = attributeInfo.getTotalLength( key );
 		const type = attributeInfo.getType( key );
+		const itemSize = attributeInfo.getItemSize( key );
+		const normalized = attributeInfo.getNormalized( key );
 		let geoAttr = attributes[ key ];
 		if ( ! geoAttr || geoAttr.array.length < requiredLength ) {
 
-			// TODO: store the itemSize and normalized values in the the TypedAttributeData object, instead,
-			// so the reference geometry is not needed here.
 			// create the attribute if it doesn't exist yet
-			const refGeoAttr = referenceGeometry.attributes[ key ];
-			geoAttr = new BufferAttribute( new type( requiredLength ), refGeoAttr.itemSize, refGeoAttr.normalized );
+			geoAttr = new BufferAttribute( new type( requiredLength ), itemSize, normalized );
 			geometry.setAttribute( key, geoAttr );
 			needsDisposal = true;
 
@@ -166,7 +165,7 @@ export class Evaluator {
 
 			const key = attributes[ i ];
 			const attr = aAttributes[ key ];
-			attributeData.initializeArray( key, attr.array.constructor );
+			attributeData.initializeArray( key, attr.array.constructor, attr.itemSize, attr.normalized );
 
 		}
 
@@ -226,7 +225,7 @@ export class Evaluator {
 		} );
 
 		// apply groups and attribute data to the geometry
-		applyToGeometry( targetGeometry, a.geometry, [ ...aGroups, ...bGroups ], attributeData );
+		applyToGeometry( targetGeometry, [ ...aGroups, ...bGroups ], attributeData );
 
 		// generate the minimum set of materials needed for the list of groups and adjust the groups
 		// if they're needed

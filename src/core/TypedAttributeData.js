@@ -19,6 +19,18 @@ export class TypedAttributeData {
 
 	}
 
+	getItemSize( name ) {
+
+		return this.groupAttributes[ 0 ][ name ].itemSize;
+
+	}
+
+	getNormalized( name ) {
+
+		return this.groupAttributes[ 0 ][ name ].normalized;
+
+	}
+
 	// returns the total length required for all groups for the given attribute
 	getTotalLength( name ) {
 
@@ -85,7 +97,7 @@ export class TypedAttributeData {
 	}
 
 	// initializes an attribute array with the given name, type, and size
-	initializeArray( name, type ) {
+	initializeArray( name, type, itemSize, normalized ) {
 
 		const { groupAttributes } = this;
 		const referenceAttrSet = groupAttributes[ 0 ];
@@ -96,15 +108,12 @@ export class TypedAttributeData {
 
 				for ( let i = 0, l = groupAttributes.length; i < l; i ++ ) {
 
-					groupAttributes[ i ][ name ].setType( type );
+					const arr = groupAttributes[ i ][ name ];
+					arr.setType( type );
+					arr.itemSize = itemSize;
+					arr.normalized = normalized;
 
 				}
-
-				// } else {
-
-				// 	throw new Error( `TypedAttributeData: Array ${ name } already initialized with a different type.` );
-
-				// }
 
 			}
 
@@ -112,7 +121,10 @@ export class TypedAttributeData {
 
 			for ( let i = 0, l = groupAttributes.length; i < l; i ++ ) {
 
-				groupAttributes[ i ][ name ] = new TypeBackedArray( type );
+				const arr = new TypeBackedArray( type );
+				arr.itemSize = itemSize;
+				arr.normalized = normalized;
+				groupAttributes[ i ][ name ] = arr;
 
 			}
 
