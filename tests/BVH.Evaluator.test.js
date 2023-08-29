@@ -22,8 +22,9 @@ describe( 'Evaluator', () => {
 		const result1 = evaluator.evaluate( brush1A, brush1B, SUBTRACTION );
 		const result2 = evaluator.evaluate( brush2A, brush2B, SUBTRACTION );
 
+		expect( result1.geometry.attributes.uv.array.constructor ).toBe( Float32Array );
+		expect( result2.geometry.attributes.uv.array.constructor ).toBe( Uint8Array );
 
 	} );
-
 
 } );
