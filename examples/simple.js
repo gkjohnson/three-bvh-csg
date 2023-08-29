@@ -1,4 +1,24 @@
-import * as THREE from 'three';
+import {
+	WebGLRenderer,
+	PCFSoftShadowMap,
+	Scene,
+	DirectionalLight,
+	AmbientLight,
+	PerspectiveCamera,
+	BoxGeometry,
+	DoubleSide,
+	FrontSide,
+	Mesh,
+	BufferGeometry,
+	MeshStandardMaterial,
+	MeshBasicMaterial,
+	SphereGeometry,
+	MathUtils,
+	CylinderGeometry,
+	TorusGeometry,
+	TorusKnotGeometry,
+	BufferAttribute,
+} from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -69,22 +89,22 @@ async function init() {
 	outputContainer = document.getElementById( 'output' );
 
 	// renderer setup
-	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer = new WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.setClearColor( bgColor, 1 );
 	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+	renderer.shadowMap.type = PCFSoftShadowMap;
 	document.body.appendChild( renderer.domElement );
 
 	// scene setup
-	scene = new THREE.Scene();
+	scene = new Scene();
 
 	// lights
-	light = new THREE.DirectionalLight( 0xffffff, 3.5 );
+	light = new DirectionalLight( 0xffffff, 3.5 );
 	light.position.set( - 1, 2, 3 );
 	scene.add( light, light.target );
-	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.35 ) );
+	scene.add( new AmbientLight( 0xb0bec5, 0.35 ) );
 
 	// shadows
 	const shadowCam = light.shadow.camera;
@@ -98,7 +118,7 @@ async function init() {
 	shadowCam.updateProjectionMatrix();
 
 	// camera setup
-	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
+	camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
 	camera.position.set( 1, 2, 4 );
 	camera.far = 100;
 	camera.updateProjectionMatrix();
@@ -125,8 +145,8 @@ async function init() {
 	csgEvaluator.attributes = [ 'position', 'normal' ];
 
 	// initialize brushes
-	brush1 = new Brush( new THREE.BoxGeometry(), new GridMaterial() );
-	brush2 = new Brush( new THREE.BoxGeometry(), new GridMaterial() );
+	brush1 = new Brush( new BoxGeometry(), new GridMaterial() );
+	brush2 = new Brush( new BoxGeometry(), new GridMaterial() );
 	brush2.position.set( - 0.75, 0.75, 0 );
 	brush2.scale.setScalar( 0.75 );
 
@@ -140,7 +160,7 @@ async function init() {
 	brush1.material.polygonOffset = true;
 	brush1.material.polygonOffsetFactor = 0.2;
 	brush1.material.polygonOffsetUnits = 0.2;
-	brush1.material.side = THREE.DoubleSide;
+	brush1.material.side = DoubleSide;
 	brush1.material.premultipliedAlpha = true;
 
 	brush2.material.opacity = 0.15;
@@ -149,7 +169,7 @@ async function init() {
 	brush2.material.polygonOffset = true;
 	brush2.material.polygonOffsetFactor = 0.2;
 	brush2.material.polygonOffsetUnits = 0.2;
-	brush2.material.side = THREE.DoubleSide;
+	brush2.material.side = DoubleSide;
 	brush2.material.premultipliedAlpha = true;
 	brush2.material.roughness = 0.25;
 	brush2.material.color.set( 0xE91E63 );
@@ -163,14 +183,14 @@ async function init() {
 	// create material map for transparent to opaque variants
 	let mat;
 	mat = brush1.material.clone();
-	mat.side = THREE.FrontSide;
+	mat.side = FrontSide;
 	mat.opacity = 1;
 	mat.transparent = false;
 	mat.depthWrite = true;
 	materialMap.set( brush1.material, mat );
 
 	mat = brush2.material.clone();
-	mat.side = THREE.FrontSide;
+	mat.side = FrontSide;
 	mat.opacity = 1;
 	mat.transparent = false;
 	mat.depthWrite = true;
@@ -184,7 +204,7 @@ async function init() {
 	} );
 
 	// add object displaying the result
-	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshStandardMaterial( {
+	resultObject = new Mesh( new BufferGeometry(), new MeshStandardMaterial( {
 		flatShading: false,
 		polygonOffset: true,
 		polygonOffsetUnits: 0.1,
@@ -196,7 +216,7 @@ async function init() {
 	scene.add( resultObject );
 
 	// add wireframe representation
-	wireframeResult = new THREE.Mesh( resultObject.geometry, new THREE.MeshBasicMaterial( {
+	wireframeResult = new Mesh( resultObject.geometry, new MeshBasicMaterial( {
 		wireframe: true,
 		color: 0,
 		opacity: 0.15,
@@ -366,35 +386,36 @@ function updateBrush( brush, type, complexity ) {
 	switch ( type ) {
 
 		case 'sphere':
-			brush.geometry = new THREE.SphereGeometry(
+			brush.geometry = new SphereGeometry(
 				1,
-				Math.round( THREE.MathUtils.lerp( 5, 32, complexity ) ),
-				Math.round( THREE.MathUtils.lerp( 5, 16, complexity ) )
+				Math.round( MathUtils.lerp( 5, 32, complexity ) ),
+				Math.round( MathUtils.lerp( 5, 16, complexity ) )
 			);
 			break;
 		case 'box':
-			brush.geometry = new THREE.BoxGeometry( 1, 1, 1 );
+			const dim = Math.round( MathUtils.lerp( 1, 10, complexity ) );
+			brush.geometry = new BoxGeometry( 1, 1, 1, dim, dim, dim );
 			break;
 		case 'cylinder':
-			brush.geometry = new THREE.CylinderGeometry(
+			brush.geometry = new CylinderGeometry(
 				0.5, 0.5, 1,
-				Math.round( THREE.MathUtils.lerp( 5, 32, complexity ) ),
+				Math.round( MathUtils.lerp( 5, 32, complexity ) ),
 			);
 			break;
 		case 'torus':
-			brush.geometry = new THREE.TorusGeometry(
+			brush.geometry = new TorusGeometry(
 				0.6,
 				0.2,
-				Math.round( THREE.MathUtils.lerp( 4, 16, complexity ) ),
-				Math.round( THREE.MathUtils.lerp( 6, 30, complexity ) )
+				Math.round( MathUtils.lerp( 4, 16, complexity ) ),
+				Math.round( MathUtils.lerp( 6, 30, complexity ) )
 			);
 			break;
 		case 'torus knot':
-			brush.geometry = new THREE.TorusKnotGeometry(
+			brush.geometry = new TorusKnotGeometry(
 				0.6,
 				0.2,
-				Math.round( THREE.MathUtils.lerp( 16, 64, complexity ) ),
-				Math.round( THREE.MathUtils.lerp( 4, 16, complexity ) ),
+				Math.round( MathUtils.lerp( 16, 64, complexity ) ),
+				Math.round( MathUtils.lerp( 4, 16, complexity ) ),
 			);
 			break;
 		case 'mesh':
@@ -423,7 +444,7 @@ function updateBrush( brush, type, complexity ) {
 
 	}
 
-	brush.geometry.setAttribute( 'color', new THREE.BufferAttribute( array, 3 ) );
+	brush.geometry.setAttribute( 'color', new BufferAttribute( array, 3 ) );
 	needsUpdate = true;
 
 }
