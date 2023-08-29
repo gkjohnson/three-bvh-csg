@@ -20,8 +20,8 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 	const rootAttrSet = attributeInfo.groupAttributes[ 0 ];
 	for ( const key in rootAttrSet ) {
 
-		const requiredLength = attributeInfo.getTotalLength( key, groupCount );
-		const type = rootAttrSet[ key ].type;
+		const requiredLength = attributeInfo.getTotalLength( key );
+		const type = attributeInfo.getType( key );
 		let attr = attributes[ key ];
 		if ( ! attr || attr.array.length < requiredLength ) {
 
