@@ -100,6 +100,13 @@ suite( 'General', () => {
 
 	} );
 
-	bench( 'Subtract w/ Groups', () => evaluator.evaluate( brush1, brush2, SUBTRACTION, result ) );
+	bench( 'Subtract w/ Groups',
+		() => evaluator.evaluate( brush1, brush2, SUBTRACTION, result ),
+	);
+
+	bench( 'Subtract w/o Groups',
+		() => evaluator.useGroups = false,
+		() => evaluator.evaluate( brush1, brush2, SUBTRACTION, result ),
+	);
 
 } );
