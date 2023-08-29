@@ -125,10 +125,8 @@ function assignBufferData( geometry, attributeData ) {
 
 }
 
-// applies the given set of attribute data to the provided geometry. If the attributes are
-// not large enough to hold the new set of data then new attributes will be created. Otherwise
-// the existing attributes will be used and draw range updated to accommodate the new size.
-function applyToGeometry( geometry, groups, attributeData ) {
+// applies the given set of groups to the geometry
+function applyGroups( geometry, groups, attributeData ) {
 
 	// initialize the groups
 	let groupOffset = 0;
@@ -223,7 +221,7 @@ export class Evaluator {
 
 		// apply groups and attribute data to the geometry
 		assignBufferData( targetGeometry, attributeData );
-		applyToGeometry( targetGeometry, [ ...aGroups, ...bGroups ], attributeData );
+		applyGroups( targetGeometry, [ ...aGroups, ...bGroups ], attributeData );
 
 		// generate the minimum set of materials needed for the list of groups and adjust the groups
 		// if they're needed
