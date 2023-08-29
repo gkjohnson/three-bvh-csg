@@ -18,7 +18,7 @@ export class TypedAttributeData {
   getType( name: String ): string;
   getTotalLength( name: String ): number;
   getGroupSet( index?: number ): Object;
-  getGroupArray( name: string, index?: number ): Array<number>;
+  getGroupAttrArray( name: string, index?: number ): Array<number>;
   initializeArray( name: string, type: string ): void;
   clear(): void;
   delete( key: string ): void;

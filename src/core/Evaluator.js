@@ -1,9 +1,9 @@
 import { BufferAttribute } from 'three';
 import { TriangleSplitter } from './TriangleSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
-import { OperationDebugData } from './OperationDebugData.js';
-import { performOperation } from './operations.js';
-import { setDebugContext } from './operationsUtils.js';
+import { OperationDebugData } from './debug/OperationDebugData.js';
+import { performOperation } from './operations/operations.js';
+import { setDebugContext } from './operations/operationsUtils.js';
 import { Brush } from './Brush.js';
 
 // applies the given set of attribute data to the provided geometry. If the attributes are
@@ -20,8 +20,8 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 	const rootAttrSet = attributeInfo.groupAttributes[ 0 ];
 	for ( const key in rootAttrSet ) {
 
-		const requiredLength = attributeInfo.getTotalLength( key, groupCount );
-		const type = rootAttrSet[ key ].type;
+		const requiredLength = attributeInfo.getTotalLength( key );
+		const type = attributeInfo.getType( key );
 		let attr = attributes[ key ];
 		if ( ! attr || attr.array.length < requiredLength ) {
 
@@ -55,7 +55,7 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 	let groupOffset = 0;
 	for ( let i = 0; i < groupCount; i ++ ) {
 
-		const posCount = attributeInfo.getGroupArray( 'position', i ).length / 3;
+		const posCount = attributeInfo.getGroupAttrArray( 'position', i ).length / 3;
 		if ( posCount !== 0 ) {
 
 			const group = groups[ i ];

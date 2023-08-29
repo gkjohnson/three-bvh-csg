@@ -1,6 +1,6 @@
 import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle, Line3 } from 'three';
-import { IntersectionMap } from './IntersectionMap.js';
-import { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } from './constants.js';
+import { IntersectionMap } from '../IntersectionMap.js';
+import { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } from '../constants.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
