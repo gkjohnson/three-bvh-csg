@@ -1,6 +1,8 @@
 import { TypeBackedArray } from './TypeBackedArray.js';
 
-// utility class for for tracking attribute data in type-backed arrays
+// Utility class for for tracking attribute data in type-backed arrays for a set
+// of groups. The set of attributes is kept for each group and are expected to be the
+// same buffer type.
 export class TypedAttributeData {
 
 	constructor() {
@@ -10,12 +12,14 @@ export class TypedAttributeData {
 
 	}
 
+	// returns the buffer type for the given attribute
 	getType( name ) {
 
 		return this.groupAttributes[ 0 ][ name ].type;
 
 	}
 
+	// returns the total length required for all groups for the given attribute
 	getTotalLength( name ) {
 
 		const { groupCount, groupAttributes } = this;
@@ -32,9 +36,10 @@ export class TypedAttributeData {
 
 	}
 
-	getGroupSet( index = 0 ) {
+	getGroupAttrSet( index = 0 ) {
 
-		// throw an error if we've never
+		// TODO: can this be abstracted?
+		// Return the exiting group set if necessary
 		const { groupAttributes } = this;
 		if ( groupAttributes[ index ] ) {
 
@@ -62,19 +67,20 @@ export class TypedAttributeData {
 
 	}
 
-	getGroupArray( name, index = 0 ) {
+	// Get the raw array for the group set of data
+	getGroupAttrArray( name, index = 0 ) {
 
 		// throw an error if we've never
 		const { groupAttributes } = this;
-		const rootAttrSet = groupAttributes[ 0 ];
-		const referenceAttr = rootAttrSet[ name ];
+		const referenceAttrSet = groupAttributes[ 0 ];
+		const referenceAttr = referenceAttrSet[ name ];
 		if ( ! referenceAttr ) {
 
 			throw new Error( `TypedAttributeData: Attribute with "${ name }" has not been initialized` );
 
 		}
 
-		return this.getGroupSet( index )[ name ];
+		return this.getGroupAttrSet( index )[ name ];
 
 	}
 
@@ -82,8 +88,8 @@ export class TypedAttributeData {
 	initializeArray( name, type ) {
 
 		const { groupAttributes } = this;
-		const rootSet = groupAttributes[ 0 ];
-		const referenceAttr = rootSet[ name ];
+		const referenceAttrSet = groupAttributes[ 0 ];
+		const referenceAttr = referenceAttrSet[ name ];
 		if ( referenceAttr ) {
 
 			if ( referenceAttr.type !== type ) {
@@ -104,6 +110,7 @@ export class TypedAttributeData {
 
 	}
 
+	// Clear all the data
 	clear() {
 
 		this.groupCount = 0;
@@ -122,6 +129,7 @@ export class TypedAttributeData {
 
 	}
 
+	// Remove the given key
 	delete( key ) {
 
 		this.groupAttributes.forEach( attrSet => {
@@ -132,9 +140,11 @@ export class TypedAttributeData {
 
 	}
 
+	// Reset the datasets completely
 	reset() {
 
 		this.groupAttributes = [];
+		this.groupCount = 0;
 
 	}
 

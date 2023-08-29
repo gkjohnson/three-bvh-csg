@@ -55,7 +55,7 @@ function applyToGeometry( geometry, referenceGeometry, groups, attributeInfo ) {
 	let groupOffset = 0;
 	for ( let i = 0; i < groupCount; i ++ ) {
 
-		const posCount = attributeInfo.getGroupArray( 'position', i ).length / 3;
+		const posCount = attributeInfo.getGroupAttrArray( 'position', i ).length / 3;
 		if ( posCount !== 0 ) {
 
 			const group = groups[ i ];

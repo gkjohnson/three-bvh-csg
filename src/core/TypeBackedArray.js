@@ -14,6 +14,8 @@ export class TypeBackedArray {
 
 	}
 
+	// Expands the typed array to the given size or by the expansion factor while
+	// retaining any data already in the buffer.
 	expand( size = null ) {
 
 		const { type, array, expansionFactor } = this;
@@ -30,6 +32,7 @@ export class TypeBackedArray {
 
 	}
 
+	// Add data onto the array - expanding the buffer if needed.
 	push( ...args ) {
 
 		let { array, length } = this;
@@ -50,6 +53,7 @@ export class TypeBackedArray {
 
 	}
 
+	// Remove any data in the array by resetting the stored length.
 	clear() {
 
 		this.length = 0;
