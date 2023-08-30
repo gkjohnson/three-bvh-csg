@@ -26,12 +26,16 @@ function getFirstIdFromSet( set ) {
 // typedAttributeData object.
 export function performOperation( a, b, operation, splitter, typedAttributeData, options ) {
 
+	// TODO: take second attribute data
+
 	const { useGroups = true } = options;
 	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b );
 
 	const resultGroups = [];
 	let resultMaterials = null;
 
+	// TODO: pass second attribute data to splitting so we don't have to do it twice
+	// TODO: whole triangle operations can just be done twice
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
 	performWholeTriangleOperations( a, b, aIntersections, operation, false, typedAttributeData, groupOffset );
@@ -106,6 +110,8 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 			splitter.splitByTriangle( _triB );
 
 		}
+
+		// TODO: append split triangles to other attribute data, as well
 
 		// for all triangles in the split result
 		const triangles = splitter.triangles;

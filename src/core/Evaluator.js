@@ -195,6 +195,8 @@ export class Evaluator {
 		this.consolidateGroups = true;
 		this.debug = new OperationDebugData();
 
+		// TODO: second attribute data
+
 	}
 
 	getGroupRanges( geometry ) {
@@ -206,6 +208,8 @@ export class Evaluator {
 	}
 
 	evaluate( a, b, operation, targetBrush = new Brush() ) {
+
+		// TODO: second brush
 
 		a.prepareGeometry();
 		b.prepareGeometry();
@@ -222,9 +226,10 @@ export class Evaluator {
 
 		prepareAttributesData( a.geometry, targetGeometry, attributeData, attributes );
 
+		// TODO: prepare second attribute data
+
 		// run the operation to fill the list of attribute data
-		// TODO: we can do this in more steps here and fill the data a second time for
-		// the sibling geometry piece
+		// TODO: pass the second attribute data into the geometry
 		debug.init();
 		performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups } );
 		debug.complete();
@@ -299,9 +304,13 @@ export class Evaluator {
 		// apply groups and attribute data to the geometry
 		assignBufferData( targetGeometry, attributeData, groups );
 
+		// TODO: assign to second geometry
+
 		if ( consolidateGroups ) {
 
 			joinGroups( targetGeometry.groups );
+
+			// TODO: join second groups of second geometry
 
 		}
 
