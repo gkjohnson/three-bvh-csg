@@ -1,33 +1,7 @@
-import { Mesh, Matrix4, BufferGeometry, BufferAttribute } from 'three';
+import { Mesh, Matrix4 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import { HalfEdgeMap } from './HalfEdgeMap.js';
-import { areSharedArrayBuffersSupported, convertToSharedArrayBuffer, ensureIndex, getTriCount, getVertexCount } from './utils.js';
-
-// Generate a version of the geometry that's trimmed to the draw range length
-function generateTrimmedGeometry( geo ) {
-
-	const drawRangeCount = Math.min( getVertexCount( geo ), geo.drawRange.count );
-	const attributes = geo.attributes;
-	const newGeo = new BufferGeometry();
-
-	const indexAttr = geo.index;
-	const array = indexAttr.array;
-	const type = array.constructor;
-	const buffer = array.buffer;
-
-	const newArray = new type( buffer, 0, drawRangeCount );
-	newGeo.index = new BufferAttribute( newArray, 1, false );
-
-	for ( const key in attributes ) {
-
-		const attr = attributes[ key ];
-		newGeo.setAttribute( key, attr );
-
-	}
-
-	return newGeo;
-
-}
+import { areSharedArrayBuffersSupported, convertToSharedArrayBuffer, ensureIndex, getTriCount } from './utils.js';
 
 export class Brush extends Mesh {
 
@@ -93,9 +67,7 @@ export class Brush extends Mesh {
 		if ( ! geometry.boundsTree ) {
 
 			ensureIndex( geometry, { useSharedArrayBuffer } );
-
-			const trimmedGeo = generateTrimmedGeometry( geometry );
-			geometry.boundsTree = new MeshBVH( trimmedGeo, { maxLeafTris: 3, indirect: true, useSharedArrayBuffer } );
+			geometry.boundsTree = new MeshBVH( geometry, { maxLeafTris: 3, indirect: true, useSharedArrayBuffer } );
 
 		}
 

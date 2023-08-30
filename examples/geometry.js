@@ -212,7 +212,7 @@ function updateCSG() {
 
 	const startTime = window.performance.now();
 	let finalBrush = brushes[ 0 ];
-	csgEvaluator.useGroups = false;
+	csgEvaluator.useGroups = params.useGroups;
 	for ( let i = 1, l = brushes.length; i < l; i ++ ) {
 
 		const b = brushes[ i ];
@@ -221,7 +221,6 @@ function updateCSG() {
 
 	}
 
-	csgEvaluator.useGroups = params.useGroups;
 	csgEvaluator.evaluate( bunnyBrush, finalBrush, params.operation, resultObject );
 	if ( params.useGroups ) {
 
