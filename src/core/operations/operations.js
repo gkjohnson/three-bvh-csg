@@ -43,10 +43,9 @@ export function performOperation(
 	const resultGroups = [];
 	let resultMaterials = null;
 
-	// TODO: pass second attribute data to splitting so we don't have to do it twice
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
-	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeData, groupOffset );
+	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeData, invertedAttributeData, groupOffset );
 	performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeData, groupOffset );
 	if ( invertedAttributeData ) {
 
@@ -55,7 +54,7 @@ export function performOperation(
 	}
 
 	groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
-	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeData, groupOffset );
+	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeData, invertedAttributeData, groupOffset );
 	performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeData, groupOffset );
 	if ( invertedAttributeData ) {
 
