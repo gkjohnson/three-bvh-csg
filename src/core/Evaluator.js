@@ -190,6 +190,7 @@ export class Evaluator {
 
 		this.triangleSplitter = new TriangleSplitter();
 		this.attributeData = new TypedAttributeData();
+		this.invertedAttributeData = new TypedAttributeData();
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
 		this.consolidateGroups = true;
@@ -207,7 +208,7 @@ export class Evaluator {
 
 	}
 
-	evaluate( a, b, operation, targetBrush = new Brush() ) {
+	evaluate( a, b, operation, targetBrush = new Brush(), invertedBrush = null ) {
 
 		// TODO: second brush
 
@@ -215,9 +216,11 @@ export class Evaluator {
 		b.prepareGeometry();
 
 		const targetGeometry = targetBrush.geometry;
+		const invertedGeometry = invertedBrush ? invertedBrush.geometry : null;
 		const {
 			triangleSplitter,
 			attributeData,
+			invertedAttributeData,
 			attributes,
 			useGroups,
 			consolidateGroups,
@@ -225,13 +228,15 @@ export class Evaluator {
 		} = this;
 
 		prepareAttributesData( a.geometry, targetGeometry, attributeData, attributes );
+		if ( invertedBrush ) {
 
-		// TODO: prepare second attribute data
+			prepareAttributesData( a.geometry, invertedGeometry, invertedAttributeData, attributes );
+
+		}
 
 		// run the operation to fill the list of attribute data
-		// TODO: pass the second attribute data into the geometry
 		debug.init();
-		performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups } );
+		performOperation( a, b, operation, triangleSplitter, attributeData, invertedAttributeData, { useGroups } );
 		debug.complete();
 
 		// get the materials and group ranges
@@ -303,14 +308,20 @@ export class Evaluator {
 
 		// apply groups and attribute data to the geometry
 		assignBufferData( targetGeometry, attributeData, groups );
-
-		// TODO: assign to second geometry
-
 		if ( consolidateGroups ) {
 
 			joinGroups( targetGeometry.groups );
 
-			// TODO: join second groups of second geometry
+		}
+
+		if ( invertedBrush ) {
+
+			assignBufferData( invertedGeometry, invertedAttributeData, groups );
+			if ( consolidateGroups ) {
+
+				joinGroups( invertedGeometry.groups );
+
+			}
 
 		}
 

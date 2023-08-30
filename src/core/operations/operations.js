@@ -23,13 +23,14 @@ function getFirstIdFromSet( set ) {
 }
 
 // runs the given operation against a and b using the splitter and appending data to the
-// typedAttributeData object.
+// attributeData object.
 export function performOperation(
 	a,
 	b,
 	operation,
 	splitter,
-	typedAttributeData,
+	attributeData,
+	invertedAttributeData,
 	options,
 ) {
 
@@ -45,12 +46,12 @@ export function performOperation(
 	// TODO: whole triangle operations can just be done twice
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
-	performWholeTriangleOperations( a, b, aIntersections, operation, false, typedAttributeData, groupOffset );
-	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, typedAttributeData, groupOffset );
+	performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeData, groupOffset );
+	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeData, groupOffset );
 
 	groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
-	performWholeTriangleOperations( b, a, bIntersections, operation, true, typedAttributeData, groupOffset );
-	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, typedAttributeData, groupOffset );
+	performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeData, groupOffset );
+	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeData, groupOffset );
 
 	return {
 		groups: resultGroups,
