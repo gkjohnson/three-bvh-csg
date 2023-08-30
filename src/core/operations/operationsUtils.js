@@ -153,7 +153,7 @@ export function appendAttributeFromTriangle(
 	geometry,
 	matrixWorld,
 	normalMatrix,
-	attributeInfo,
+	attributeData,
 	invert = false,
 ) {
 
@@ -164,11 +164,11 @@ export function appendAttributeFromTriangle(
 	const i1 = indexAttr.getX( i3 + 1 );
 	const i2 = indexAttr.getX( i3 + 2 );
 
-	for ( const key in attributeInfo ) {
+	for ( const key in attributeData ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = attributeInfo[ key ];
+		const arr = attributeData[ key ];
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } not available on geometry.` );
@@ -224,13 +224,13 @@ export function appendAttributesFromIndices(
 	attributes,
 	matrixWorld,
 	normalMatrix,
-	attributeInfo,
+	attributeData,
 	invert = false,
 ) {
 
-	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
-	appendAttributeFromIndex( invert ? i2 : i1, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
-	appendAttributeFromIndex( invert ? i1 : i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
+	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeData, invert );
+	appendAttributeFromIndex( invert ? i2 : i1, attributes, matrixWorld, normalMatrix, attributeData, invert );
+	appendAttributeFromIndex( invert ? i1 : i2, attributes, matrixWorld, normalMatrix, attributeData, invert );
 
 }
 
@@ -360,15 +360,15 @@ function appendAttributeFromIndex(
 	attributes,
 	matrixWorld,
 	normalMatrix,
-	attributeInfo,
+	attributeData,
 	invert = false,
 ) {
 
-	for ( const key in attributeInfo ) {
+	for ( const key in attributeData ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = attributeInfo[ key ];
+		const arr = attributeData[ key ];
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );

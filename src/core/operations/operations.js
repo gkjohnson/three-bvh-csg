@@ -67,7 +67,7 @@ function performSplitTriangleOperations(
 	operation,
 	invert,
 	splitter,
-	attributeInfo,
+	attributeData,
 	groupOffset = 0,
 ) {
 
@@ -98,7 +98,7 @@ function performSplitTriangleOperations(
 
 		const ia = splitIds[ i ];
 		const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ ia ] + groupOffset;
-		const attrSet = attributeInfo.getGroupAttrSet( groupIndex );
+		const attrSet = attributeData.getGroupAttrSet( groupIndex );
 
 		// get the triangle in the geometry B local frame
 		const ia3 = 3 * ia;
@@ -169,7 +169,7 @@ function performWholeTriangleOperations(
 	splitTriSet,
 	operation,
 	invert,
-	attributeInfo,
+	attributeData,
 	groupOffset = 0,
 ) {
 
@@ -232,7 +232,7 @@ function performWholeTriangleOperations(
 
 			const currId = stack.pop();
 			const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ currId ] + groupOffset;
-			const attrSet = attributeInfo.getGroupAttrSet( groupIndex );
+			const attrSet = attributeData.getGroupAttrSet( groupIndex );
 
 			for ( let i = 0; i < 3; i ++ ) {
 
