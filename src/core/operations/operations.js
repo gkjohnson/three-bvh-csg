@@ -24,7 +24,14 @@ function getFirstIdFromSet( set ) {
 
 // runs the given operation against a and b using the splitter and appending data to the
 // typedAttributeData object.
-export function performOperation( a, b, operation, splitter, typedAttributeData, options ) {
+export function performOperation(
+	a,
+	b,
+	operation,
+	splitter,
+	typedAttributeData,
+	options,
+) {
 
 	// TODO: take second attribute data
 
@@ -53,7 +60,16 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 }
 
 // perform triangle splitting and CSG operations on the set of split triangles
-function performSplitTriangleOperations( a, b, intersectionMap, operation, invert, splitter, attributeInfo, groupOffset = 0 ) {
+function performSplitTriangleOperations(
+	a,
+	b,
+	intersectionMap,
+	operation,
+	invert,
+	splitter,
+	attributeInfo,
+	groupOffset = 0,
+) {
 
 	const invertedGeometry = a.matrixWorld.determinant() < 0;
 
@@ -147,7 +163,15 @@ function performSplitTriangleOperations( a, b, intersectionMap, operation, inver
 // at the moment this isn't always faster due to overhead of building the half edge structure
 // and degraded connectivity due to split triangles.
 
-function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, attributeInfo, groupOffset = 0 ) {
+function performWholeTriangleOperations(
+	a,
+	b,
+	splitTriSet,
+	operation,
+	invert,
+	attributeInfo,
+	groupOffset = 0,
+) {
 
 	const invertedGeometry = a.matrixWorld.determinant() < 0;
 
