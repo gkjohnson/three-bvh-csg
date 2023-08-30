@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+### Added
+- Evaluator.consolidateGroups option to merge groups with common materials on CSG operation.
+
+### Changed
+- Bumped three-mesh-bvh version to v0.6.5
+- Uses an indirect bvh buffer to enable faster intersection search operations.
+
 ## [0.0.9] - 2023-08-12
 ### Fixed
 - Incorrect type declarations.
