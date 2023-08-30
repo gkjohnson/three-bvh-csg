@@ -5,6 +5,30 @@ import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
 
+// merges groups with common material indices in place
+function joinGroups( groups ) {
+
+	for ( let i = 0; i < groups.length - 1; i ++ ) {
+
+		const group = groups[ i ];
+		const nextGroup = groups[ i + 1 ];
+		if ( group.materialIndex === nextGroup.materialIndex ) {
+
+			const start = group.start;
+			const end = nextGroup.start + nextGroup.count;
+			nextGroup.start = start;
+			nextGroup.count = end - start;
+
+			groups.splice( i, 1 );
+			i --;
+
+		}
+
+	}
+
+
+}
+
 // initialize the target geometry and attribute data to be based on
 // the given reference geometry
 function prepareAttributesData( referenceGeometry, targetGeometry, attributeData, relevantAttributes ) {
@@ -168,6 +192,7 @@ export class Evaluator {
 		this.attributeData = new TypedAttributeData();
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
+		this.consolidateGroups = true;
 		this.debug = new OperationDebugData();
 
 	}
@@ -191,6 +216,7 @@ export class Evaluator {
 			attributeData,
 			attributes,
 			useGroups,
+			consolidateGroups,
 			debug,
 		} = this;
 
@@ -211,15 +237,33 @@ export class Evaluator {
 		const bMaterials = getMaterialList( bGroups, b.material );
 		bGroups.forEach( g => g.materialIndex += aMaterials.length );
 
-		const groups = [ ...aGroups, ...bGroups ]
+		let groups = [ ...aGroups, ...bGroups ]
 			.map( ( group, index ) => ( { ...group, index } ) );
 
 		// generate the minimum set of materials needed for the list of groups and adjust the groups
 		// if they're needed
 		if ( useGroups ) {
 
-			// create a map from old to new index and remove materials that aren't used
 			const allMaterials = [ ...aMaterials, ...bMaterials ];
+			if ( consolidateGroups ) {
+
+				groups = groups
+					.map( group => {
+
+						const mat = allMaterials[ group.materialIndex ];
+						group.materialIndex = allMaterials.indexOf( mat );
+						return group;
+
+					} )
+					.sort( ( a, b ) => {
+
+						return a.materialIndex - b.materialIndex;
+
+					} );
+
+			}
+
+			// create a map from old to new index and remove materials that aren't used
 			const finalMaterials = [];
 			for ( let i = 0, l = allMaterials.length; i < l; i ++ ) {
 
@@ -254,6 +298,12 @@ export class Evaluator {
 
 		// apply groups and attribute data to the geometry
 		assignBufferData( targetGeometry, attributeData, groups );
+
+		if ( consolidateGroups ) {
+
+			joinGroups( targetGeometry.groups );
+
+		}
 
 		return targetBrush;
 

@@ -20,6 +20,7 @@ const params = {
 	displayBrushes: false,
 	shadows: true,
 	useGroups: true,
+	consolidateGroups: true,
 
 	randomize: () => {
 
@@ -191,6 +192,7 @@ async function init() {
 	gui.add( params, 'shadows' );
 	gui.add( params, 'wireframe' );
 	gui.add( params, 'useGroups' ).onChange( updateCSG );
+	gui.add( params, 'consolidateGroups' ).onChange( updateCSG );
 	gui.add( params, 'randomize' );
 
 	window.addEventListener( 'resize', function () {
@@ -213,6 +215,7 @@ function updateCSG() {
 	const startTime = window.performance.now();
 	let finalBrush = brushes[ 0 ];
 	csgEvaluator.useGroups = params.useGroups;
+	csgEvaluator.consolidateGroups = params.consolidateGroups;
 	for ( let i = 1, l = brushes.length; i < l; i ++ ) {
 
 		const b = brushes[ i ];
