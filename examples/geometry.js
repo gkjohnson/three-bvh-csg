@@ -233,7 +233,11 @@ function updateCSG() {
 	}
 
 	const deltaTime = window.performance.now() - startTime;
-	outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
+	const geometry = resultObject.geometry;
+	outputContainer.innerText =
+		`${ deltaTime.toFixed( 3 ) }ms\n` +
+		`${ geometry.groups.length } groups\n` +
+		`${ Array.isArray( resultObject.material ) ? resultObject.material.length : 1 } materials`;
 
 }
 
