@@ -406,3 +406,16 @@ function appendAttributeFromIndex(
 	}
 
 }
+
+export function getInvertOperation( op ) {
+
+	switch ( op ) {
+
+		case ADDITION: 		return SUBTRACTION;
+		case SUBTRACTION: 	return ADDITION;
+		case INTERSECTION: 	return DIFFERENCE;
+		case DIFFERENCE: 	return INTERSECTION;
+
+	}
+
+}
