@@ -81,12 +81,14 @@ suite( 'General', () => {
 	let brush1,
 		brush2,
 		evaluator,
-		result;
+		result,
+		invertedResult;
 
 	beforeEach( () => {
 
 		evaluator = new Evaluator();
 		result = new Brush();
+		invertedResult = new Brush();
 
 		brush1 = new Brush( generateGroupGeometry( 100 ) );
 		brush1.updateMatrixWorld( true );
@@ -107,6 +109,10 @@ suite( 'General', () => {
 	bench( 'Subtract w/o Groups',
 		() => evaluator.useGroups = false,
 		() => evaluator.evaluate( brush1, brush2, SUBTRACTION, result ),
+	);
+
+	bench( 'Subtract w/ Inverted',
+		() => evaluator.evaluate( brush1, brush2, SUBTRACTION, result, invertedResult ),
 	);
 
 } );
