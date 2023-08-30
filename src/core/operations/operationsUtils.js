@@ -407,7 +407,7 @@ function appendAttributeFromIndex(
 
 }
 
-export function getInvertOperation( op ) {
+export function getInvertedOperation( op ) {
 
 	switch ( op ) {
 

@@ -5,7 +5,7 @@ import {
 	appendAttributeFromTriangle,
 	appendAttributesFromIndices,
 	getOperationAction,
-	SKIP_TRI, INVERT_TRI,
+	SKIP_TRI, INVERT_TRI, getInvertedOperation,
 } from './operationsUtils.js';
 import { getTriCount } from '../utils.js';
 
@@ -30,8 +30,8 @@ export function performOperation(
 	operation,
 	splitter,
 	attributeData,
-	invertedAttributeData,
-	options,
+	invertedAttributeData = null,
+	options = {},
 ) {
 
 	// TODO: take second attribute data
@@ -39,19 +39,29 @@ export function performOperation(
 	const { useGroups = true } = options;
 	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b );
 
+	const invertedOperation = getInvertedOperation( operation );
 	const resultGroups = [];
 	let resultMaterials = null;
 
 	// TODO: pass second attribute data to splitting so we don't have to do it twice
-	// TODO: whole triangle operations can just be done twice
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
-	performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeData, groupOffset );
 	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeData, groupOffset );
+	performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeData, groupOffset );
+	if ( invertedAttributeData ) {
+
+		performWholeTriangleOperations( a, b, aIntersections, invertedOperation, true, invertedAttributeData, groupOffset );
+
+	}
 
 	groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
-	performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeData, groupOffset );
 	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeData, groupOffset );
+	performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeData, groupOffset );
+	if ( invertedAttributeData ) {
+
+		performWholeTriangleOperations( b, a, bIntersections, invertedOperation, false, invertedAttributeData, groupOffset );
+
+	}
 
 	return {
 		groups: resultGroups,
@@ -247,6 +257,7 @@ function performWholeTriangleOperations(
 
 			}
 
+			// TODO: can we just append to the inverted attr data here?
 			if ( action === SKIP_TRI ) {
 
 				continue;

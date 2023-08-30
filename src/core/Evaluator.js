@@ -217,10 +217,10 @@ export class Evaluator {
 
 		const targetGeometry = targetBrush.geometry;
 		const invertedGeometry = invertedBrush ? invertedBrush.geometry : null;
+		const invertedAttributeData = invertedBrush ? this.invertedAttributeData : null;
 		const {
 			triangleSplitter,
 			attributeData,
-			invertedAttributeData,
 			attributes,
 			useGroups,
 			consolidateGroups,
