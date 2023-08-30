@@ -50,7 +50,7 @@ export function performOperation(
 	performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeData, groupOffset );
 	if ( invertedAttributeData ) {
 
-		performWholeTriangleOperations( a, b, aIntersections, invertedOperation, true, invertedAttributeData, groupOffset );
+		performWholeTriangleOperations( a, b, aIntersections, invertedOperation, false, invertedAttributeData, groupOffset );
 
 	}
 
@@ -59,7 +59,7 @@ export function performOperation(
 	performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeData, groupOffset );
 	if ( invertedAttributeData ) {
 
-		performWholeTriangleOperations( b, a, bIntersections, invertedOperation, false, invertedAttributeData, groupOffset );
+		performWholeTriangleOperations( b, a, bIntersections, invertedOperation, true, invertedAttributeData, groupOffset );
 
 	}
 
@@ -79,10 +79,12 @@ function performSplitTriangleOperations(
 	invert,
 	splitter,
 	attributeData,
+	invertedAttributeData,
 	groupOffset = 0,
 ) {
 
 	const invertedGeometry = a.matrixWorld.determinant() < 0;
+	const invertedOperation = getInvertedOperation( operation );
 
 	// transforms into the local frame of matrix b
 	_matrix
@@ -109,7 +111,6 @@ function performSplitTriangleOperations(
 
 		const ia = splitIds[ i ];
 		const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ ia ] + groupOffset;
-		const attrSet = attributeData.getGroupAttrSet( groupIndex );
 
 		// get the triangle in the geometry B local frame
 		const ia3 = 3 * ia;
@@ -138,10 +139,22 @@ function performSplitTriangleOperations(
 
 		}
 
-		// TODO: append split triangles to other attribute data, as well
+		const attrSet = attributeData.getGroupAttrSet( groupIndex );
+		appendTriangles( ia, splitter.triangles, attrSet, operation );
+		if ( invertedAttributeData ) {
+
+			const invertedAttrSet = invertedAttributeData.getGroupAttrSet( groupIndex );
+			appendTriangles( ia, splitter.triangles, invertedAttrSet, invertedOperation );
+
+		}
+
+	}
+
+	return splitIds.length;
+
+	function appendTriangles( triIndex, triangles, attrSet, operation ) {
 
 		// for all triangles in the split result
-		const triangles = splitter.triangles;
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
 			// get the barycentric coordinates of the clipped triangle to add
@@ -158,15 +171,13 @@ function performSplitTriangleOperations(
 				_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
 
 				const invertTri = action === INVERT_TRI;
-				appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet, invertedGeometry !== invertTri );
+				appendAttributeFromTriangle( triIndex, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet, invertedGeometry !== invertTri );
 
 			}
 
 		}
 
 	}
-
-	return splitIds.length;
 
 }
 
