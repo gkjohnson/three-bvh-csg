@@ -5,6 +5,30 @@ import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
 
+// merges groups with common material indices in place
+function joinGroups( groups ) {
+
+	for ( let i = 0; i < groups.length - 1; i ++ ) {
+
+		const group = groups[ i ];
+		const nextGroup = groups[ i + 1 ];
+		if ( group.materialIndex === nextGroup.materialIndex ) {
+
+			const start = group.start;
+			const end = nextGroup.start + nextGroup.count;
+			nextGroup.start = start;
+			nextGroup.count = end - start;
+
+			groups.splice( i, 1 );
+			i --;
+
+		}
+
+	}
+
+
+}
+
 // initialize the target geometry and attribute data to be based on
 // the given reference geometry
 function prepareAttributesData( referenceGeometry, targetGeometry, attributeData, relevantAttributes ) {
@@ -46,11 +70,10 @@ function prepareAttributesData( referenceGeometry, targetGeometry, attributeData
 
 // Assigns the given tracked attribute data to the geometry and returns whether the
 // geometry needs to be disposed of.
-function assignBufferData( geometry, attributeData ) {
+function assignBufferData( geometry, attributeData, groupOrder ) {
 
 	let needsDisposal = false;
 	let drawRange = - 1;
-	const groupCount = attributeData.groupCount;
 
 	// set the data
 	const attributes = geometry.attributes;
@@ -71,11 +94,13 @@ function assignBufferData( geometry, attributeData ) {
 
 		}
 
-		// assign the data to the geometry attribute buffers
+		// assign the data to the geometry attribute buffers in the provided order
+		// of the groups list
 		let offset = 0;
-		for ( let i = 0; i < groupCount; i ++ ) {
+		for ( let i = 0, l = groupOrder.length; i < l; i ++ ) {
 
-			const { array, type, length } = attributeData.groupAttributes[ i ][ key ];
+			const index = groupOrder[ i ].index;
+			const { array, type, length } = attributeData.groupAttributes[ index ][ key ];
 			const trimmedArray = new type( array.buffer, 0, length );
 			geoAttr.array.set( trimmedArray, offset );
 			offset += trimmedArray.length;
@@ -108,9 +133,23 @@ function assignBufferData( geometry, attributeData ) {
 
 	}
 
+	// initialize the groups
+	let groupOffset = 0;
+	geometry.clearGroups();
+	for ( let i = 0, l = attributeData.groupCount; i < l; i ++ ) {
+
+		const vertCount = attributeData.getCount( i );
+		if ( vertCount !== 0 ) {
+
+			geometry.addGroup( groupOffset, vertCount, groupOrder[ i ].materialIndex );
+			groupOffset += vertCount;
+
+		}
+
+	}
+
 	// update the draw range
 	geometry.setDrawRange( 0, drawRange );
-	geometry.clearGroups();
 
 	// remove the bounds tree if it exists because its now out of date
 	// TODO: can we have this dispose in the same way that a brush does?
@@ -122,29 +161,6 @@ function assignBufferData( geometry, attributeData ) {
 		geometry.dispose();
 
 	}
-
-}
-
-// applies the given set of groups to the geometry
-function applyGroups( geometry, groups, attributeData ) {
-
-	// initialize the groups
-	let groupOffset = 0;
-	const groupCount = attributeData.groupCount;
-	for ( let i = 0; i < groupCount; i ++ ) {
-
-		const posCount = attributeData.getCount( i );
-		if ( posCount !== 0 ) {
-
-			const group = groups[ i ];
-			geometry.addGroup( groupOffset, posCount, group.materialIndex );
-			groupOffset += posCount;
-
-		}
-
-	}
-
-	return geometry;
 
 }
 
@@ -176,6 +192,7 @@ export class Evaluator {
 		this.attributeData = new TypedAttributeData();
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
+		this.consolidateGroups = true;
 		this.debug = new OperationDebugData();
 
 	}
@@ -199,6 +216,7 @@ export class Evaluator {
 			attributeData,
 			attributes,
 			useGroups,
+			consolidateGroups,
 			debug,
 		} = this;
 
@@ -219,45 +237,71 @@ export class Evaluator {
 		const bMaterials = getMaterialList( bGroups, b.material );
 		bGroups.forEach( g => g.materialIndex += aMaterials.length );
 
-		// apply groups and attribute data to the geometry
-		assignBufferData( targetGeometry, attributeData );
-		applyGroups( targetGeometry, [ ...aGroups, ...bGroups ], attributeData );
+		let groups = [ ...aGroups, ...bGroups ]
+			.map( ( group, index ) => ( { ...group, index } ) );
 
 		// generate the minimum set of materials needed for the list of groups and adjust the groups
 		// if they're needed
-		const groups = targetGeometry.groups;
 		if ( useGroups ) {
 
-			const materialMap = new Map();
 			const allMaterials = [ ...aMaterials, ...bMaterials ];
+			if ( consolidateGroups ) {
+
+				groups = groups
+					.map( group => {
+
+						const mat = allMaterials[ group.materialIndex ];
+						group.materialIndex = allMaterials.indexOf( mat );
+						return group;
+
+					} )
+					.sort( ( a, b ) => {
+
+						return a.materialIndex - b.materialIndex;
+
+					} );
+
+			}
 
 			// create a map from old to new index and remove materials that aren't used
-			let newIndex = 0;
+			const finalMaterials = [];
 			for ( let i = 0, l = allMaterials.length; i < l; i ++ ) {
 
-				const foundGroup = Boolean( groups.find( group => group.materialIndex === i ) );
-				if ( ! foundGroup ) {
+				let foundGroup = false;
+				for ( let g = 0, lg = groups.length; g < lg; g ++ ) {
 
-					allMaterials[ i ] = null;
+					const group = groups[ g ];
+					if ( group.materialIndex === i ) {
 
-				} else {
+						foundGroup = true;
+						group.materialIndex = finalMaterials.length;
 
-					materialMap.set( i, newIndex );
-					newIndex ++;
+					}
+
+				}
+
+				if ( foundGroup ) {
+
+					finalMaterials.push( allMaterials[ i ] );
 
 				}
 
 			}
 
-			// adjust the groups indices
-			for ( let i = 0, l = groups.length; i < l; i ++ ) {
+			targetBrush.material = finalMaterials;
 
-				const group = groups[ i ];
-				group.materialIndex = materialMap.get( group.materialIndex );
+		} else {
 
-			}
+			targetBrush.material = aMaterials[ 0 ];
 
-			targetBrush.material = allMaterials.filter( material => material );
+		}
+
+		// apply groups and attribute data to the geometry
+		assignBufferData( targetGeometry, attributeData, groups );
+
+		if ( consolidateGroups ) {
+
+			joinGroups( targetGeometry.groups );
 
 		}
 
