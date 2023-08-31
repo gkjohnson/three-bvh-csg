@@ -302,7 +302,7 @@ Computes the volume of the given mesh in world space. The world matrix is expect
 - All geometry are expected to have all attributes being used and of the same type.
 - Geometry on a Brush should be unique and not be modified after being set.
 - All geometry must be [two-manifold](https://knowledge.autodesk.com/support/maya-lt/learn-explore/caas/CloudHelp/cloudhelp/2015/ENU/MayaLT/files/Polygons-overview-Twomanifold-vs--nonmanifold-polygonal-geometry-htm.html) - or water tight with no triangle interpenetration.
-- CSG results use `Geometry.drawRange` to help maintain performance which can cause three.js exporters to fail to export the geometry correctly. It is necessary to convert the geometry to remove the draw range before exporting.
+- CSG results use `Geometry.drawRange` to help maintain performance which can cause three.js exporters to fail to export the geometry correctly. It is necessary to convert the geometry to remove the use of draw range before exporting with three.js exporters.
 
 # References
 - [Godot CSG](https://github.com/godotengine/godot/blob/master/modules/csg/csg.cpp)
