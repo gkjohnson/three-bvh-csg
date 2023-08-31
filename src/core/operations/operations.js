@@ -34,8 +34,6 @@ export function performOperation(
 	options = {},
 ) {
 
-	// TODO: take second attribute data
-
 	const { useGroups = true } = options;
 	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b );
 
@@ -138,22 +136,10 @@ function performSplitTriangleOperations(
 
 		}
 
-		const attrSet = attributeData.getGroupAttrSet( groupIndex );
-		appendTriangles( ia, splitter.triangles, attrSet, operation );
-		if ( invertedAttributeData ) {
-
-			const invertedAttrSet = invertedAttributeData.getGroupAttrSet( groupIndex );
-			appendTriangles( ia, splitter.triangles, invertedAttrSet, invertedOperation );
-
-		}
-
-	}
-
-	return splitIds.length;
-
-	function appendTriangles( triIndex, triangles, attrSet, operation ) {
-
 		// for all triangles in the split result
+		const attrSet = attributeData.getGroupAttrSet( groupIndex );
+		const invertedAttrSet = invertedAttributeData && invertedAttributeData.getGroupAttrSet( groupIndex );
+		const triangles = splitter.triangles;
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
 			// get the barycentric coordinates of the clipped triangle to add
@@ -163,20 +149,35 @@ function performSplitTriangleOperations(
 			// uncertain then fall back to the raycasting approach
 			const hitSide = getHitSide( clippedTri, bBVH );
 			const action = getOperationAction( operation, hitSide, invert );
-			if ( action !== SKIP_TRI ) {
+			const invAction = invertedAttrSet && getOperationAction( invertedOperation, hitSide, invert ) || SKIP_TRI;
+			if ( action !== SKIP_TRI || invAction !== SKIP_TRI ) {
 
 				_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
 				_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
 				_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
 
-				const invertTri = action === INVERT_TRI;
-				appendAttributeFromTriangle( triIndex, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet, invertedGeometry !== invertTri );
+				if ( action !== SKIP_TRI ) {
+
+					const invertTri = action === INVERT_TRI;
+					appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet, invertedGeometry !== invertTri );
+
+				}
+
+				if ( invAction !== SKIP_TRI ) {
+
+					const invertTri = action === INVERT_TRI;
+					appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, invertedAttrSet, invertedGeometry !== invertTri );
+
+
+				}
 
 			}
 
 		}
 
 	}
+
+	return splitIds.length;
 
 }
 
