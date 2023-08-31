@@ -195,7 +195,7 @@ function render() {
 	brush1.material = mat1;
 	brush2.material = mat2;
 	csgEvaluator.useGroups = params.useGroups;
-	csgEvaluator.evaluate( brush1, brush2, params.operation, resultObject, resultObject2 );
+	csgEvaluator.evaluate( brush1, brush2, [ SUBTRACTION, INTERSECTION ], [ resultObject, resultObject2 ] );
 	resultObject.position.x = - 3;
 	resultObject2.position.x = 3;
 

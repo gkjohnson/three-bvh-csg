@@ -4,7 +4,6 @@ import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
-import { ADDITION } from './constants.js';
 
 // merges groups with common material indices in place
 function joinGroups( groups ) {
@@ -224,7 +223,7 @@ export class Evaluator {
 
 		if ( targetBrushes.length !== operations.length ) {
 
-			throw new Error();
+			throw new Error( 'Evaluator: operations and target array passed as different sizes.' );
 
 		}
 
@@ -240,15 +239,17 @@ export class Evaluator {
 			debug,
 		} = this;
 
+		// expand the attribute data array to the necessary size
 		while ( attributeData.length < targetBrushes.length ) {
 
 			attributeData.push( new TypedAttributeData() );
 
 		}
 
-		targetBrushes.forEach( ( tb, i ) => {
+		// prepare the attribute data buffer information
+		targetBrushes.forEach( ( brush, i ) => {
 
-			prepareAttributesData( a.geometry, tb.geometry, attributeData[ i ], attributes );
+			prepareAttributesData( a.geometry, brush.geometry, attributeData[ i ], attributes );
 
 		} );
 
@@ -316,19 +317,27 @@ export class Evaluator {
 
 			}
 
-			targetBrushes.forEach( tb => tb.material = finalMaterials );
+			targetBrushes.forEach( tb => {
+
+				tb.material = finalMaterials;
+
+			} );
 
 		} else {
 
-			targetBrushes.forEach( tb => tb.material = aMaterials[ 0 ] );
 			groups = [ { start: 0, count: Infinity, index: 0, materialIndex: 0 } ];
+			targetBrushes.forEach( tb => {
+
+				tb.material = aMaterials[ 0 ];
+
+			} );
 
 		}
 
 		// apply groups and attribute data to the geometry
-		targetBrushes.forEach( ( tb, i ) => {
+		targetBrushes.forEach( ( brush, i ) => {
 
-			const targetGeometry = tb.geometry;
+			const targetGeometry = brush.geometry;
 			assignBufferData( targetGeometry, attributeData[ i ], groups );
 			if ( consolidateGroups ) {
 
