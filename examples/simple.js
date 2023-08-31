@@ -34,6 +34,7 @@ import {
 	GridMaterial,
 	ADDITION,
 	SUBTRACTION,
+	REVERSE_SUBTRACTION,
 	INTERSECTION,
 	DIFFERENCE,
 } from '..';
