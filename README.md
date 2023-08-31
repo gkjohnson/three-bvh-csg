@@ -121,6 +121,14 @@ useGroups = true : Boolean
 
 Whether to use geometry groups when processing the geometry. If geometry groups are used then a material array and groups will be assigned to the target `Brush` after processing. If groups are disabled then a single coherent piece of geometry with no groups will be produced.
 
+### .consolidateGroups
+
+```js
+consolidateGroups = true : Boolean
+```
+
+If true then any group in the final geometry that shares a common material with another group will be merged into one to reduce the number of draw calls required by the resulting mesh.
+
 ### .evaluate
 
 ```js

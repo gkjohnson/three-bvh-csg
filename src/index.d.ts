@@ -29,18 +29,19 @@ export class TypedAttributeData {
 export enum CSGOperation{}
 export const ADDITION: CSGOperation;
 export const SUBTRACTION: CSGOperation;
-export const DIFFERENCE: CSGOperation;
+export const REVERSE_SUBTRACTION: CSGOperation;
 export const INTERSECTION: CSGOperation;
+export const DIFFERENCE: CSGOperation;
 
 export class Evaluator {
 
-  triangleSplitter: TriangleSplitter;
-  attributeData: TypedAttributeData;
   attributes: String[];
   useGroups: boolean;
+  consolidateMaterials: boolean;
   debug: OperationDebugData;
 
   evaluate( a: Brush, b: Brush, operation: CSGOperation, targetBrush?: Brush ): Brush;
+  evaluate( a: Brush, b: Brush, operations: CSGOperation[], targetBrushes: Brush[] ): Brush[];
 
   evaluateHierarchy( root: Operation, target?: Brush ): Brush;
 
