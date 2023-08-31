@@ -309,10 +309,12 @@ export class Evaluator {
 			}
 
 			targetBrush.material = finalMaterials;
+			if ( invertedBrush ) invertedBrush.material = finalMaterials;
 
 		} else {
 
 			targetBrush.material = aMaterials[ 0 ];
+			if ( invertedBrush ) invertedBrush.material = aMaterials[ 0 ];
 			groups = [ { start: 0, count: Infinity, index: 0, materialIndex: 0 } ];
 
 		}
