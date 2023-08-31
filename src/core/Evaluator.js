@@ -347,7 +347,7 @@ export class Evaluator {
 
 		} );
 
-		return wasArray ? targetBrushes[ 0 ] : targetBrushes;
+		return wasArray ? targetBrushes : targetBrushes[ 0 ];
 
 	}
 
