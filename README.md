@@ -60,6 +60,7 @@ CSG operations enums for use with `Evaluator`.
 ```
 ADDITION
 SUBTRACTION
+REVERSE_SUBTRACTION
 DIFFERENCE
 INTERSECTION
 ```
@@ -129,17 +130,28 @@ evaluate(
 	operation : CSGOperation,
 	target = null : Brush | Mesh
 ) : Brush | Mesh
+
+// or
+
+evaluate(
+	brushA : Brush,
+	brushB : Brush,
+	operations : Array<CSGOperation>,
+	targets : Array<Brush | Mesh>
+) : Array<Brush | Mesh>
 ```
 
 Performs the given `operation` on `brushA` with `brushB`. If no target is provided then a new `Brush` will be created with the new geometry. Otherwise the provided Brush will be _modified in place_ and geometry disposed or marked for update as needed.
+
+If arrays are provided for the "targets" and "operations" arguments then multiple results from different operations can be produced at once with minimal additional overhead.
 
 
 ### .evaluateHierarchy
 
 ```js
 evaluateHierarchy(
-  root: Opertation,
-  target = new Brush : Brush | Mesh
+  root: Operation,
+  target = null : Brush | Mesh
 ) : Brush | Mesh
 ```
 
