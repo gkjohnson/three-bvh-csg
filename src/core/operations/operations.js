@@ -37,28 +37,17 @@ export function performOperation(
 	const { useGroups = true } = options;
 	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b );
 
-	const invertedOperation = getInvertedOperation( operation );
 	const resultGroups = [];
 	let resultMaterials = null;
 
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
 	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeData, invertedAttributeData, groupOffset );
-	performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeData, groupOffset );
-	if ( invertedAttributeData ) {
-
-		performWholeTriangleOperations( a, b, aIntersections, invertedOperation, false, invertedAttributeData, groupOffset );
-
-	}
+	performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeData, invertedAttributeData, groupOffset );
 
 	groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
 	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeData, invertedAttributeData, groupOffset );
-	performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeData, groupOffset );
-	if ( invertedAttributeData ) {
-
-		performWholeTriangleOperations( b, a, bIntersections, invertedOperation, true, invertedAttributeData, groupOffset );
-
-	}
+	performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeData, invertedAttributeData, groupOffset );
 
 	return {
 		groups: resultGroups,
@@ -192,10 +181,12 @@ function performWholeTriangleOperations(
 	operation,
 	invert,
 	attributeData,
+	invertedAttributeData = null,
 	groupOffset = 0,
 ) {
 
 	const invertedGeometry = a.matrixWorld.determinant() < 0;
+	const invertedOperation = getInvertedOperation( operation );
 
 	// matrix for transforming into the local frame of geometry b
 	_matrix
@@ -249,13 +240,11 @@ function performWholeTriangleOperations(
 		// get the side and decide if we need to cull the triangle based on the operation
 		const hitSide = getHitSide( _tri, bBVH );
 		const action = getOperationAction( operation, hitSide, invert );
+		const invAction = invertedAttributeData && getOperationAction( invertedOperation, hitSide, invert ) || SKIP_TRI;
 
 		while ( stack.length > 0 ) {
 
 			const currId = stack.pop();
-			const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ currId ] + groupOffset;
-			const attrSet = attributeData.getGroupAttrSet( groupIndex );
-
 			for ( let i = 0; i < 3; i ++ ) {
 
 				const sid = halfEdges.getSiblingTriangleIndex( currId, i );
@@ -268,19 +257,31 @@ function performWholeTriangleOperations(
 
 			}
 
-			// TODO: can we just append to the inverted attr data here?
-			if ( action === SKIP_TRI ) {
+			if ( action !== SKIP_TRI || invAction !== SKIP_TRI ) {
 
-				continue;
+				const i3 = 3 * currId;
+				const i0 = aIndex.getX( i3 + 0 );
+				const i1 = aIndex.getX( i3 + 1 );
+				const i2 = aIndex.getX( i3 + 2 );
+				const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ currId ] + groupOffset;
+
+				if ( action !== SKIP_TRI ) {
+
+					const attrSet = attributeData.getGroupAttrSet( groupIndex );
+					const invertTri = action === INVERT_TRI;
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
+
+				}
+
+				if ( invAction !== SKIP_TRI ) {
+
+					const attrSet = invertedAttributeData.getGroupAttrSet( groupIndex );
+					const invertTri = invAction === INVERT_TRI;
+					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
+
+				}
 
 			}
-
-			const i3 = 3 * currId;
-			const i0 = aIndex.getX( i3 + 0 );
-			const i1 = aIndex.getX( i3 + 1 );
-			const i2 = aIndex.getX( i3 + 2 );
-			const invertTri = action === INVERT_TRI;
-			appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
 
 		}
 
