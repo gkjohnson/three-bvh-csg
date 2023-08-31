@@ -27,7 +27,7 @@ function getFirstIdFromSet( set ) {
 export function performOperation(
 	a,
 	b,
-	operation,
+	operations,
 	splitter,
 	attributeData,
 	options = {},
@@ -41,12 +41,12 @@ export function performOperation(
 
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
-	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeData, groupOffset );
-	performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeData, groupOffset );
+	performSplitTriangleOperations( a, b, aIntersections, operations, false, splitter, attributeData, groupOffset );
+	performWholeTriangleOperations( a, b, aIntersections, operations, false, attributeData, groupOffset );
 
 	groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
-	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeData, groupOffset );
-	performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeData, groupOffset );
+	performSplitTriangleOperations( b, a, bIntersections, operations, true, splitter, attributeData, groupOffset );
+	performWholeTriangleOperations( b, a, bIntersections, operations, true, attributeData, groupOffset );
 
 	return {
 		groups: resultGroups,
@@ -60,7 +60,7 @@ function performSplitTriangleOperations(
 	a,
 	b,
 	intersectionMap,
-	operation,
+	operations,
 	invert,
 	splitter,
 	attributeData,
@@ -135,7 +135,7 @@ function performSplitTriangleOperations(
 			const hitSide = getHitSide( clippedTri, bBVH );
 
 			let nonSkip = false;
-			const actions = operation.map( o => {
+			const actions = operations.map( o => {
 
 				const result = getOperationAction( o, hitSide, invert );
 				nonSkip = nonSkip || result !== SKIP_TRI;

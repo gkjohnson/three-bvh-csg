@@ -206,9 +206,9 @@ export class Evaluator {
 
 	}
 
-	// TODO: change this to be an array of operations, instead
 	evaluate( a, b, operations, targetBrushes = new Brush() ) {
 
+		let wasArray = true;
 		if ( ! Array.isArray( operations ) ) {
 
 			operations = [ operations ];
@@ -218,6 +218,7 @@ export class Evaluator {
 		if ( ! Array.isArray( targetBrushes ) ) {
 
 			targetBrushes = [ targetBrushes ];
+			wasArray = false;
 
 		}
 
@@ -337,7 +338,7 @@ export class Evaluator {
 
 		} );
 
-		return targetBrushes[ 0 ];
+		return wasArray ? targetBrushes[ 0 ] : targetBrushes;
 
 	}
 
