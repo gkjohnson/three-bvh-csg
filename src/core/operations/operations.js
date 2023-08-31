@@ -30,7 +30,6 @@ export function performOperation(
 	operation,
 	splitter,
 	attributeData,
-	invertedAttributeData = null,
 	options = {},
 ) {
 
@@ -42,12 +41,12 @@ export function performOperation(
 
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
-	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeData, invertedAttributeData, groupOffset );
-	performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeData, invertedAttributeData, groupOffset );
+	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, attributeData, groupOffset );
+	performWholeTriangleOperations( a, b, aIntersections, operation, false, attributeData, groupOffset );
 
 	groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
-	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeData, invertedAttributeData, groupOffset );
-	performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeData, invertedAttributeData, groupOffset );
+	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, attributeData, groupOffset );
+	performWholeTriangleOperations( b, a, bIntersections, operation, true, attributeData, groupOffset );
 
 	return {
 		groups: resultGroups,
@@ -65,12 +64,10 @@ function performSplitTriangleOperations(
 	invert,
 	splitter,
 	attributeData,
-	invertedAttributeData,
 	groupOffset = 0,
 ) {
 
 	const invertedGeometry = a.matrixWorld.determinant() < 0;
-	const invertedOperation = getInvertedOperation( operation );
 
 	// transforms into the local frame of matrix b
 	_matrix
@@ -126,8 +123,7 @@ function performSplitTriangleOperations(
 		}
 
 		// for all triangles in the split result
-		const attrSet = attributeData.getGroupAttrSet( groupIndex );
-		const invertedAttrSet = invertedAttributeData && invertedAttributeData.getGroupAttrSet( groupIndex );
+		const attrSets = attributeData.map( ad => ad.getGroupAttrSet( groupIndex ) );
 		const triangles = splitter.triangles;
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
@@ -137,28 +133,33 @@ function performSplitTriangleOperations(
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach
 			const hitSide = getHitSide( clippedTri, bBVH );
-			const action = getOperationAction( operation, hitSide, invert );
-			const invAction = invertedAttrSet ? getOperationAction( invertedOperation, hitSide, invert ) : SKIP_TRI;
-			if ( action !== SKIP_TRI || invAction !== SKIP_TRI ) {
+
+			let nonSkip = false;
+			const actions = operation.map( o => {
+
+				const result = getOperationAction( o, hitSide, invert );
+				nonSkip = nonSkip || result !== SKIP_TRI;
+				return result;
+
+			} );
+
+			if ( nonSkip ) {
 
 				_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
 				_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
 				_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
 
-				if ( action !== SKIP_TRI ) {
+				attrSets.forEach( ( as, i ) => {
 
-					const invertTri = action === INVERT_TRI;
-					appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet, invertedGeometry !== invertTri );
+					const action = actions[ i ];
+					if ( action !== SKIP_TRI ) {
 
-				}
+						const invertTri = action === INVERT_TRI;
+						appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, as, invertedGeometry !== invertTri );
 
-				if ( invAction !== SKIP_TRI ) {
+					}
 
-					const invertTri = invertedOperation === INVERT_TRI;
-					appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, invertedAttrSet, invertedGeometry !== invertTri );
-
-
-				}
+				} );
 
 			}
 
@@ -181,7 +182,6 @@ function performWholeTriangleOperations(
 	operation,
 	invert,
 	attributeData,
-	invertedAttributeData = null,
 	groupOffset = 0,
 ) {
 
@@ -239,9 +239,15 @@ function performWholeTriangleOperations(
 
 		// get the side and decide if we need to cull the triangle based on the operation
 		const hitSide = getHitSide( _tri, bBVH );
-		const action = getOperationAction( operation, hitSide, invert );
-		const invAction = invertedAttributeData ? getOperationAction( invertedOperation, hitSide, invert ) : SKIP_TRI;
 
+		let nonSkip = false;
+		const actions = operation.map( o => {
+
+			const result = getOperationAction( o, hitSide, invert );
+			nonSkip = nonSkip || result !== SKIP_TRI;
+			return result;
+
+		} );
 		while ( stack.length > 0 ) {
 
 			const currId = stack.pop();
@@ -257,7 +263,7 @@ function performWholeTriangleOperations(
 
 			}
 
-			if ( action !== SKIP_TRI || invAction !== SKIP_TRI ) {
+			if ( nonSkip ) {
 
 				const i3 = 3 * currId;
 				const i0 = aIndex.getX( i3 + 0 );
@@ -265,21 +271,19 @@ function performWholeTriangleOperations(
 				const i2 = aIndex.getX( i3 + 2 );
 				const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ currId ] + groupOffset;
 
-				if ( action !== SKIP_TRI ) {
+				attributeData.forEach( ( ad, i ) => {
 
-					const attrSet = attributeData.getGroupAttrSet( groupIndex );
-					const invertTri = action === INVERT_TRI;
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
+					const action = actions[ i ];
+					if ( action !== SKIP_TRI ) {
 
-				}
+						const attrSet = ad.getGroupAttrSet( groupIndex );
+						const invertTri = action === INVERT_TRI;
+						appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
 
-				if ( invAction !== SKIP_TRI ) {
+					}
 
-					const attrSet = invertedAttributeData.getGroupAttrSet( groupIndex );
-					const invertTri = invAction === INVERT_TRI;
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
+				} );
 
-				}
 
 			}
 

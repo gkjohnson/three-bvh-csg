@@ -190,14 +190,11 @@ export class Evaluator {
 	constructor() {
 
 		this.triangleSplitter = new TriangleSplitter();
-		this.attributeData = new TypedAttributeData();
-		this.invertedAttributeData = new TypedAttributeData();
+		this.attributeData = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
 		this.consolidateGroups = true;
 		this.debug = new OperationDebugData();
-
-		// TODO: second attribute data
 
 	}
 
@@ -210,25 +207,29 @@ export class Evaluator {
 	}
 
 	// TODO: change this to be an array of operations, instead
-	evaluate( a, b, operation, targetBrush = new Brush(), invertedBrush = null ) {
+	evaluate( a, b, operations, targetBrushes = new Brush() ) {
 
-		// if asking for the inversion of an addition operation then there's nothing we can
-		// provide. Just set the mesh to draw nothing.
-		if ( invertedBrush && operation === ADDITION ) {
+		if ( ! Array.isArray( operations ) ) {
 
-			// TODO: we also need to dispose of the half edges and cache data here, right?
-			invertedBrush.geometry.setDrawRange( 0, 0 );
-			invertedBrush.geometry.boundsTree = null;
-			invertedBrush = null;
+			operations = [ operations ];
+
+		}
+
+		if ( ! Array.isArray( targetBrushes ) ) {
+
+			targetBrushes = [ targetBrushes ];
+
+		}
+
+		if ( targetBrushes.length !== operations.length ) {
+
+			throw new Error();
 
 		}
 
 		a.prepareGeometry();
 		b.prepareGeometry();
 
-		const targetGeometry = targetBrush.geometry;
-		const invertedGeometry = invertedBrush ? invertedBrush.geometry : null;
-		const invertedAttributeData = invertedBrush ? this.invertedAttributeData : null;
 		const {
 			triangleSplitter,
 			attributeData,
@@ -238,16 +239,21 @@ export class Evaluator {
 			debug,
 		} = this;
 
-		prepareAttributesData( a.geometry, targetGeometry, attributeData, attributes );
-		if ( invertedBrush ) {
+		while ( attributeData.length < targetBrushes.length ) {
 
-			prepareAttributesData( a.geometry, invertedGeometry, invertedAttributeData, attributes );
+			attributeData.push( new TypedAttributeData() );
 
 		}
 
+		targetBrushes.forEach( ( tb, i ) => {
+
+			prepareAttributesData( a.geometry, tb.geometry, attributeData[ i ], attributes );
+
+		} );
+
 		// run the operation to fill the list of attribute data
 		debug.init();
-		performOperation( a, b, operation, triangleSplitter, attributeData, invertedAttributeData, { useGroups } );
+		performOperation( a, b, operations, triangleSplitter, attributeData, { useGroups } );
 		debug.complete();
 
 		// get the materials and group ranges
@@ -309,37 +315,29 @@ export class Evaluator {
 
 			}
 
-			targetBrush.material = finalMaterials;
-			if ( invertedBrush ) invertedBrush.material = finalMaterials;
+			targetBrushes.forEach( tb => tb.material = finalMaterials );
 
 		} else {
 
-			targetBrush.material = aMaterials[ 0 ];
-			if ( invertedBrush ) invertedBrush.material = aMaterials[ 0 ];
+			targetBrushes.forEach( tb => tb.material = aMaterials[ 0 ] );
 			groups = [ { start: 0, count: Infinity, index: 0, materialIndex: 0 } ];
 
 		}
 
 		// apply groups and attribute data to the geometry
-		assignBufferData( targetGeometry, attributeData, groups );
-		if ( consolidateGroups ) {
+		targetBrushes.forEach( ( tb, i ) => {
 
-			joinGroups( targetGeometry.groups );
-
-		}
-
-		if ( invertedBrush ) {
-
-			assignBufferData( invertedGeometry, invertedAttributeData, groups );
+			const targetGeometry = tb.geometry;
+			assignBufferData( targetGeometry, attributeData[ i ], groups );
 			if ( consolidateGroups ) {
 
-				joinGroups( invertedGeometry.groups );
+				joinGroups( targetGeometry.groups );
 
 			}
 
-		}
+		} );
 
-		return targetBrush;
+		return targetBrushes[ 0 ];
 
 	}
 
