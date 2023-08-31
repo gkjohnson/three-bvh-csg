@@ -313,6 +313,7 @@ export class Evaluator {
 		} else {
 
 			targetBrush.material = aMaterials[ 0 ];
+			groups = [ { start: 0, count: Infinity, index: 0, materialIndex: 0 } ];
 
 		}
 
