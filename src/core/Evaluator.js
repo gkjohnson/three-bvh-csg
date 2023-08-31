@@ -209,6 +209,7 @@ export class Evaluator {
 
 	}
 
+	// TODO: change this to be an array of operations, instead
 	evaluate( a, b, operation, targetBrush = new Brush(), invertedBrush = null ) {
 
 		// if asking for the inversion of an addition operation then there's nothing we can
