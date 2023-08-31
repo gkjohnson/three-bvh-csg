@@ -138,7 +138,7 @@ function performSplitTriangleOperations(
 			// uncertain then fall back to the raycasting approach
 			const hitSide = getHitSide( clippedTri, bBVH );
 			const action = getOperationAction( operation, hitSide, invert );
-			const invAction = invertedAttrSet && getOperationAction( invertedOperation, hitSide, invert ) || SKIP_TRI;
+			const invAction = invertedAttrSet ? getOperationAction( invertedOperation, hitSide, invert ) : SKIP_TRI;
 			if ( action !== SKIP_TRI || invAction !== SKIP_TRI ) {
 
 				_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
@@ -154,7 +154,7 @@ function performSplitTriangleOperations(
 
 				if ( invAction !== SKIP_TRI ) {
 
-					const invertTri = action === INVERT_TRI;
+					const invertTri = invertedOperation === INVERT_TRI;
 					appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, invertedAttrSet, invertedGeometry !== invertTri );
 
 
@@ -240,7 +240,7 @@ function performWholeTriangleOperations(
 		// get the side and decide if we need to cull the triangle based on the operation
 		const hitSide = getHitSide( _tri, bBVH );
 		const action = getOperationAction( operation, hitSide, invert );
-		const invAction = invertedAttributeData && getOperationAction( invertedOperation, hitSide, invert ) || SKIP_TRI;
+		const invAction = invertedAttributeData ? getOperationAction( invertedOperation, hitSide, invert ) : SKIP_TRI;
 
 		while ( stack.length > 0 ) {
 

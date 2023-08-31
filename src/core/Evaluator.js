@@ -98,7 +98,7 @@ function assignBufferData( geometry, attributeData, groupOrder ) {
 		// assign the data to the geometry attribute buffers in the provided order
 		// of the groups list
 		let offset = 0;
-		for ( let i = 0, l = groupOrder.length; i < l; i ++ ) {
+		for ( let i = 0, l = Math.min( groupOrder.length, attributeData.groupCount ); i < l; i ++ ) {
 
 			const index = groupOrder[ i ].index;
 			const { array, type, length } = attributeData.groupAttributes[ index ][ key ];
