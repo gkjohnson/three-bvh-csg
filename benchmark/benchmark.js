@@ -5,6 +5,7 @@ import {
 import {
 	Brush,
 	Evaluator,
+	INTERSECTION,
 	SUBTRACTION,
 } from '../src/index.js';
 import { CSG } from 'three-csg-ts';
@@ -112,7 +113,7 @@ suite( 'General', () => {
 	);
 
 	bench( 'Subtract w/ Inverted',
-		() => evaluator.evaluate( brush1, brush2, SUBTRACTION, result, invertedResult ),
+		() => evaluator.evaluate( brush1, brush2, [ SUBTRACTION, INTERSECTION ], [ result, invertedResult ] ),
 	);
 
 } );
