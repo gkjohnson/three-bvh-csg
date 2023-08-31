@@ -4,6 +4,7 @@ import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
+import { ADDITION } from './constants.js';
 
 // merges groups with common material indices in place
 function joinGroups( groups ) {
@@ -210,7 +211,16 @@ export class Evaluator {
 
 	evaluate( a, b, operation, targetBrush = new Brush(), invertedBrush = null ) {
 
-		// TODO: second brush
+		// if asking for the inversion of an addition operation then there's nothing we can
+		// provide. Just set the mesh to draw nothing.
+		if ( invertedBrush && operation === ADDITION ) {
+
+			// TODO: we also need to dispose of the half edges and cache data here, right?
+			invertedBrush.geometry.setDrawRange( 0, 0 );
+			invertedBrush.geometry.boundsTree = null;
+			invertedBrush = null;
+
+		}
 
 		a.prepareGeometry();
 		b.prepareGeometry();
