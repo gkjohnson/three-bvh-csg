@@ -199,20 +199,8 @@ function render() {
 	resultObject.position.x = - 3;
 	resultObject2.position.x = 3;
 
-
 	brush1.material = transMat1;
 	brush2.material = transMat2;
-
-	// if ( params.useGroups ) {
-
-	// 	resultObject.material = resultObject.material.map( m => materialMap.get( m ) );
-
-	// } else {
-
-	// 	resultObject.material = originalMaterial;
-
-	// }
-
 
 	renderer.render( scene, camera );
 
