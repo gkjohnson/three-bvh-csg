@@ -20,6 +20,7 @@ import {
 	logTriangleDefinitions,
 	ADDITION,
 	SUBTRACTION,
+	REVERSE_SUBTRACTION,
 	INTERSECTION,
 } from '../src';
 
@@ -27,7 +28,7 @@ window.logTriangleDefinitions = logTriangleDefinitions;
 
 let renderer, camera, controls, scene;
 let brush1, brush2;
-let result, result2, result3, light;
+let result, result2, result3, result4, light;
 let csgEvaluator;
 let mat1, mat2, transMat1, transMat2;
 
@@ -123,7 +124,11 @@ async function init() {
 	result3 = new Mesh();
 	result3.castShadow = true;
 	result3.receiveShadow = true;
-	scene.add( result, result2, result3 );
+
+	result4 = new Mesh();
+	result4.castShadow = true;
+	result4.receiveShadow = true;
+	scene.add( result, result2, result3, result4 );
 
 	const floor = new Mesh( new PlaneGeometry(), new ShadowMaterial( { color: 0xffffff, transparent: true, opacity: 0.075 } ) );
 	// const floor = new Mesh( new PlaneGeometry(), new MeshStandardMaterial() );
@@ -164,14 +169,18 @@ function render() {
 
 	brush1.material = mat1;
 	brush2.material = mat2;
-	csgEvaluator.evaluate( brush1, brush2, [ SUBTRACTION, INTERSECTION, ADDITION ], [ result, result2, result3 ] );
+	csgEvaluator.evaluate( brush1, brush2, [ SUBTRACTION, INTERSECTION, ADDITION, REVERSE_SUBTRACTION ], [ result, result2, result3, result4 ] );
 	result.position.x = - 3.5;
-	result.position.z = 2.5;
+	result.position.z = 3.5;
 
 	result2.position.x = 3.5;
-	result2.position.z = 2.5;
+	result2.position.z = 3.5;
 
-	result3.position.z = - 4;
+	result3.position.x = - 3.5;
+	result3.position.z = - 3.5;
+
+	result4.position.x = 3.5;
+	result4.position.z = - 3.5;
 
 	brush1.material = transMat1;
 	brush2.material = transMat2;
