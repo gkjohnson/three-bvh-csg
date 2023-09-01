@@ -1,4 +1,4 @@
-import { Brush, Evaluator, SUBTRACTION, computeMeshVolume } from '../src';
+import { Brush, Evaluator, INTERSECTION, SUBTRACTION, computeMeshVolume } from '../src';
 import { SphereGeometry, BoxGeometry, BufferAttribute } from 'three';
 
 describe( 'Evaluator', () => {
@@ -15,7 +15,7 @@ describe( 'Evaluator', () => {
 
 		const result1 = new Brush();
 		const result2 = new Brush();
-		evaluator.evaluate( brush1, brush2, SUBTRACTION, result1, result2 );
+		evaluator.evaluate( brush1, brush2, [ SUBTRACTION, INTERSECTION ], [ result1, result2 ] );
 
 		const vol1 = computeMeshVolume( result1 );
 		const vol2 = computeMeshVolume( result2 );
