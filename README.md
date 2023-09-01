@@ -57,12 +57,12 @@ const result = csgEvaluator.evaluate( brush1, brush2, SUBTRACTION );
 
 CSG operations enums for use with `Evaluator`.
 
-```
-ADDITION
-SUBTRACTION
-REVERSE_SUBTRACTION
-DIFFERENCE
-INTERSECTION
+```js
+ADDITION              // A ∪ B
+SUBTRACTION           // A - B
+REVERSE_SUBTRACTION   // B - A
+DIFFERENCE            // A ⊕ B
+INTERSECTION          // A ∩ B
 ```
 
 ## Brush
