@@ -13,7 +13,6 @@ import {
 	CylinderGeometry,
 	IcosahedronGeometry,
 } from 'three';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
 	Brush,
@@ -22,42 +21,13 @@ import {
 	ADDITION,
 	SUBTRACTION,
 	INTERSECTION,
-	DIFFERENCE,
 } from '../src';
 
 window.logTriangleDefinitions = logTriangleDefinitions;
 
-const params = {
-
-	brush1Shape: 'box',
-	brush1Complexity: 1,
-	brush1Color: '#ffffff',
-
-	brush2Shape: 'sphere',
-	brush2Complexity: 1,
-	brush2Color: '#E91E63',
-
-	operation: SUBTRACTION,
-	wireframe: false,
-	displayBrushes: true,
-	displayControls: true,
-	shadows: true,
-	vertexColors: false,
-	flatShading: false,
-	gridTexture: false,
-	useGroups: true,
-
-	enableDebugTelemetry: true,
-	displayIntersectionEdges: false,
-	displayTriangleIntersections: false,
-	displayBrush1BVH: false,
-	displayBrush2BVH: false,
-
-};
-
-let renderer, camera, controls, scene, gui;
+let renderer, camera, controls, scene;
 let brush1, brush2;
-let resultObject, resultObject2, light, originalMaterial;
+let result, result2, result3, light;
 let csgEvaluator;
 let mat1, mat2, transMat1, transMat2;
 
@@ -99,7 +69,7 @@ async function init() {
 
 	// camera setup
 	camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
-	camera.position.set( 0, 3, 4 );
+	camera.position.set( 0, 7, 6 );
 	camera.far = 100;
 	camera.updateProjectionMatrix();
 
@@ -142,14 +112,18 @@ async function init() {
 	scene.add( brush1, brush2 );
 
 	// add object displaying the result
-	resultObject = new Mesh();
-	resultObject.castShadow = true;
-	resultObject.receiveShadow = true;
+	result = new Mesh();
+	result.castShadow = true;
+	result.receiveShadow = true;
 
-	resultObject2 = new Mesh();
-	resultObject2.castShadow = true;
-	resultObject2.receiveShadow = true;
-	scene.add( resultObject, resultObject2 );
+	result2 = new Mesh();
+	result2.castShadow = true;
+	result2.receiveShadow = true;
+
+	result3 = new Mesh();
+	result3.castShadow = true;
+	result3.receiveShadow = true;
+	scene.add( result, result2, result3 );
 
 	const floor = new Mesh( new PlaneGeometry(), new ShadowMaterial( { color: 0xffffff, transparent: true, opacity: 0.075 } ) );
 	// const floor = new Mesh( new PlaneGeometry(), new MeshStandardMaterial() );
@@ -159,10 +133,6 @@ async function init() {
 	floor.receiveShadow = true;
 	scene.add( floor );
 
-	// gui
-	gui = new GUI();
-	gui.add( params, 'operation', { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } );
-	gui.add( params, 'useGroups' );
 	window.addEventListener( 'resize', function () {
 
 		camera.aspect = window.innerWidth / window.innerHeight;
@@ -194,10 +164,14 @@ function render() {
 
 	brush1.material = mat1;
 	brush2.material = mat2;
-	csgEvaluator.useGroups = params.useGroups;
-	csgEvaluator.evaluate( brush1, brush2, [ SUBTRACTION, INTERSECTION ], [ resultObject, resultObject2 ] );
-	resultObject.position.x = - 3;
-	resultObject2.position.x = 3;
+	csgEvaluator.evaluate( brush1, brush2, [ SUBTRACTION, INTERSECTION, ADDITION ], [ result, result2, result3 ] );
+	result.position.x = - 3.5;
+	result.position.z = 2.5;
+
+	result2.position.x = 3.5;
+	result2.position.z = 2.5;
+
+	result3.position.z = - 4;
 
 	brush1.material = transMat1;
 	brush2.material = transMat2;
