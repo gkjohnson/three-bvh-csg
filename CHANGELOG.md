@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 ### Added
 - Evaluator.consolidateGroups option to merge groups with common materials on CSG operation.
+- New optional function signature for Evalutor.evalute to return perform multiple operations on the brushes at once.
 
 ### Changed
 - Bumped three-mesh-bvh version to v0.6.5
