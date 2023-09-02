@@ -11,11 +11,12 @@ export function getTriangleDefinitions( ...triangles ) {
 	return triangles.map( t => {
 
 		return /* js */`
-			new THREE.Triangle(
-				${ getVectorDefinition( t.a ) },
-				${ getVectorDefinition( t.b ) },
-				${ getVectorDefinition( t.c ) },
-			)`.substring( 1 );
+new THREE.Triangle(
+	${ getVectorDefinition( t.a ) },
+	${ getVectorDefinition( t.b ) },
+	${ getVectorDefinition( t.c ) },
+)
+		`.trim();
 
 	} );
 

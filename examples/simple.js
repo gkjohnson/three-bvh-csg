@@ -248,7 +248,7 @@ async function init() {
 
 	// gui
 	gui = new GUI();
-	gui.add( params, 'operation', { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
+	gui.add( params, 'operation', { ADDITION, SUBTRACTION, REVERSE_SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
 
 		needsUpdate = true;
 
