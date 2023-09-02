@@ -1,6 +1,6 @@
 import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle, Line3 } from 'three';
 import { IntersectionMap } from '../IntersectionMap.js';
-import { ADDITION, SUBTRACTION, INTERSECTION, DIFFERENCE } from '../constants.js';
+import { ADDITION, SUBTRACTION, REVERSE_SUBTRACTION, INTERSECTION, DIFFERENCE } from '../constants.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
@@ -153,7 +153,7 @@ export function appendAttributeFromTriangle(
 	geometry,
 	matrixWorld,
 	normalMatrix,
-	attributeInfo,
+	attributeData,
 	invert = false,
 ) {
 
@@ -164,11 +164,11 @@ export function appendAttributeFromTriangle(
 	const i1 = indexAttr.getX( i3 + 1 );
 	const i2 = indexAttr.getX( i3 + 2 );
 
-	for ( const key in attributeInfo ) {
+	for ( const key in attributeData ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = attributeInfo[ key ];
+		const arr = attributeData[ key ];
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } not available on geometry.` );
@@ -224,13 +224,13 @@ export function appendAttributesFromIndices(
 	attributes,
 	matrixWorld,
 	normalMatrix,
-	attributeInfo,
+	attributeData,
 	invert = false,
 ) {
 
-	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
-	appendAttributeFromIndex( invert ? i2 : i1, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
-	appendAttributeFromIndex( invert ? i1 : i2, attributes, matrixWorld, normalMatrix, attributeInfo, invert );
+	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeData, invert );
+	appendAttributeFromIndex( invert ? i2 : i1, attributes, matrixWorld, normalMatrix, attributeData, invert );
+	appendAttributeFromIndex( invert ? i1 : i2, attributes, matrixWorld, normalMatrix, attributeData, invert );
 
 }
 
@@ -263,6 +263,27 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 				if ( hitSide === FRONT_SIDE || hitSide === COPLANAR_OPPOSITE ) {
 
 					return ADD_TRI;
+
+				}
+
+			}
+
+			break;
+		case REVERSE_SUBTRACTION:
+
+			if ( invert ) {
+
+				if ( hitSide === FRONT_SIDE || hitSide === COPLANAR_OPPOSITE ) {
+
+					return ADD_TRI;
+
+				}
+
+			} else {
+
+				if ( hitSide === BACK_SIDE ) {
+
+					return INVERT_TRI;
 
 				}
 
@@ -360,15 +381,15 @@ function appendAttributeFromIndex(
 	attributes,
 	matrixWorld,
 	normalMatrix,
-	attributeInfo,
+	attributeData,
 	invert = false,
 ) {
 
-	for ( const key in attributeInfo ) {
+	for ( const key in attributeData ) {
 
 		// check if the key we're asking for is in the geometry at all
 		const attr = attributes[ key ];
-		const arr = attributeInfo[ key ];
+		const arr = attributeData[ key ];
 		if ( ! ( key in attributes ) ) {
 
 			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );

@@ -33,6 +33,12 @@ export class TypedAttributeData {
 
 	getCount( index ) {
 
+		if ( this.groupCount <= index ) {
+
+			return 0;
+
+		}
+
 		const pos = this.getGroupAttrArray( 'position', index );
 		return pos.length / pos.itemSize;
 

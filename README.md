@@ -57,11 +57,12 @@ const result = csgEvaluator.evaluate( brush1, brush2, SUBTRACTION );
 
 CSG operations enums for use with `Evaluator`.
 
-```
-ADDITION
-SUBTRACTION
-DIFFERENCE
-INTERSECTION
+```js
+ADDITION              // A ∪ B
+SUBTRACTION           // A - B
+REVERSE_SUBTRACTION   // B - A
+DIFFERENCE            // A ⊕ B
+INTERSECTION          // A ∩ B
 ```
 
 ## Brush
@@ -120,6 +121,14 @@ useGroups = true : Boolean
 
 Whether to use geometry groups when processing the geometry. If geometry groups are used then a material array and groups will be assigned to the target `Brush` after processing. If groups are disabled then a single coherent piece of geometry with no groups will be produced.
 
+### .consolidateGroups
+
+```js
+consolidateGroups = true : Boolean
+```
+
+If true then any group in the final geometry that shares a common material with another group will be merged into one to reduce the number of draw calls required by the resulting mesh.
+
 ### .evaluate
 
 ```js
@@ -129,17 +138,28 @@ evaluate(
 	operation : CSGOperation,
 	target = null : Brush | Mesh
 ) : Brush | Mesh
+
+// or
+
+evaluate(
+	brushA : Brush,
+	brushB : Brush,
+	operations : Array<CSGOperation>,
+	targets : Array<Brush | Mesh>
+) : Array<Brush | Mesh>
 ```
 
 Performs the given `operation` on `brushA` with `brushB`. If no target is provided then a new `Brush` will be created with the new geometry. Otherwise the provided Brush will be _modified in place_ and geometry disposed or marked for update as needed.
+
+If arrays are provided for the "targets" and "operations" arguments then multiple results from different operations can be produced at once with minimal additional overhead.
 
 
 ### .evaluateHierarchy
 
 ```js
 evaluateHierarchy(
-  root: Opertation,
-  target = new Brush : Brush | Mesh
+  root: Operation,
+  target = null : Brush | Mesh
 ) : Brush | Mesh
 ```
 

@@ -97,7 +97,7 @@ function assignBufferData( geometry, attributeData, groupOrder ) {
 		// assign the data to the geometry attribute buffers in the provided order
 		// of the groups list
 		let offset = 0;
-		for ( let i = 0, l = groupOrder.length; i < l; i ++ ) {
+		for ( let i = 0, l = Math.min( groupOrder.length, attributeData.groupCount ); i < l; i ++ ) {
 
 			const index = groupOrder[ i ].index;
 			const { array, type, length } = attributeData.groupAttributes[ index ][ key ];
@@ -189,7 +189,7 @@ export class Evaluator {
 	constructor() {
 
 		this.triangleSplitter = new TriangleSplitter();
-		this.attributeData = new TypedAttributeData();
+		this.attributeData = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
 		this.consolidateGroups = true;
@@ -205,12 +205,31 @@ export class Evaluator {
 
 	}
 
-	evaluate( a, b, operation, targetBrush = new Brush() ) {
+	evaluate( a, b, operations, targetBrushes = new Brush() ) {
+
+		let wasArray = true;
+		if ( ! Array.isArray( operations ) ) {
+
+			operations = [ operations ];
+
+		}
+
+		if ( ! Array.isArray( targetBrushes ) ) {
+
+			targetBrushes = [ targetBrushes ];
+			wasArray = false;
+
+		}
+
+		if ( targetBrushes.length !== operations.length ) {
+
+			throw new Error( 'Evaluator: operations and target array passed as different sizes.' );
+
+		}
 
 		a.prepareGeometry();
 		b.prepareGeometry();
 
-		const targetGeometry = targetBrush.geometry;
 		const {
 			triangleSplitter,
 			attributeData,
@@ -220,13 +239,23 @@ export class Evaluator {
 			debug,
 		} = this;
 
-		prepareAttributesData( a.geometry, targetGeometry, attributeData, attributes );
+		// expand the attribute data array to the necessary size
+		while ( attributeData.length < targetBrushes.length ) {
+
+			attributeData.push( new TypedAttributeData() );
+
+		}
+
+		// prepare the attribute data buffer information
+		targetBrushes.forEach( ( brush, i ) => {
+
+			prepareAttributesData( a.geometry, brush.geometry, attributeData[ i ], attributes );
+
+		} );
 
 		// run the operation to fill the list of attribute data
-		// TODO: we can do this in more steps here and fill the data a second time for
-		// the sibling geometry piece
 		debug.init();
-		performOperation( a, b, operation, triangleSplitter, attributeData, { useGroups } );
+		performOperation( a, b, operations, triangleSplitter, attributeData, { useGroups } );
 		debug.complete();
 
 		// get the materials and group ranges
@@ -288,24 +317,37 @@ export class Evaluator {
 
 			}
 
-			targetBrush.material = finalMaterials;
+			targetBrushes.forEach( tb => {
+
+				tb.material = finalMaterials;
+
+			} );
 
 		} else {
 
-			targetBrush.material = aMaterials[ 0 ];
+			groups = [ { start: 0, count: Infinity, index: 0, materialIndex: 0 } ];
+			targetBrushes.forEach( tb => {
+
+				tb.material = aMaterials[ 0 ];
+
+			} );
 
 		}
 
 		// apply groups and attribute data to the geometry
-		assignBufferData( targetGeometry, attributeData, groups );
+		targetBrushes.forEach( ( brush, i ) => {
 
-		if ( consolidateGroups ) {
+			const targetGeometry = brush.geometry;
+			assignBufferData( targetGeometry, attributeData[ i ], groups );
+			if ( consolidateGroups ) {
 
-			joinGroups( targetGeometry.groups );
+				joinGroups( targetGeometry.groups );
 
-		}
+			}
 
-		return targetBrush;
+		} );
+
+		return wasArray ? targetBrushes : targetBrushes[ 0 ];
 
 	}
 
