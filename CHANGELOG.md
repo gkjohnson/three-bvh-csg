@@ -4,13 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.0.10] - 2023-09-03
 ### Added
 - Evaluator.consolidateGroups option to merge groups with common materials on CSG operation.
-- New optional function signature for Evalutor.evalute to return perform multiple operations on the brushes at once.
+- New optional function signature for Evaluator.evalute to return perform multiple operations on the brushes at once.
+- `REVERSE_SUBTRACTION` operation to perform the subtraction of brush A from brush B.
+
+### Fixed
+- A clip case resulting in a missing triangle.
 
 ### Changed
-- Bumped three-mesh-bvh version to v0.6.5
+- Bumped three-mesh-bvh version to v0.6.6
 - Uses an indirect bvh buffer to enable faster intersection search operations.
 
 ## [0.0.9] - 2023-08-12
