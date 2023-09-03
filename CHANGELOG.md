@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.0.10] - 2023-09-03
 ### Added
 - Evaluator.consolidateGroups option to merge groups with common materials on CSG operation.
-- New optional function signature for Evalutor.evalute to return perform multiple operations on the brushes at once.
+- New optional function signature for Evaluator.evalute to return perform multiple operations on the brushes at once.
+- `REVERSE_SUBTRACTION` operation to perform the subtraction of brush A from brush B.
 
 ### Fixed
 - A clip case resulting in a missing triangle.
