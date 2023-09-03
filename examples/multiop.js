@@ -36,7 +36,9 @@ init();
 
 async function init() {
 
-	const bgColor = 0x111111;
+	// const bgColor = bf360c;
+	//  004d40
+	const bgColor = 0x15100c;
 
 	// renderer setup
 	renderer = new WebGLRenderer( { antialias: true } );
@@ -55,7 +57,7 @@ async function init() {
 	light.position.set( 0, 2, 0 );
 	light.castShadow = true;
 	scene.add( light, light.target );
-	scene.add( new AmbientLight( 0xb0bec5, 0.35 ) );
+	scene.add( new AmbientLight( 0xe65100, 0.25 ) );
 
 	// shadows
 	const shadowCam = light.shadow.camera;
@@ -84,11 +86,11 @@ async function init() {
 	// initialize materials
 	mat1 = new MeshStandardMaterial();
 	mat1.side = DoubleSide;
-	mat1.roughness = 0.25;
-	mat1.color.set( 0xffffff );
+	mat1.roughness = 0.9;
+	mat1.color.set( 0xfff8e1 );
 
 	mat2 = mat1.clone();
-	mat2.color.set( 0xE91E63 );
+	mat2.color.set( 0xff9800 );
 
 	transMat1 = mat1.clone();
 	transMat1.opacity = 0.15;
@@ -130,7 +132,7 @@ async function init() {
 	result4.receiveShadow = true;
 	scene.add( result, result2, result3, result4 );
 
-	const floor = new Mesh( new PlaneGeometry(), new ShadowMaterial( { color: 0xffffff, transparent: true, opacity: 0.075 } ) );
+	const floor = new Mesh( new PlaneGeometry(), new ShadowMaterial( { color: 0xe65100, transparent: true, opacity: 0.075 } ) );
 	// const floor = new Mesh( new PlaneGeometry(), new MeshStandardMaterial() );
 	floor.rotation.x = - Math.PI / 2;
 	floor.position.y = - 2;
