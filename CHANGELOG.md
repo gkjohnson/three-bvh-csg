@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Evaluator.consolidateGroups option to merge groups with common materials on CSG operation.
 - New optional function signature for Evalutor.evalute to return perform multiple operations on the brushes at once.
 
+### Fixed
+- A clip case resulting in a missing triangle.
+
 ### Changed
-- Bumped three-mesh-bvh version to v0.6.5
+- Bumped three-mesh-bvh version to v0.6.6
 - Uses an indirect bvh buffer to enable faster intersection search operations.
 
 ## [0.0.9] - 2023-08-12
