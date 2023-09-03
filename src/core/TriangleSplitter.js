@@ -151,7 +151,7 @@ export class TriangleSplitter {
 
 	// Split the triangles by the given plan. If a triangle is provided then we ensure we
 	// intersect the triangle before splitting the plane
-	splitByPlane( plane, triangle = null, coplanarIndex = - 1 ) {
+	splitByPlane( plane, triangle = null ) {
 
 		const { triangles, trianglePool } = this;
 
@@ -184,8 +184,9 @@ export class TriangleSplitter {
 
 			let intersects = 0;
 			let vertexSplitEnd = - 1;
-			let positiveSide = 0;
 			let coplanarEdge = false;
+			let posSideVerts = [];
+			let negSideVerts = [];
 			const arr = [ a, b, c ];
 			for ( let t = 0; t < 3; t ++ ) {
 
@@ -214,7 +215,11 @@ export class TriangleSplitter {
 
 				if ( startDist > 0 ) {
 
-					positiveSide ++;
+					posSideVerts.push( t );
+
+				} else {
+
+					negSideVerts.push( t );
 
 				}
 
@@ -307,19 +312,10 @@ export class TriangleSplitter {
 				} else {
 
 					// we're splitting with a quad and a triangle
-					const singleVert = arr.findIndex( v => {
-
-						if ( positiveSide >= 2 ) {
-
-							return plane.distanceToPoint( v ) < 0;
-
-						} else {
-
-							return plane.distanceToPoint( v ) > 0;
-
-						}
-
-					} );
+					const singleVert =
+						negSideVerts.length === 1 ?
+							negSideVerts[ 0 ] :
+							posSideVerts[ 0 ];
 
 					if ( singleVert === 0 ) {
 
