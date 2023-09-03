@@ -10,6 +10,7 @@ describe( 'TriangleSplitter', () => {
 
 	} );
 
+	// issue #141
 	it( 'split failure case 1', () => {
 
 		const t1 = new Triangle(
