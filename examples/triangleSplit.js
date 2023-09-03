@@ -6,7 +6,7 @@ import { TriangleSplitter, TriangleSetHelper } from '..';
 let renderer, camera, scene;
 let controls, transformControls;
 let planeObject, planeHelper;
-let splitter, frontClippedTris, backClippedTris, coplanarTris, initialTris;
+let splitter, clippedTris, initialTris;
 let plane = new THREE.Plane();
 let _vec = new THREE.Vector3();
 
@@ -85,17 +85,11 @@ function init() {
 	scene.add( planeHelper );
 
 	initialTris = new TriangleSetHelper();
-	frontClippedTris = new TriangleSetHelper();
-
-	backClippedTris = new TriangleSetHelper();
-	backClippedTris.color.set( 0xff0000 );
-
-	coplanarTris = new TriangleSetHelper();
-	coplanarTris.color.set( 0x0000ff );
+	clippedTris = new TriangleSetHelper();
 
 	splitter = new TriangleSplitter();
 
-	scene.add( initialTris, frontClippedTris, backClippedTris, coplanarTris );
+	scene.add( initialTris, clippedTris );
 
 	window.addEventListener( 'resize', function () {
 
@@ -122,23 +116,11 @@ function render() {
 
 	} );
 
-	// logTriangleDefinitions( ...splitter.triangles );
-
-	// plane.copy( splitter.triangles[ 0 ].__plane )
-	// console.log( splitter.triangles.map( t => t.side ) )
 	planeHelper.visible = false;
 	transformControls.visible = false;
 	transformControls.enabled = false;
 
-	frontClippedTris.setTriangles( splitter.triangles.filter( t => t.side === 1 || t.side === null ) );
-	frontClippedTris.position.y = - 2;
-
-	backClippedTris.setTriangles( splitter.triangles.filter( t => t.side === - 1 ) );
-	backClippedTris.position.y = - 2;
-
-	coplanarTris.setTriangles( splitter.triangles.filter( t => t.side === 0 ) );
-	coplanarTris.position.y = - 2;
-
+	clippedTris.setTriangles( splitter.triangles );
 	initialTris.setTriangles( [ ...ogTris, ...tris ] );
 
 	renderer.render( scene, camera );
