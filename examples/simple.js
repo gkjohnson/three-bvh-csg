@@ -18,6 +18,7 @@ import {
 	TorusGeometry,
 	TorusKnotGeometry,
 	BufferAttribute,
+	Matrix4,
 } from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
@@ -503,15 +504,30 @@ function render() {
 	// window.CSG_DEBUG = csgEvaluator.debug;
 	// if ( window.TRI !== undefined ) {
 
-	// 	trisHelper.setTriangles( [
-	// 		...csgEvaluator.debug.triangleIntersectsA.getTrianglesAsArray( window.TRI ),
-	// 		...csgEvaluator.debug.triangleIntersectsA.getIntersectionsAsArray( window.TRI )
-	// 	] );
+	// 	const v = Object.keys( csgEvaluator.debug.triangleIntersectsA.data )[ window.TRI ];
+	// 	const _matrix = new Matrix4();
+	// 	_matrix
+	// 		.copy( brush2.matrixWorld )
+	// 		.invert()
+	// 		.multiply( brush1.matrixWorld );
 
-	// 	logTriangleDefinitions(
-	// 		...csgEvaluator.debug.triangleIntersectsA.getTrianglesAsArray( window.TRI ),
-	// 		...csgEvaluator.debug.triangleIntersectsA.getIntersectionsAsArray( window.TRI )
-	// 	);
+
+	// 	// This is the space that clipping happens in
+	// 	const tris = [
+	// 		...csgEvaluator.debug.triangleIntersectsA.getTrianglesAsArray( v ),
+	// 		...csgEvaluator.debug.triangleIntersectsA.getIntersectionsAsArray( v ),
+	// 	].map( t => {
+
+	// 		t = t.clone();
+	// 		t.a.applyMatrix4( _matrix );
+	// 		t.b.applyMatrix4( _matrix );
+	// 		t.c.applyMatrix4( _matrix );
+	// 		return t;
+
+	// 	} );
+
+	// 	trisHelper.setTriangles( [ ...tris ] );
+	// 	logTriangleDefinitions( ...tris );
 
 	// }
 

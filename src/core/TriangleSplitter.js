@@ -1,6 +1,5 @@
 import { Triangle, Line3, Vector3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
-import { BACK_SIDE, FRONT_SIDE } from './operations/operationsUtils.js';
 
 const EPSILON = 1e-14;
 const COPLANAR_EPSILON = 1e-10;
@@ -11,9 +10,25 @@ const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _exTriangle = new ExtendedTriangle();
 
+const _AB = new Vector3();
+const _AC = new Vector3();
+const _CB = new Vector3();
+
 export function isTriDegenerate( tri ) {
 
-	return tri.a.distanceToSquared( tri.b ) < EPSILON ||
+	// compute angles to determine whether they're degenerate
+	_AB.subVectors( tri.b, tri.a );
+	_AC.subVectors( tri.c, tri.a );
+	_CB.subVectors( tri.c, tri.b );
+
+	const angle1 = _AB.angleTo( _AC );				// AB v AC
+	const angle2 = _AB.angleTo( _CB ) - Math.PI;	// AB v BC - 180deg
+	const angle3 = Math.PI - angle1 - angle2;		// 180deg - angle1 - angle2
+
+	return Math.abs( angle1 ) < EPSILON ||
+		Math.abs( angle2 ) < EPSILON ||
+		Math.abs( angle3 ) < EPSILON ||
+		tri.a.distanceToSquared( tri.b ) < EPSILON ||
 		tri.a.distanceToSquared( tri.c ) < EPSILON ||
 		tri.b.distanceToSquared( tri.c ) < EPSILON;
 
@@ -151,7 +166,7 @@ export class TriangleSplitter {
 
 	// Split the triangles by the given plan. If a triangle is provided then we ensure we
 	// intersect the triangle before splitting the plane
-	splitByPlane( plane, triangle = null, coplanarIndex = - 1 ) {
+	splitByPlane( plane, triangle = null ) {
 
 		const { triangles, trianglePool } = this;
 
@@ -184,8 +199,9 @@ export class TriangleSplitter {
 
 			let intersects = 0;
 			let vertexSplitEnd = - 1;
-			let positiveSide = 0;
 			let coplanarEdge = false;
+			let posSideVerts = [];
+			let negSideVerts = [];
 			const arr = [ a, b, c ];
 			for ( let t = 0; t < 3; t ++ ) {
 
@@ -214,7 +230,11 @@ export class TriangleSplitter {
 
 				if ( startDist > 0 ) {
 
-					positiveSide ++;
+					posSideVerts.push( t );
+
+				} else {
+
+					negSideVerts.push( t );
 
 				}
 
@@ -307,19 +327,10 @@ export class TriangleSplitter {
 				} else {
 
 					// we're splitting with a quad and a triangle
-					const singleVert = arr.findIndex( v => {
-
-						if ( positiveSide >= 2 ) {
-
-							return plane.distanceToPoint( v ) < 0;
-
-						} else {
-
-							return plane.distanceToPoint( v ) > 0;
-
-						}
-
-					} );
+					const singleVert =
+						negSideVerts.length === 1 ?
+							negSideVerts[ 0 ] :
+							posSideVerts[ 0 ];
 
 					if ( singleVert === 0 ) {
 
