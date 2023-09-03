@@ -30,6 +30,7 @@ export class TriangleSetHelper extends Group {
 			flatShading: true,
 			transparent: true,
 			opacity: 0.25,
+			depthWrite: false,
 		} ) );
 		this._lines = new LineSegments( lineGeom, new LineBasicMaterial() );
 		this._mesh.material.color = this._lines.material.color;
