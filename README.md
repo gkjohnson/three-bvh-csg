@@ -44,7 +44,11 @@ import { MeshStandardMaterial, Mesh, SphereGeometry, BoxGeometry } from 'three';
 
 const csgEvaluator = new Evaluator();
 const brush1 = new Brush( new SphereGeometry() );
+brush1.updateMatrixWorld();
+
 const brush2 = new Brush( new BoxGeometry() );
+brush2.position.y = 0.5;
+brush2.updateMatrixWorld();
 
 const result = csgEvaluator.evaluate( brush1, brush2, SUBTRACTION );
 
