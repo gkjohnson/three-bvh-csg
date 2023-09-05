@@ -49,8 +49,8 @@ const brush2 = new Brush( new BoxGeometry() );
 brush2.position.y = 0.5;
 brush2.updateMatrixWorld();
 
-const csgEvaluator = new Evaluator();
-const result = csgEvaluator.evaluate( brush1, brush2, SUBTRACTION );
+const evaluator = new Evaluator();
+const result = evaluator.evaluate( brush1, brush2, SUBTRACTION );
 
 // render the result!
 ```
