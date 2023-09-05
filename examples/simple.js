@@ -239,6 +239,9 @@ async function init() {
 	bvhHelper2 = new MeshBVHVisualizer( brush2, 20 );
 	scene.add( bvhHelper1, bvhHelper2 );
 
+	bvhHelper1.update();
+	bvhHelper2.update();
+
 	// load bunny geometry
 	const gltf = await new GLTFLoader()
 		.setMeshoptDecoder( MeshoptDecoder )
@@ -311,11 +314,13 @@ async function init() {
 	brush1Folder.add( params, 'brush1Shape', [ 'sphere', 'box', 'cylinder', 'torus', 'torus knot', 'mesh' ] ).name( 'shape' ).onChange( v => {
 
 		updateBrush( brush1, v, params.brush1Complexity );
+		bvhHelper1.update();
 
 	} );
 	brush1Folder.add( params, 'brush1Complexity', 0, 2 ).name( 'complexity' ).onChange( v => {
 
 		updateBrush( brush1, params.brush1Shape, v );
+		bvhHelper1.update();
 
 	} );
 	brush1Folder.addColor( params, 'brush1Color' ).onChange( v => {
@@ -329,11 +334,13 @@ async function init() {
 	brush2Folder.add( params, 'brush2Shape', [ 'sphere', 'box', 'cylinder', 'torus', 'torus knot', 'mesh' ] ).name( 'shape' ).onChange( v => {
 
 		updateBrush( brush2, v, params.brush2Complexity );
+		bvhHelper2.update();
 
 	} );
 	brush2Folder.add( params, 'brush2Complexity', 0, 2 ).name( 'complexity' ).onChange( v => {
 
 		updateBrush( brush2, params.brush2Shape, v );
+		bvhHelper2.update();
 
 	} );
 	brush2Folder.addColor( params, 'brush2Color' ).onChange( v => {
@@ -447,6 +454,7 @@ function updateBrush( brush, type, complexity ) {
 	}
 
 	brush.geometry.setAttribute( 'color', new BufferAttribute( array, 3 ) );
+	brush.prepareGeometry();
 	needsUpdate = true;
 
 }
@@ -466,9 +474,6 @@ function render() {
 
 		brush1.updateMatrixWorld();
 		brush2.updateMatrixWorld();
-
-		bvhHelper1.update();
-		bvhHelper2.update();
 
 		const startTime = window.performance.now();
 		csgEvaluator.debug.enabled = enableDebugTelemetry;
