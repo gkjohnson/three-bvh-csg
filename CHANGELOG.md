@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+### Added
+- Small performance improvement to HalfEdge structure generation resulting in up to ~5% time improvement on operations.
+
 ## [0.0.10] - 2023-09-03
 ### Added
 - Evaluator.consolidateGroups option to merge groups with common materials on CSG operation.
