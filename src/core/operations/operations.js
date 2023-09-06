@@ -1,6 +1,7 @@
 import { Matrix4, Matrix3, Triangle } from 'three';
 import {
 	getHitSide,
+	getHitSideWholeTriangle,
 	collectIntersectingTriangles,
 	appendAttributeFromTriangle,
 	appendAttributesFromIndices,
@@ -242,7 +243,7 @@ function performWholeTriangleOperations(
 		_tri.c.fromBufferAttribute( aPosition, i2 ).applyMatrix4( _matrix );
 
 		// get the side and decide if we need to cull the triangle based on the operation
-		const hitSide = getHitSide( _tri, bBVH );
+		const hitSide = getHitSideWholeTriangle( _tri, bBVH );
 
 		_actions.length = 0;
 		_attr.length = 0;
