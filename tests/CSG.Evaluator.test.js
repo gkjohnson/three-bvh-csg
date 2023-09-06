@@ -1,5 +1,5 @@
-import { Brush, Evaluator, INTERSECTION, SUBTRACTION, computeMeshVolume } from '../src';
-import { SphereGeometry, BoxGeometry, BufferAttribute } from 'three';
+import { ADDITION, Brush, DIFFERENCE, Evaluator, INTERSECTION, SUBTRACTION, computeMeshVolume } from '../src';
+import { SphereGeometry, BoxGeometry, CylinderGeometry, BufferAttribute } from 'three';
 
 describe( 'Evaluator', () => {
 
@@ -44,6 +44,65 @@ describe( 'Evaluator', () => {
 
 		expect( result1.geometry.attributes.uv.array.constructor ).toBe( Float32Array );
 		expect( result2.geometry.attributes.uv.array.constructor ).toBe( Uint8Array );
+
+	} );
+
+	describe( 'Just Touch Cases', () => {
+
+		it( 'case 1', () => {
+
+			const b1 = new Brush( new CylinderGeometry() );
+			const b2 = new Brush( new CylinderGeometry() );
+			const evaluator = new Evaluator();
+			const result = evaluator.evaluate( b1, b2, SUBTRACTION );
+			expect( computeMeshVolume( result ) ).toBe( 0 );
+
+		} );
+
+		it( 'case 2', () => {
+
+			const b1 = new Brush( new CylinderGeometry( 1, 1, 1, 100 ) );
+			const b2 = new Brush( new CylinderGeometry( 1, 1, 1, 100 ) );
+			b2.position.y = 1;
+			b2.updateMatrixWorld();
+
+			const evaluator = new Evaluator();
+			const result = evaluator.evaluate( b1, b2, ADDITION );
+			expect( computeMeshVolume( result ) ).toBeCloseTo( computeMeshVolume( b1 ) + computeMeshVolume( b2 ) );
+
+		} );
+
+		it( 'case 3', () => {
+
+			const b1 = new Brush( new BoxGeometry() );
+			b1.position.x = - 0.5;
+			b1.updateMatrixWorld();
+
+			const b2 = new Brush( new BoxGeometry() );
+			b2.position.x = 0.5;
+			b2.updateMatrixWorld();
+
+			const evaluator = new Evaluator();
+			const result = evaluator.evaluate( b1, b2, DIFFERENCE );
+			expect( computeMeshVolume( result ) ).toBeCloseTo( 2 );
+
+		} );
+
+		it( 'case 4', () => {
+
+			const b1 = new Brush( new BoxGeometry() );
+			b1.position.x = - 0.5;
+			b1.updateMatrixWorld();
+
+			const b2 = new Brush( new BoxGeometry() );
+			b2.position.x = 0.5;
+			b2.updateMatrixWorld();
+
+			const evaluator = new Evaluator();
+			const result = evaluator.evaluate( b1, b2, INTERSECTION );
+			expect( computeMeshVolume( result ) ).toBeCloseTo( 0 );
+
+		} );
 
 	} );
 
