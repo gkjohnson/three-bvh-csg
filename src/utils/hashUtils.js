@@ -6,8 +6,20 @@ export function hashNumber( v ) {
 
 }
 
-export function hashVertex( v ) {
+export function hashVertex2( v ) {
+
+	return `${ hashNumber( v.x ) },${ hashNumber( v.y ) }`;
+
+}
+
+export function hashVertex3( v ) {
 
 	return `${ hashNumber( v.x ) },${ hashNumber( v.y ) },${ hashNumber( v.z ) }`;
+
+}
+
+export function hashVertex4( v ) {
+
+	return `${ hashNumber( v.x ) },${ hashNumber( v.y ) },${ hashNumber( v.z ) },${ hashNumber( v.w ) }`;
 
 }
