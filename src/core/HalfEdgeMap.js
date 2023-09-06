@@ -76,10 +76,9 @@ export class HalfEdgeMap {
 		// iterate over all triangles
 		let unmatchedEdges = 0;
 		let matchedEdges = 0;
-		for ( let i = 0; i < triCount; i ++ ) {
+		for ( let i = offset, l = triCount * 3 + offset; i < l; i += 3 ) {
 
-			// TODO: perf improvement by avoiding accessor functions?
-			const i3 = 3 * i + offset;
+			const i3 = i;
 			for ( let e = 0; e < 3; e ++ ) {
 
 				let i0 = i3 + e;
@@ -102,7 +101,6 @@ export class HalfEdgeMap {
 
 				const reverseHash = `${ vh1 }_${ vh0 }`;
 				if ( map.has( reverseHash ) ) {
-
 
 					// create a reference between the two triangles and clear the hash
 					const otherIndex = map.get( reverseHash );
