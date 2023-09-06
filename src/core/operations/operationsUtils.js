@@ -33,6 +33,17 @@ export function setDebugContext( debugData ) {
 
 }
 
+export function getHitSideWholeTriangle( tri, bvh ) {
+
+	tri.getMidpoint( _ray.origin );
+	_ray.direction.set( 0, 0, 1 );
+
+	const hit = bvh.raycastFirst( _ray, DoubleSide );
+	const hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
+	return hitBackSide ? BACK_SIDE : FRONT_SIDE;
+
+}
+
 export function getHitSide( tri, bvh ) {
 
 	// random function that returns [ - 0.5, 0.5 ];
