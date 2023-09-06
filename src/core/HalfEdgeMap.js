@@ -49,6 +49,7 @@ export class HalfEdgeMap {
 
 		// attributes
 		const { attributes } = geometry;
+		const attrKeys = useAllAttributes ? Object.keys( attributes ) : null;
 		const indexAttr = geometry.index;
 		const posAttr = attributes.position;
 
@@ -144,9 +145,9 @@ export class HalfEdgeMap {
 		function hashAllAttributes( i ) {
 
 			let result = '';
-			for ( const key in attributes ) {
+			for ( let k = 0, l = attrKeys.length; k < l; k ++ ) {
 
-				const attr = attributes[ key ];
+				const attr = attributes[ attrKeys[ k ] ];
 				let str;
 				switch ( attr.itemSize ) {
 
