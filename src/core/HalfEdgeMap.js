@@ -2,7 +2,8 @@ import { Vector3 } from 'three';
 import { hashVertex } from '../utils/hashUtils.js';
 import { getTriCount } from './utils.js';
 
-const _vertices = [ new Vector3(), new Vector3(), new Vector3() ];
+const _vec = new Vector3();
+const _hashes = [ '', '', '' ];
 
 export class HalfEdgeMap {
 
@@ -50,7 +51,6 @@ export class HalfEdgeMap {
 		const maxTriCount = triCount;
 
 		// get the real number of triangles from the based on the draw range
-		// TODO: remove use of draw range?
 		let offset = 0;
 		if ( this.useDrawRange ) {
 
@@ -76,10 +76,9 @@ export class HalfEdgeMap {
 		// iterate over all triangles
 		let unmatchedEdges = 0;
 		let matchedEdges = 0;
-		for ( let i = 0; i < triCount; i ++ ) {
+		for ( let i = offset, l = triCount * 3 + offset; i < l; i += 3 ) {
 
-			// TODO: perf improvement by avoiding accessor functions?
-			const i3 = 3 * i + offset;
+			const i3 = i;
 			for ( let e = 0; e < 3; e ++ ) {
 
 				let i0 = i3 + e;
@@ -89,18 +88,16 @@ export class HalfEdgeMap {
 
 				}
 
-				_vertices[ e ].fromBufferAttribute( posAttr, i0 );
+				_vec.fromBufferAttribute( posAttr, i0 );
+				_hashes[ e ] = hashVertex( _vec );
 
 			}
 
 			for ( let e = 0; e < 3; e ++ ) {
 
 				const nextE = ( e + 1 ) % 3;
-				const _vec0 = _vertices[ e ];
-				const _vec1 = _vertices[ nextE ];
-
-				const vh0 = hashVertex( _vec0 );
-				const vh1 = hashVertex( _vec1 );
+				const vh0 = _hashes[ e ];
+				const vh1 = _hashes[ nextE ];
 
 				const reverseHash = `${ vh1 }_${ vh0 }`;
 				if ( map.has( reverseHash ) ) {
