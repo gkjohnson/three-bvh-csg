@@ -1,6 +1,6 @@
 const HASH_WIDTH = 1e-6;
 const HASH_HALF_WIDTH = HASH_WIDTH * 0.5;
-const HASH_MULTIPLIER = - Math.log10( HASH_WIDTH );
+const HASH_MULTIPLIER = Math.pow( 10, - Math.log10( HASH_WIDTH ) );
 const HASH_ADDITION = HASH_HALF_WIDTH * HASH_MULTIPLIER;
 export function hashNumber( v ) {
 

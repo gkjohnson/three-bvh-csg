@@ -62,9 +62,6 @@ export class HalfEdgeHelper extends EdgesHelper {
 
 	setHalfEdges( geometry, halfEdges ) {
 
-		const indexAttr = geometry.index;
-		const posAttr = geometry.attributes.position;
-
 		const vertKeys = [ 'a', 'b', 'c' ];
 		const edges = [];
 		const triCount = getTriCount( geometry );
