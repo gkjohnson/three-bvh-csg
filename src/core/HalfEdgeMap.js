@@ -10,7 +10,7 @@ const _hashes = [ '', '', '' ];
 
 function toTriIndex( v ) {
 
-	return ~ ~ ( v / 3 )
+	return ~ ~ ( v / 3 );
 
 }
 
