@@ -1,8 +1,10 @@
-const HASH_MULTIPLIER = ( 1 + 1e-7 ) * 1e6;
-
+const HASH_MULTIPLIER = 1e6;
+const HASH_WIDTH = 1e-6;
+const HASH_HALF_WIDTH = HASH_WIDTH * 0.5;
+const HASH_ADDITION = HASH_HALF_WIDTH * HASH_MULTIPLIER;
 export function hashNumber( v ) {
 
-	return ~ ~ ( v * HASH_MULTIPLIER );
+	return ~ ~ ( v * HASH_MULTIPLIER + HASH_ADDITION );
 
 }
 
