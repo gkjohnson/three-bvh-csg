@@ -25,3 +25,10 @@ export function hashVertex4( v ) {
 	return `${ hashNumber( v.x ) },${ hashNumber( v.y ) },${ hashNumber( v.z ) },${ hashNumber( v.w ) }`;
 
 }
+
+export function hashDirection( v ) {
+
+	const l = v.length();
+	return `${ hashNumber( v.x / l ) },${ hashNumber( v.y / l ) },${ hashNumber( v.z / l ) }`;
+
+}

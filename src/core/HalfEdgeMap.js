@@ -81,8 +81,8 @@ export class HalfEdgeMap {
 		data.fill( - 1 );
 
 		// iterate over all triangles
-		let unmatchedEdges = 0;
 		let matchedEdges = 0;
+		let unmatchedSet = new Set();
 		for ( let i = offset, l = triCount * 3 + offset; i < l; i += 3 ) {
 
 			const i3 = i;
@@ -109,12 +109,13 @@ export class HalfEdgeMap {
 				if ( map.has( reverseHash ) ) {
 
 					// create a reference between the two triangles and clear the hash
+					const index = i3 + e;
 					const otherIndex = map.get( reverseHash );
-					data[ i3 + e ] = otherIndex;
-					data[ otherIndex ] = i3 + e;
+					data[ index ] = otherIndex;
+					data[ otherIndex ] = index;
 					map.delete( reverseHash );
-					unmatchedEdges --;
 					matchedEdges += 2;
+					unmatchedSet.delete( otherIndex );
 
 				} else {
 
@@ -122,8 +123,9 @@ export class HalfEdgeMap {
 					// triIndex = ~ ~ ( i0 / 3 );
 					// edgeIndex = i0 % 3;
 					const hash = `${ vh0 }_${ vh1 }`;
-					map.set( hash, i3 + e );
-					unmatchedEdges ++;
+					const index = i3 + e;
+					map.set( hash, index );
+					unmatchedSet.add( index );
 
 				}
 
@@ -131,8 +133,10 @@ export class HalfEdgeMap {
 
 		}
 
+		// TODO: iterate over the unmatched set of edges
+
 		this.matchedEdges = matchedEdges;
-		this.unmatchedEdges = unmatchedEdges;
+		this.unmatchedEdges = unmatchedSet.size;
 		this.data = data;
 
 		function hashPositionAttribute( i ) {
