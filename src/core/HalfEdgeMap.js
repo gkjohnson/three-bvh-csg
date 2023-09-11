@@ -10,8 +10,7 @@ const _hashes = [ '', '', '' ];
 
 // TODO: track the connectivity graph
 // TODO: we should make sure the overlap is outside of an epsilon threshold to avoid edges with being connected at corners?
-function matchEdges( edges, others ) {
-
+function matchEdges( edges, others, disjointConnectivityMap ) {
 
 	edges.sort( sortEdgeFunc );
 	others.sort( sortEdgeFunc );
@@ -86,6 +85,28 @@ function matchEdges( edges, others ) {
 
 			}
 
+			// Add the connectivity information
+			if ( ! disjointConnectivityMap.has( e1.index ) ) {
+
+				disjointConnectivityMap.set( e1.index, [] );
+
+			}
+
+			if ( ! disjointConnectivityMap.has( e2.index ) ) {
+
+				disjointConnectivityMap.set( e2.index, [] );
+
+			}
+
+			disjointConnectivityMap
+				.get( e1.index )
+				.push( e2.index );
+
+			disjointConnectivityMap
+				.get( e2.index )
+				.push( e1.index );
+
+			// Remove the edges from the pools if they've been completely matched
 			if ( isEdgeDegenerate( e1 ) ) {
 
 				edges.splice( i, 1 );
@@ -316,11 +337,9 @@ export class HalfEdgeMap {
 			for ( let i = 0, l = fields.length; i < l; i ++ ) {
 
 				const { edges, others } = fields[ i ];
-				matchEdges( edges, others );
+				matchEdges( edges, others, disjointConnectivityMap );
 
 			}
-
-			// TODO: pass disjoint edge map into the above function and verify we do not have dupes in the 1 to many arrays
 
 		}
 
