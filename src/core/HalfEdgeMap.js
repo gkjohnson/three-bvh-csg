@@ -3,10 +3,12 @@ import { hashNumber, hashRay, hashVertex2, hashVertex3, hashVertex4, toNormalize
 import { getTriCount } from './utils/geometryUtils.js';
 import { Ray } from 'three';
 import { sortEdgeFunc, toTriIndex, toEdgeIndex, isEdgeDegenerate, areDistancesDegenerate } from './utils/halfEdgeUtils.js';
+
 const _vec2 = new Vector2();
 const _vec3 = new Vector3();
 const _vec4 = new Vector4();
 const _hashes = [ '', '', '' ];
+const _tempVec = new Vector3();
 
 function matchEdges( edges, others, disjointConnectivityMap ) {
 
@@ -140,7 +142,8 @@ export class HalfEdgeMap {
 
 		// result data
 		this.data = null;
-		this.disjointData = null;
+		this.disjointConnections = null;
+		this.unmatchedDisjointEdges = null;
 		this.unmatchedEdges = - 1;
 		this.matchedEdges = - 1;
 
@@ -175,7 +178,7 @@ export class HalfEdgeMap {
 	getDisjointSiblingTriangleIndices( triIndex, edgeIndex ) {
 
 		const index = triIndex * 3 + edgeIndex;
-		const arr = this.disjointData.get( index );
+		const arr = this.disjointConnections.get( index );
 		return arr ? arr.map( i => ~ ~ ( i / 3 ) ) : [];
 
 	}
@@ -183,7 +186,7 @@ export class HalfEdgeMap {
 	getDisjointSiblingEdgeIndices( triIndex, edgeIndex ) {
 
 		const index = triIndex * 3 + edgeIndex;
-		const arr = this.disjointData.get( index );
+		const arr = this.disjointConnections.get( index );
 		return arr ? arr.map( i => i % 3 ) : [];
 
 	}
@@ -343,8 +346,9 @@ export class HalfEdgeMap {
 
 				}
 
-				let start = info.ray.direction.dot( v0 );
-				let end = info.ray.direction.dot( v1 );
+				const infoRay = info.ray;
+				let start = _tempVec.subVectors( v0, infoRay.origin ).dot( infoRay.direction );
+				let end = _tempVec.subVectors( v1, infoRay.origin ).dot( infoRay.direction );
 				if ( start > end ) {
 
 					[ start, end ] = [ end, start ];
@@ -363,12 +367,8 @@ export class HalfEdgeMap {
 
 			}
 
-			let tot = 0;
 			unmatchedSet.clear();
 			fragmentMap.forEach( ( { edges, others }, key ) => {
-
-				edges.forEach( ( { start, end } ) => tot += end - start );
-				others.forEach( ( { start, end } ) => tot += end - start );
 
 				edges.forEach( ( { index } ) => unmatchedSet.add( index ) );
 				others.forEach( ( { index } ) => unmatchedSet.add( index ) );
@@ -381,7 +381,8 @@ export class HalfEdgeMap {
 
 			} );
 
-			this.disjointData = disjointConnectivityMap;
+			this.unmatchedDisjointEdges = fragmentMap;
+			this.disjointConnections = disjointConnectivityMap;
 
 		}
 
