@@ -18,6 +18,12 @@ export function sortEdgeFunc( a, b ) {
 
 }
 
+export function areDistancesDegenerate( start, end ) {
+
+	return end - start < DEGENERATE_EPSILON;
+
+}
+
 export function isEdgeDegenerate( e ) {
 
 	return e.end - e.start < DEGENERATE_EPSILON;

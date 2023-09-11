@@ -2,14 +2,12 @@ import { Vector2, Vector3, Vector4 } from 'three';
 import { hashNumber, hashRay, hashVertex2, hashVertex3, hashVertex4, toNormalizedRay } from '../utils/hashUtils.js';
 import { getTriCount } from './utils.js';
 import { Ray } from 'three';
-import { sortEdgeFunc, toTriIndex, toEdgeIndex, isEdgeDegenerate } from './utils/halfEdgeUtils.js';
+import { sortEdgeFunc, toTriIndex, toEdgeIndex, isEdgeDegenerate, areDistancesDegenerate } from './utils/halfEdgeUtils.js';
 const _vec2 = new Vector2();
 const _vec3 = new Vector3();
 const _vec4 = new Vector4();
 const _hashes = [ '', '', '' ];
 
-// TODO: track the connectivity graph
-// TODO: we should make sure the overlap is outside of an epsilon threshold to avoid edges with being connected at corners?
 function matchEdges( edges, others, disjointConnectivityMap ) {
 
 	edges.sort( sortEdgeFunc );
@@ -35,44 +33,50 @@ function matchEdges( edges, others, disjointConnectivityMap ) {
 
 			}
 
-			if ( e1.start < e2.start && e1.end > e2.end ) {
+			if ( e1.start <= e2.start && e1.end >= e2.end ) {
 
 				// e1 is larger than and e2 is completely within e1
-				const newEdge = {
-					start: e2.end,
-					end: e1.end,
-					index: e1.index,
-				};
-				edges.splice( i, 0, newEdge );
+				if ( ! areDistancesDegenerate( e2.end, e1.end ) ) {
+
+					edges.splice( i + 1, 0, {
+						start: e2.end,
+						end: e1.end,
+						index: e1.index,
+					} );
+
+				}
 
 				e1.end = e2.start;
 
 				e2.start = 0;
 				e2.end = 0;
 
-			} else if ( e1.start > e2.start && e1.end < e2.end ) {
+			} else if ( e1.start >= e2.start && e1.end <= e2.end ) {
 
 				// e2 is larger than and e1 is completely within e2
-				const newEdge = {
-					start: e1.end,
-					end: e2.end,
-					index: e2.index,
-				};
-				others.splice( o, 0, newEdge );
+				if ( ! areDistancesDegenerate( e1.end, e2.end ) ) {
+
+					others.splice( o + 1, 0, {
+						start: e1.end,
+						end: e2.end,
+						index: e2.index,
+					} );
+
+				}
 
 				e2.end = e1.start;
 
 				e1.start = 0;
 				e1.end = 0;
 
-			} else if ( e1.start < e2.start && e1.end < e2.end ) {
+			} else if ( e1.start <= e2.start && e1.end <= e2.end ) {
 
 				// e1 overlaps e2 at the beginning
 				const tmp = e1.end;
 				e1.end = e2.start;
 				e2.start = tmp;
 
-			} else if ( e1.start > e2.start && e1.end > e2.end ) {
+			} else if ( e1.start >= e2.start && e1.end >= e2.end ) {
 
 				// e1 overlaps e2 at the end
 				const tmp = e2.end;
@@ -84,6 +88,7 @@ function matchEdges( edges, others, disjointConnectivityMap ) {
 				throw new Error();
 
 			}
+
 
 			// Add the connectivity information
 			if ( ! disjointConnectivityMap.has( e1.index ) ) {
@@ -111,6 +116,7 @@ function matchEdges( edges, others, disjointConnectivityMap ) {
 
 				edges.splice( i, 1 );
 				i --;
+				break;
 
 			}
 
@@ -259,7 +265,6 @@ export class HalfEdgeMap {
 
 		}
 
-		// TODO: iterate over the unmatched set of edges
 		if ( matchDisjointEdges ) {
 
 			const disjointConnectivityMap = new Map();
@@ -275,7 +280,7 @@ export class HalfEdgeMap {
 				const edgeIndex = toEdgeIndex( index );
 
 				let i0 = 3 * triIndex + edgeIndex;
-				let i1 = ( i0 + 1 ) % 3;
+				let i1 = 3 * triIndex + ( edgeIndex + 1 ) % 3;
 				if ( indexAttr ) {
 
 					i0 = indexAttr.getX( i0 );
@@ -333,13 +338,22 @@ export class HalfEdgeMap {
 
 			}
 
-			const fields = fragmentMap.values();
+			const fields = Array.from( fragmentMap.values() );
+			console.log( fields );
 			for ( let i = 0, l = fields.length; i < l; i ++ ) {
 
 				const { edges, others } = fields[ i ];
 				matchEdges( edges, others, disjointConnectivityMap );
 
 			}
+
+			unmatchedSet.clear();
+			fragmentMap.forEach( ( { edges, others } ) => {
+
+				edges.forEach( ( { index } ) => unmatchedSet.add( index ) );
+				others.forEach( ( { index } ) => unmatchedSet.add( index ) );
+
+			} );
 
 		}
 
