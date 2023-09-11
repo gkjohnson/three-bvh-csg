@@ -381,6 +381,8 @@ export class HalfEdgeMap {
 
 			} );
 
+			this.disjointData = disjointConnectivityMap;
+
 		}
 
 		this.matchedEdges = matchedEdges;
