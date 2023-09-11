@@ -142,7 +142,6 @@ describe( 'HalfEdgeMap', () => {
 
 		it( 'should consider a basic cube operation to be water tight.', () => {
 
-			// TODO: try with 0.25, as well
 			const b1 = new Brush( new BoxGeometry() );
 			const b2 = new Brush( new BoxGeometry() );
 			b2.position.y = 0.5;
@@ -155,8 +154,7 @@ describe( 'HalfEdgeMap', () => {
 			halfEdge.matchDisjointEdges = true;
 			halfEdge.updateFrom( result.geometry );
 
-			console.log( halfEdge.unmatchedEdges );
-
+			expect( halfEdge.unmatchedEdges ).toBe( 0 );
 
 		} );
 
