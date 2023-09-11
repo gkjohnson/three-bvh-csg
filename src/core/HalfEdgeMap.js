@@ -1,6 +1,6 @@
 import { Vector2, Vector3, Vector4 } from 'three';
-import { hashNumber, hashRay, hashVertex2, hashVertex3, hashVertex4, toNormalizedRay } from '../utils/hashUtils.js';
-import { getTriCount } from './utils.js';
+import { hashNumber, hashRay, hashVertex2, hashVertex3, hashVertex4, toNormalizedRay } from './utils/hashUtils.js';
+import { getTriCount } from './utils/geometryUtils.js';
 import { Ray } from 'three';
 import { sortEdgeFunc, toTriIndex, toEdgeIndex, isEdgeDegenerate, areDistancesDegenerate } from './utils/halfEdgeUtils.js';
 const _vec2 = new Vector2();

@@ -1,4 +1,4 @@
-import { hashNumber } from '../src/utils/hashUtils.js';
+import { hashNumber } from '../src/core/utils/hashUtils.js';
 
 const HASH_WIDTH = 1e-6;
 const HALF_HASH_WIDTH = 0.5 * HASH_WIDTH;

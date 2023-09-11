@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
 import { Triangle } from 'three';
-import { getTriCount } from '../core/utils.js';
+import { getTriCount } from '../core/utils/geometryUtils.js';
 
 // https://stackoverflow.com/questions/1406029/how-to-calculate-the-volume-of-a-3d-mesh-object-the-surface-of-which-is-made-up
 const _tri = new Triangle();

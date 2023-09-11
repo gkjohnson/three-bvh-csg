@@ -1,7 +1,7 @@
 import { Line3, Triangle, Vector3, Plane, Ray } from 'three';
 import { EdgesHelper } from './EdgesHelper.js';
-import { getTriCount } from '../core/utils.js';
-import { toNormalizedRay } from '../utils/hashUtils.js';
+import { getTriCount } from '../core/utils/geometryUtils.js';
+import { toNormalizedRay } from '../core/utils/hashUtils.js';
 
 const vertKeys = [ 'a', 'b', 'c' ];
 const _tri1 = new Triangle();

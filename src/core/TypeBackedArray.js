@@ -1,4 +1,4 @@
-import { areSharedArrayBuffersSupported } from './utils.js';
+import { areSharedArrayBuffersSupported } from './utils/geometryUtils.js';
 
 function ceilToFourByteStride( byteLength ) {
 

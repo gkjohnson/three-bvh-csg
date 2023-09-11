@@ -8,7 +8,7 @@ import {
 	getOperationAction,
 	SKIP_TRI, INVERT_TRI,
 } from './operationsUtils.js';
-import { getTriCount } from '../utils.js';
+import { getTriCount } from '../utils/geometryUtils.js';
 
 const _matrix = new Matrix4();
 const _normalMatrix = new Matrix3();
