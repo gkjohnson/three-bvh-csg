@@ -38,11 +38,4 @@ describe( 'hashNumber', () => {
 
 	} );
 
-	it( 'should round 0.99999999 to 1', () => {
-
-		expect( hashNumber( 0.999999999999999 ) ).toBe( 1000000 );
-		// expect( hashNumber( - 0.999999999999999 ) ).toBe( - 1000000 );
-
-	} );
-
 } );

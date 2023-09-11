@@ -19,14 +19,14 @@ function matchEdges( edges, others, disjointConnectivityMap ) {
 		for ( let o = 0; o < others.length; o ++ ) {
 
 			const e2 = others[ o ];
-			if ( e1.start > e2.end ) {
+			if ( e2.start > e1.end ) {
 
-				// e1 is completely after e2
+				// e2 is completely after e1
 				break;
 
 			}
 
-			if ( e1.end < e2.start ) {
+			if ( e1.end < e2.start || e2.end < e1.start ) {
 
 				// e1 is completely before e2
 				continue;
@@ -111,7 +111,6 @@ function matchEdges( edges, others, disjointConnectivityMap ) {
 				.get( e2.index )
 				.push( e1.index );
 
-			// Remove the edges from the pools if they've been completely matched
 			if ( isEdgeDegenerate( e2 ) ) {
 
 				others.splice( o, 1 );
@@ -364,11 +363,21 @@ export class HalfEdgeMap {
 
 			}
 
+			let tot = 0;
 			unmatchedSet.clear();
-			fragmentMap.forEach( ( { edges, others } ) => {
+			fragmentMap.forEach( ( { edges, others }, key ) => {
+
+				edges.forEach( ( { start, end } ) => tot += end - start );
+				others.forEach( ( { start, end } ) => tot += end - start );
 
 				edges.forEach( ( { index } ) => unmatchedSet.add( index ) );
 				others.forEach( ( { index } ) => unmatchedSet.add( index ) );
+
+				if ( edges.length === 0 && others.length === 0 ) {
+
+					fragmentMap.delete( key );
+
+				}
 
 			} );
 
