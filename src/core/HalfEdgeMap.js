@@ -1,22 +1,108 @@
 import { Vector2, Vector3, Vector4 } from 'three';
-import { hashNumber, hashVertex2, hashVertex3, hashVertex4, toNormalizedRay } from '../utils/hashUtils.js';
+import { hashNumber, hashRay, hashVertex2, hashVertex3, hashVertex4, toNormalizedRay } from '../utils/hashUtils.js';
 import { getTriCount } from './utils.js';
 import { Ray } from 'three';
-
+import { sortEdgeFunc, toTriIndex, toEdgeIndex, isEdgeDegenerate } from './utils/halfEdgeUtils.js';
 const _vec2 = new Vector2();
 const _vec3 = new Vector3();
 const _vec4 = new Vector4();
 const _hashes = [ '', '', '' ];
 
-function toTriIndex( v ) {
+// TODO: track the connectivity graph
+// TODO: we should make sure the overlap is outside of an epsilon threshold to avoid edges with being connected at corners?
+function matchEdges( edges, others ) {
 
-	return ~ ~ ( v / 3 );
 
-}
+	edges.sort( sortEdgeFunc );
+	others.sort( sortEdgeFunc );
 
-function toEdgeIndex( v ) {
+	for ( let i = 0; i < edges.length; i ++ ) {
 
-	return v % 3;
+		const e1 = edges[ i ];
+		for ( let o = 0; o < others.length; o ++ ) {
+
+			const e2 = others[ o ];
+			if ( e1.start > e2.end ) {
+
+				// e1 is completely after e2
+				break;
+
+			}
+
+			if ( e1.end < e2.start ) {
+
+				// e1 is completely before e2
+				continue;
+
+			}
+
+			if ( e1.start < e2.start && e1.end > e2.end ) {
+
+				// e1 is larger than and e2 is completely within e1
+				const newEdge = {
+					start: e2.end,
+					end: e1.end,
+					index: e1.index,
+				};
+				edges.splice( i, 0, newEdge );
+
+				e1.end = e2.start;
+
+				e2.start = 0;
+				e2.end = 0;
+
+			} else if ( e1.start > e2.start && e1.end < e2.end ) {
+
+				// e2 is larger than and e1 is completely within e2
+				const newEdge = {
+					start: e1.end,
+					end: e2.end,
+					index: e2.index,
+				};
+				others.splice( o, 0, newEdge );
+
+				e2.end = e1.start;
+
+				e1.start = 0;
+				e1.end = 0;
+
+			} else if ( e1.start < e2.start && e1.end < e2.end ) {
+
+				// e1 overlaps e2 at the beginning
+				const tmp = e1.end;
+				e1.end = e2.start;
+				e2.start = tmp;
+
+			} else if ( e1.start > e2.start && e1.end > e2.end ) {
+
+				// e1 overlaps e2 at the end
+				const tmp = e2.end;
+				e2.end = e1.start;
+				e1.start = tmp;
+
+			} else {
+
+				throw new Error();
+
+			}
+
+			if ( isEdgeDegenerate( e1 ) ) {
+
+				edges.splice( i, 1 );
+				i --;
+
+			}
+
+			if ( isEdgeDegenerate( e2 ) ) {
+
+				others.splice( o, 1 );
+				o --;
+
+			}
+
+		}
+
+	}
 
 }
 
@@ -163,9 +249,9 @@ export class HalfEdgeMap {
 			const ray = new Ray();
 			for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
-				const ei = edges[ i ];
-				const triIndex = toTriIndex( ei );
-				const edgeIndex = toEdgeIndex( ei );
+				const index = edges[ i ];
+				const triIndex = toTriIndex( index );
+				const edgeIndex = toEdgeIndex( index );
 
 				let i0 = 3 * triIndex + edgeIndex;
 				let i1 = ( i0 + 1 ) % 3;
@@ -179,18 +265,62 @@ export class HalfEdgeMap {
 				v0.fromBufferAttribute( posAttr, i0 );
 				v1.fromBufferAttribute( posAttr, i1 );
 
-				// TODO: how can we make this ray always point in the same direction?
-				// First non zer component must be positive? Use two ray hashes?
-				// Dot with a common vector? What about perpendicular vectors?
-				// Or use the winding direction of the triangle somehow?
+				// The ray will be pointing in the direction related to the triangles
+				// winding direction. The opposite edge will have an inverted ray
+				// direction
 				toNormalizedRay( v0, v1, ray );
 
-				// TODO: initialize a set of rays that line on the ray
-				// TODO: append the "stride" along the ray that the current ray covers along with its index.
-				// or if theres already siblings we detect then "eat" away at both strides, removing if
-				// they've shrunk to a tolerance and define a connectivity graph.
+				const invRay = ray.clone();
+				invRay.direction.multiplyScalar( - 1 );
+
+				const hash = hashRay( ray );
+				const invHash = hashRay( invRay );
+
+				let info, arr;
+				if ( fragmentMap.has( hash ) ) {
+
+					info = fragmentMap.get( hash );
+					arr = info.edges;
+
+				} else if ( fragmentMap.has( invHash ) ) {
+
+					info = fragmentMap.get( invHash );
+					arr = fragmentMap.get( invHash ).others;
+
+				} else {
+
+					info = {
+						edges: [],
+						others: [],
+						ray: ray.clone(),
+						otherHash: invHash,
+					};
+					arr = info.edges;
+					fragmentMap.set( hash, info );
+
+				}
+
+				let start = info.ray.direction.dot( v0 );
+				let end = info.ray.direction.dot( v1 );
+				if ( start > end ) {
+
+					[ start, end ] = [ end, start ];
+
+				}
+
+				arr.push( { start, end, index } );
 
 			}
+
+			const fields = fragmentMap.values();
+			for ( let i = 0, l = fields.length; i < l; i ++ ) {
+
+				const { edges, others } = fields[ i ];
+				matchEdges( edges, others );
+
+			}
+
+			// TODO: pass disjoint edge map into the above function and verify we do not have dupes in the 1 to many arrays
 
 		}
 
