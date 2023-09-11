@@ -83,8 +83,6 @@ export class HalfEdgeHelper extends EdgesHelper {
 				// get other triangle
 				getTriangle( geometry, otherTriIndex, _tri2 );
 				_tri2.getPlane( _plane2 );
-
-				// get triangle center
 				_tri2.getMidpoint( _center2 );
 
 				// get edge centers

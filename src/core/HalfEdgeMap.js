@@ -173,6 +173,22 @@ export class HalfEdgeMap {
 
 	}
 
+	getDisjointSiblingTriangleIndices( triIndex, edgeIndex ) {
+
+		const index = triIndex * 3 + edgeIndex;
+		const arr = this.disjointData.get( index );
+		return arr ? arr.map( i => ~ ~ ( i / 3 ) ) : [];
+
+	}
+
+	getDisjointSiblingEdgeIndices( triIndex, edgeIndex ) {
+
+		const index = triIndex * 3 + edgeIndex;
+		const arr = this.disjointData.get( index );
+		return arr ? arr.map( i => i % 3 ) : [];
+
+	}
+
 	updateFrom( geometry ) {
 
 		const { useAllAttributes, useDrawRange, matchDisjointEdges } = this;
