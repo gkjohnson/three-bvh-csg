@@ -1,5 +1,5 @@
-import { BoxGeometry, SphereGeometry } from 'three';
-import { HalfEdgeMap } from '../src';
+import { BoxGeometry, SphereGeometry, BufferGeometry, BufferAttribute } from 'three';
+import { Brush, Evaluator, HalfEdgeMap, SUBTRACTION } from '../src';
 
 describe( 'HalfEdgeMap', () => {
 
@@ -35,6 +35,128 @@ describe( 'HalfEdgeMap', () => {
 			halfEdgeMap.updateFrom( geometry );
 
 			expect( halfEdgeMap.unmatchedEdges ).toBe( 26 );
+
+		} );
+
+	} );
+
+	describe( 'matchDisjointEdges', () => {
+
+		it( 'should match disjoint edges.', () => {
+
+			//    / \
+			//   /   \
+			//  -------
+			//   \ | /
+			//    \|/
+
+			const geometry = new BufferGeometry();
+			geometry.setAttribute( 'position', new BufferAttribute( new Float32Array( [
+
+				// top triangle
+				- 1, 0, 0,
+				1, 0, 0,
+				0, 1, 0,
+
+				// bottom two triangles
+				- 1, 0, 0,
+				0, - 1, 0,
+				0, 0, 0,
+
+				1, 0, 0,
+				0, 0, 0,
+				0, - 1, 0,
+
+			] ), 3 ) );
+
+			const halfEdge = new HalfEdgeMap();
+			halfEdge.matchDisjointEdges = true;
+			halfEdge.updateFrom( geometry );
+
+			expect( halfEdge.unmatchedEdges ).toBe( 4 );
+
+		} );
+
+		it( 'should match disjoint edges in the opposite order.', () => {
+
+			//    / \
+			//   /   \
+			//  -------
+			//   \ | /
+			//    \|/
+
+			const geometry = new BufferGeometry();
+			geometry.setAttribute( 'position', new BufferAttribute( new Float32Array( [
+
+				// bottom two triangles
+				- 1, 0, 0,
+				0, - 1, 0,
+				0, 0, 0,
+
+				1, 0, 0,
+				0, 0, 0,
+				0, - 1, 0,
+
+				// top triangle
+				- 1, 0, 0,
+				1, 0, 0,
+				0, 1, 0,
+
+			] ), 3 ) );
+
+			const halfEdge = new HalfEdgeMap();
+			halfEdge.matchDisjointEdges = true;
+			halfEdge.updateFrom( geometry );
+
+			expect( halfEdge.unmatchedEdges ).toBe( 4 );
+
+		} );
+
+		it( 'should match partial disjoint edges.', () => {
+
+			//    / \
+			//   /   \
+			//  -------
+			//    \ /
+
+			const geometry = new BufferGeometry();
+			geometry.setAttribute( 'position', new BufferAttribute( new Float32Array( [
+
+				- 1, 0, 0,
+				1, 0, 0,
+				0, 1, 0,
+
+				0.5, 0, 0,
+				- 0.5, 0, 0,
+				0, - 1, 0,
+
+			] ), 3 ) );
+
+			const halfEdge = new HalfEdgeMap();
+			halfEdge.matchDisjointEdges = true;
+			halfEdge.updateFrom( geometry );
+
+			expect( halfEdge.unmatchedEdges ).toBe( 5 );
+
+		} );
+
+		it( 'should consider a basic cube operation to be water tight.', () => {
+
+			// TODO: try with 0.25, as well
+			const b1 = new Brush( new BoxGeometry() );
+			const b2 = new Brush( new BoxGeometry() );
+			b2.position.y = 0.5;
+			b2.scale.setScalar( 0.5 );
+			b2.updateMatrixWorld( true );
+
+			const evaluator = new Evaluator();
+			const result = evaluator.evaluate( b1, b2, SUBTRACTION );
+			const halfEdge = new HalfEdgeMap();
+			halfEdge.matchDisjointEdges = true;
+			halfEdge.updateFrom( result.geometry );
+
+			console.log( halfEdge.unmatchedEdges );
+
 
 		} );
 

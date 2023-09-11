@@ -112,18 +112,20 @@ function matchEdges( edges, others, disjointConnectivityMap ) {
 				.push( e1.index );
 
 			// Remove the edges from the pools if they've been completely matched
-			if ( isEdgeDegenerate( e1 ) ) {
-
-				edges.splice( i, 1 );
-				i --;
-				break;
-
-			}
-
 			if ( isEdgeDegenerate( e2 ) ) {
 
 				others.splice( o, 1 );
 				o --;
+
+			}
+
+			if ( isEdgeDegenerate( e1 ) ) {
+
+				// and if we have to remove the current original edge then exit this loop
+				// so we can work on the next one
+				edges.splice( i, 1 );
+				i --;
+				break;
 
 			}
 
@@ -339,7 +341,6 @@ export class HalfEdgeMap {
 			}
 
 			const fields = Array.from( fragmentMap.values() );
-			console.log( fields );
 			for ( let i = 0, l = fields.length; i < l; i ++ ) {
 
 				const { edges, others } = fields[ i ];
