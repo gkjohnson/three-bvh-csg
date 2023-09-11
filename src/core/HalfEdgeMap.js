@@ -1,21 +1,153 @@
 import { Vector2, Vector3, Vector4 } from 'three';
-import { hashNumber, hashVertex2, hashVertex3, hashVertex4 } from '../utils/hashUtils.js';
+import { hashNumber, hashRay, hashVertex2, hashVertex3, hashVertex4, toNormalizedRay } from '../utils/hashUtils.js';
 import { getTriCount } from './utils.js';
-
+import { Ray } from 'three';
+import { sortEdgeFunc, toTriIndex, toEdgeIndex, isEdgeDegenerate, areDistancesDegenerate } from './utils/halfEdgeUtils.js';
 const _vec2 = new Vector2();
 const _vec3 = new Vector3();
 const _vec4 = new Vector4();
 const _hashes = [ '', '', '' ];
 
+function matchEdges( edges, others, disjointConnectivityMap ) {
+
+	edges.sort( sortEdgeFunc );
+	others.sort( sortEdgeFunc );
+
+	for ( let i = 0; i < edges.length; i ++ ) {
+
+		const e1 = edges[ i ];
+		for ( let o = 0; o < others.length; o ++ ) {
+
+			const e2 = others[ o ];
+			if ( e2.start > e1.end ) {
+
+				// e2 is completely after e1
+				break;
+
+			}
+
+			if ( e1.end < e2.start || e2.end < e1.start ) {
+
+				// e1 is completely before e2
+				continue;
+
+			}
+
+			if ( e1.start <= e2.start && e1.end >= e2.end ) {
+
+				// e1 is larger than and e2 is completely within e1
+				if ( ! areDistancesDegenerate( e2.end, e1.end ) ) {
+
+					edges.splice( i + 1, 0, {
+						start: e2.end,
+						end: e1.end,
+						index: e1.index,
+					} );
+
+				}
+
+				e1.end = e2.start;
+
+				e2.start = 0;
+				e2.end = 0;
+
+			} else if ( e1.start >= e2.start && e1.end <= e2.end ) {
+
+				// e2 is larger than and e1 is completely within e2
+				if ( ! areDistancesDegenerate( e1.end, e2.end ) ) {
+
+					others.splice( o + 1, 0, {
+						start: e1.end,
+						end: e2.end,
+						index: e2.index,
+					} );
+
+				}
+
+				e2.end = e1.start;
+
+				e1.start = 0;
+				e1.end = 0;
+
+			} else if ( e1.start <= e2.start && e1.end <= e2.end ) {
+
+				// e1 overlaps e2 at the beginning
+				const tmp = e1.end;
+				e1.end = e2.start;
+				e2.start = tmp;
+
+			} else if ( e1.start >= e2.start && e1.end >= e2.end ) {
+
+				// e1 overlaps e2 at the end
+				const tmp = e2.end;
+				e2.end = e1.start;
+				e1.start = tmp;
+
+			} else {
+
+				throw new Error();
+
+			}
+
+
+			// Add the connectivity information
+			if ( ! disjointConnectivityMap.has( e1.index ) ) {
+
+				disjointConnectivityMap.set( e1.index, [] );
+
+			}
+
+			if ( ! disjointConnectivityMap.has( e2.index ) ) {
+
+				disjointConnectivityMap.set( e2.index, [] );
+
+			}
+
+			disjointConnectivityMap
+				.get( e1.index )
+				.push( e2.index );
+
+			disjointConnectivityMap
+				.get( e2.index )
+				.push( e1.index );
+
+			if ( isEdgeDegenerate( e2 ) ) {
+
+				others.splice( o, 1 );
+				o --;
+
+			}
+
+			if ( isEdgeDegenerate( e1 ) ) {
+
+				// and if we have to remove the current original edge then exit this loop
+				// so we can work on the next one
+				edges.splice( i, 1 );
+				i --;
+				break;
+
+			}
+
+		}
+
+	}
+
+}
+
 export class HalfEdgeMap {
 
 	constructor( geometry = null ) {
 
+		// result data
 		this.data = null;
-		this.unmatchedEdges = null;
-		this.matchedEdges = null;
+		this.disjointData = null;
+		this.unmatchedEdges = - 1;
+		this.matchedEdges = - 1;
+
+		// options
 		this.useDrawRange = true;
 		this.useAllAttributes = false;
+		this.matchDisjointEdges = false;
 
 		if ( geometry ) {
 
@@ -25,6 +157,7 @@ export class HalfEdgeMap {
 
 	}
 
+	// TODO: can these be faster for use in the CSG operations
 	getSiblingTriangleIndex( triIndex, edgeIndex ) {
 
 		const otherIndex = this.data[ triIndex * 3 + edgeIndex ];
@@ -39,9 +172,25 @@ export class HalfEdgeMap {
 
 	}
 
+	getDisjointSiblingTriangleIndices( triIndex, edgeIndex ) {
+
+		const index = triIndex * 3 + edgeIndex;
+		const arr = this.disjointData.get( index );
+		return arr ? arr.map( i => ~ ~ ( i / 3 ) ) : [];
+
+	}
+
+	getDisjointSiblingEdgeIndices( triIndex, edgeIndex ) {
+
+		const index = triIndex * 3 + edgeIndex;
+		const arr = this.disjointData.get( index );
+		return arr ? arr.map( i => i % 3 ) : [];
+
+	}
+
 	updateFrom( geometry ) {
 
-		const { useAllAttributes, useDrawRange } = this;
+		const { useAllAttributes, useDrawRange, matchDisjointEdges } = this;
 		const hashFunction = useAllAttributes ? hashAllAttributes : hashPositionAttribute;
 
 		// runs on the assumption that there is a 1 : 1 match of edges
@@ -81,8 +230,8 @@ export class HalfEdgeMap {
 		data.fill( - 1 );
 
 		// iterate over all triangles
-		let unmatchedEdges = 0;
 		let matchedEdges = 0;
+		let unmatchedSet = new Set();
 		for ( let i = offset, l = triCount * 3 + offset; i < l; i += 3 ) {
 
 			const i3 = i;
@@ -109,12 +258,13 @@ export class HalfEdgeMap {
 				if ( map.has( reverseHash ) ) {
 
 					// create a reference between the two triangles and clear the hash
+					const index = i3 + e;
 					const otherIndex = map.get( reverseHash );
-					data[ i3 + e ] = otherIndex;
-					data[ otherIndex ] = i3 + e;
+					data[ index ] = otherIndex;
+					data[ otherIndex ] = index;
 					map.delete( reverseHash );
-					unmatchedEdges --;
 					matchedEdges += 2;
+					unmatchedSet.delete( otherIndex );
 
 				} else {
 
@@ -122,8 +272,9 @@ export class HalfEdgeMap {
 					// triIndex = ~ ~ ( i0 / 3 );
 					// edgeIndex = i0 % 3;
 					const hash = `${ vh0 }_${ vh1 }`;
-					map.set( hash, i3 + e );
-					unmatchedEdges ++;
+					const index = i3 + e;
+					map.set( hash, index );
+					unmatchedSet.add( index );
 
 				}
 
@@ -131,8 +282,111 @@ export class HalfEdgeMap {
 
 		}
 
+		if ( matchDisjointEdges ) {
+
+			const disjointConnectivityMap = new Map();
+			const fragmentMap = new Map();
+			const edges = Array.from( unmatchedSet );
+			const v0 = new Vector3();
+			const v1 = new Vector3();
+			const ray = new Ray();
+			for ( let i = 0, l = edges.length; i < l; i ++ ) {
+
+				const index = edges[ i ];
+				const triIndex = toTriIndex( index );
+				const edgeIndex = toEdgeIndex( index );
+
+				let i0 = 3 * triIndex + edgeIndex;
+				let i1 = 3 * triIndex + ( edgeIndex + 1 ) % 3;
+				if ( indexAttr ) {
+
+					i0 = indexAttr.getX( i0 );
+					i1 = indexAttr.getX( i1 );
+
+				}
+
+				v0.fromBufferAttribute( posAttr, i0 );
+				v1.fromBufferAttribute( posAttr, i1 );
+
+				// The ray will be pointing in the direction related to the triangles
+				// winding direction. The opposite edge will have an inverted ray
+				// direction
+				toNormalizedRay( v0, v1, ray );
+
+				const invRay = ray.clone();
+				invRay.direction.multiplyScalar( - 1 );
+
+				const hash = hashRay( ray );
+				const invHash = hashRay( invRay );
+
+				let info, arr;
+				if ( fragmentMap.has( hash ) ) {
+
+					info = fragmentMap.get( hash );
+					arr = info.edges;
+
+				} else if ( fragmentMap.has( invHash ) ) {
+
+					info = fragmentMap.get( invHash );
+					arr = fragmentMap.get( invHash ).others;
+
+				} else {
+
+					info = {
+						edges: [],
+						others: [],
+						ray: ray.clone(),
+						otherHash: invHash,
+					};
+					arr = info.edges;
+					fragmentMap.set( hash, info );
+
+				}
+
+				let start = info.ray.direction.dot( v0 );
+				let end = info.ray.direction.dot( v1 );
+				if ( start > end ) {
+
+					[ start, end ] = [ end, start ];
+
+				}
+
+				arr.push( { start, end, index } );
+
+			}
+
+			const fields = Array.from( fragmentMap.values() );
+			for ( let i = 0, l = fields.length; i < l; i ++ ) {
+
+				const { edges, others } = fields[ i ];
+				matchEdges( edges, others, disjointConnectivityMap );
+
+			}
+
+			let tot = 0;
+			unmatchedSet.clear();
+			fragmentMap.forEach( ( { edges, others }, key ) => {
+
+				edges.forEach( ( { start, end } ) => tot += end - start );
+				others.forEach( ( { start, end } ) => tot += end - start );
+
+				edges.forEach( ( { index } ) => unmatchedSet.add( index ) );
+				others.forEach( ( { index } ) => unmatchedSet.add( index ) );
+
+				if ( edges.length === 0 && others.length === 0 ) {
+
+					fragmentMap.delete( key );
+
+				}
+
+			} );
+
+			this.disjointData = disjointConnectivityMap;
+
+		}
+
 		this.matchedEdges = matchedEdges;
-		this.unmatchedEdges = unmatchedEdges;
+		this.unmatchedEdges = unmatchedSet.size;
 		this.data = data;
 
 		function hashPositionAttribute( i ) {
