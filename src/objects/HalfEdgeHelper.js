@@ -87,6 +87,7 @@ export class HalfEdgeHelper extends EdgesHelper {
 
 		super();
 		this.straightEdges = false;
+		this.displayDisconnectedEdges = false;
 
 		if ( geometry && halfEdges ) {
 
@@ -98,54 +99,109 @@ export class HalfEdgeHelper extends EdgesHelper {
 
 	setHalfEdges( geometry, halfEdges ) {
 
-		const { straightEdges } = this;
+		const { straightEdges, displayDisconnectedEdges } = this;
 		const edges = [];
-		const triCount = getTriCount( geometry );
-		for ( let triIndex = 0; triIndex < triCount; triIndex ++ ) {
+		const offset = geometry.drawRange.start;
+		let triCount = getTriCount( geometry );
+		if ( geometry.drawRange.count !== Infinity ) {
 
-			getTriangle( geometry, triIndex, _tri1 );
-			for ( let e = 0; e < 3; e ++ ) {
+			triCount = ~ ~ ( geometry.drawRange.count / 3 );
 
-				const otherTriIndex = halfEdges.getSiblingTriangleIndex( triIndex, e );
-				if ( otherTriIndex === - 1 ) {
+		}
 
-					continue;
+		if ( displayDisconnectedEdges ) {
+
+			if ( halfEdges.unmatchedDisjointEdges ) {
+
+				halfEdges
+					.unmatchedDisjointEdges
+					.forEach( info => {
+
+						[ ...info.edges, ...info.others ]
+							.forEach( ( { start, end } ) => {
+
+								const edge = new Line3();
+								info.ray.at( start, edge.start );
+								info.ray.at( end, edge.end );
+								edges.push( edge );
+
+							} );
+
+					} );
+
+			} else {
+
+				for ( let triIndex = offset; triIndex < triCount; triIndex ++ ) {
+
+					getTriangle( geometry, triIndex, _tri1 );
+					for ( let e = 0; e < 3; e ++ ) {
+
+						const otherTriIndex = halfEdges.getSiblingTriangleIndex( triIndex, e );
+						if ( otherTriIndex === - 1 ) {
+
+							const nextE = ( e + 1 ) % 3;
+							const v0 = _tri1[ vertKeys[ e ] ];
+							const v1 = _tri1[ vertKeys[ nextE ] ];
+							const edge = new Line3();
+							edge.start.copy( v0 );
+							edge.end.copy( v1 );
+							edges.push( edge );
+
+						}
+
+					}
 
 				}
 
-				// get other triangle
-				getTriangle( geometry, otherTriIndex, _tri2 );
-
-				// get edge centers
-				const nextE = ( e + 1 ) % 3;
-				const v0 = _tri1[ vertKeys[ e ] ];
-				const v1 = _tri1[ vertKeys[ nextE ] ];
-				_centerPoint.lerpVectors( v0, v1, 0.5 );
-				addConnectionEdge( _tri1, _tri2, _centerPoint );
-
 			}
 
-			if ( halfEdges.disjointData ) {
+		} else {
 
+			for ( let triIndex = offset; triIndex < triCount; triIndex ++ ) {
+
+				getTriangle( geometry, triIndex, _tri1 );
 				for ( let e = 0; e < 3; e ++ ) {
 
-					const disjointTriIndices = halfEdges.getDisjointSiblingTriangleIndices( triIndex, e );
-					const disjointEdgeIndices = halfEdges.getDisjointSiblingEdgeIndices( triIndex, e );
+					const otherTriIndex = halfEdges.getSiblingTriangleIndex( triIndex, e );
+					if ( otherTriIndex === - 1 ) {
 
-					for ( let i = 0; i < disjointTriIndices.length; i ++ ) {
+						continue;
 
-						const ti = disjointTriIndices[ i ];
-						const ei = disjointEdgeIndices[ i ];
+					}
 
-						// get other triangle
-						getTriangle( geometry, ti, _tri2 );
+					// get other triangle
+					getTriangle( geometry, otherTriIndex, _tri2 );
 
-						getOverlapEdge( _tri1, e, _tri2, ei, _edge );
+					// get edge centers
+					const nextE = ( e + 1 ) % 3;
+					const v0 = _tri1[ vertKeys[ e ] ];
+					const v1 = _tri1[ vertKeys[ nextE ] ];
+					_centerPoint.lerpVectors( v0, v1, 0.5 );
+					addConnectionEdge( _tri1, _tri2, _centerPoint );
 
-						_centerPoint.lerpVectors( _edge.start, _edge.end, 0.5 );
+				}
 
-						// _centerPoint.lerpVectors( v0, v1, 0.5 );
-						addConnectionEdge( _tri1, _tri2, _centerPoint );
+				if ( halfEdges.disjointConnections ) {
+
+					for ( let e = 0; e < 3; e ++ ) {
+
+						const disjointTriIndices = halfEdges.getDisjointSiblingTriangleIndices( triIndex, e );
+						const disjointEdgeIndices = halfEdges.getDisjointSiblingEdgeIndices( triIndex, e );
+
+						for ( let i = 0; i < disjointTriIndices.length; i ++ ) {
+
+							const ti = disjointTriIndices[ i ];
+							const ei = disjointEdgeIndices[ i ];
+
+							// get other triangle
+							getTriangle( geometry, ti, _tri2 );
+
+							getOverlapEdge( _tri1, e, _tri2, ei, _edge );
+
+							_centerPoint.lerpVectors( _edge.start, _edge.end, 0.5 );
+							addConnectionEdge( _tri1, _tri2, _centerPoint );
+
+						}
 
 					}
 
