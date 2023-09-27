@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Small performance improvement to HalfEdge structure generation resulting in up to 4-5% time improvement on operations.
 - Additional small performance improvement of 4-5% to speed up determination of whether a whole triangle is inside the companion mesh or not.
 - Adjust the hash logic for finding sibling edges to be more robust.
+- Support for `HOLLOW_INTERSECTION` and `HOLLOW_SUBTRACTION` to allow for non-manifold clipping results on the first brush.
 
 ## [0.0.10] - 2023-09-03
 ### Added
