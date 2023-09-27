@@ -1,6 +1,14 @@
 import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle, Line3 } from 'three';
 import { IntersectionMap } from '../IntersectionMap.js';
-import { ADDITION, SUBTRACTION, REVERSE_SUBTRACTION, INTERSECTION, DIFFERENCE } from '../constants.js';
+import {
+	ADDITION,
+	SUBTRACTION,
+	REVERSE_SUBTRACTION,
+	INTERSECTION,
+	DIFFERENCE,
+	HOLLOW_SUBTRACTION,
+	HOLLOW_INTERSECTION,
+} from '../constants.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
@@ -316,6 +324,23 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 			break;
 		case INTERSECTION:
 			if ( hitSide === BACK_SIDE || ( hitSide === COPLANAR_ALIGNED && ! invert ) ) {
+
+				return ADD_TRI;
+
+			}
+
+			break;
+
+		case HOLLOW_SUBTRACTION:
+			if ( ! invert && ( hitSide === FRONT_SIDE || hitSide === COPLANAR_OPPOSITE ) ) {
+
+				return ADD_TRI;
+
+			}
+
+			break;
+		case HOLLOW_INTERSECTION:
+			if ( ! invert && ( hitSide === BACK_SIDE || hitSide === COPLANAR_ALIGNED ) ) {
 
 				return ADD_TRI;
 
