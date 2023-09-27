@@ -69,6 +69,12 @@ SUBTRACTION           // A - B
 REVERSE_SUBTRACTION   // B - A
 DIFFERENCE            // A ⊕ B
 INTERSECTION          // A ∩ B
+
+// "Hollow" operations are non-solid and result in simply removing the geometry
+// within Brush B from brush A. For these operations Brush A can be non-manifold
+// but it is still required that Brush B be a water-tight, two-manifold mesh.
+HOLLOW_SUBTRACTION    // A - B
+HOLLOW_INTERSECTION   // A ∩ B
 ```
 
 ## Brush

@@ -38,6 +38,8 @@ import {
 	REVERSE_SUBTRACTION,
 	INTERSECTION,
 	DIFFERENCE,
+	HOLLOW_INTERSECTION,
+	HOLLOW_SUBTRACTION,
 } from '..';
 
 window.logTriangleDefinitions = logTriangleDefinitions;
@@ -252,9 +254,19 @@ async function init() {
 
 	// gui
 	gui = new GUI();
-	gui.add( params, 'operation', { ADDITION, SUBTRACTION, REVERSE_SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
+	gui.add( params, 'operation', { ADDITION, SUBTRACTION, REVERSE_SUBTRACTION, INTERSECTION, DIFFERENCE, HOLLOW_INTERSECTION, HOLLOW_SUBTRACTION } ).onChange( v => {
 
 		needsUpdate = true;
+
+		if ( v === HOLLOW_INTERSECTION || v === HOLLOW_SUBTRACTION ) {
+
+			materialMap.forEach( m => m.side = DoubleSide );
+
+		} else {
+
+			materialMap.forEach( m => m.side = FrontSide );
+
+		}
 
 	} );
 	gui.add( params, 'displayBrushes' );

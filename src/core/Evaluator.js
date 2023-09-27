@@ -26,7 +26,6 @@ function joinGroups( groups ) {
 
 	}
 
-
 }
 
 // initialize the target geometry and attribute data to be based on
