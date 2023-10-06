@@ -348,7 +348,9 @@ export class TriangleSplitter {
 							negSideVerts[ 0 ] :
 							posSideVerts[ 0 ];
 
-					// TODO: comment this
+					// swap the direction of the intersection edge depending on which
+					// side of the plane the single vertex is on to align with the
+					// correct winding order.
 					if ( singleVert === 0 ) {
 
 						let tmp = _foundEdge.start;
