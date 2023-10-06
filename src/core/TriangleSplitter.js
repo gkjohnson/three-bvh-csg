@@ -145,6 +145,7 @@ export class TriangleSplitter {
 				const v0 = arr[ i ];
 				const v1 = arr[ nexti ];
 
+				// plane positive direction is toward triangle center
 				_vec.subVectors( v1, v0 ).normalize();
 				_planeNormal.crossVectors( normal, _vec );
 				_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
@@ -171,13 +172,13 @@ export class TriangleSplitter {
 
 	// Split the triangles by the given plan. If a triangle is provided then we ensure we
 	// intersect the triangle before splitting the plane
-	splitByPlane( plane, triangle, incrementCoplanarity = false ) {
+	splitByPlane( plane, clippingTriangle, incrementCoplanarity = false ) {
 
 		const { triangles, trianglePool } = this;
 
 
 		// init our triangle to check for intersection
-		_splittingTriangle.copy( triangle );
+		_splittingTriangle.copy( clippingTriangle );
 		_splittingTriangle.needsUpdate = true;
 
 		// try to split every triangle in the class
@@ -185,24 +186,26 @@ export class TriangleSplitter {
 
 			const tri = triangles[ i ];
 
-			// skip the triangle if we don't intersect with it
-			if ( ! _splittingTriangle.intersectsTriangle( tri, _edge, true ) ) {
-
-				continue;
-
-			}
-
+			// TODO: this needs to be done elsewhere after clipping
 			// detect whether the triangle is on the inside of planes being used to define the
 			// outside of the coplanar triangle
 			if ( incrementCoplanarity && ! tri.isCoplanar ) {
 
+				// plane positive direction is toward clipping triangle center
 				tri.getMidpoint( _center );
-				if ( plane.distanceToPoint( _center ) < 0 ) {
+				if ( plane.distanceToPoint( _center ) > 0 ) {
 
 					tri.coplanarCount ++;
 					tri.isCoplanar = tri.coplanarCount === 3;
 
 				}
+
+			}
+
+			// skip the triangle if we don't intersect with it
+			if ( ! _splittingTriangle.intersectsTriangle( tri, _edge, true ) ) {
+
+				continue;
 
 			}
 
