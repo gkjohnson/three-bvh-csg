@@ -46,7 +46,7 @@ class TrianglePool {
 
 	}
 
-	getTriangle() {
+	getTriangle( reference = null ) {
 
 		if ( this._index >= this._pool.length ) {
 
@@ -55,8 +55,18 @@ class TrianglePool {
 		}
 
 		const result = this._pool[ this._index ++ ];
-		result.coplanarCount = 0;
-		result.isCoplanar = false;
+		if ( reference ) {
+
+			result.coplanarCount = reference.coplanarCount;
+			result.isCoplanar = reference.isCoplanar;
+
+		} else {
+
+			result.coplanarCount = 0;
+			result.isCoplanar = false;
+
+		}
+
 		return result;
 
 	}
@@ -136,6 +146,13 @@ export class TriangleSplitter {
 
 		if ( Math.abs( 1.0 - Math.abs( _plane.normal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
 
+			for ( let i = 0, l = triangles.length; i < l; i ++ ) {
+
+				const t = triangles[ i ];
+				t.coplanarCount = 0;
+
+			}
+
 			// if the triangle is coplanar then split by the edge planes
 			const arr = [ triangle.a, triangle.b, triangle.c ];
 			for ( let i = 0; i < 3; i ++ ) {
@@ -154,13 +171,6 @@ export class TriangleSplitter {
 
 			}
 
-			for ( let i = 0, l = triangles.length; i < l; i ++ ) {
-
-				const t = triangles[ i ];
-				t.coplanarCount = 0;
-
-			}
-
 		} else {
 
 			// otherwise split by the triangle plane
@@ -176,7 +186,6 @@ export class TriangleSplitter {
 
 		const { triangles, trianglePool } = this;
 
-
 		// init our triangle to check for intersection
 		_splittingTriangle.copy( clippingTriangle );
 		_splittingTriangle.needsUpdate = true;
@@ -186,12 +195,10 @@ export class TriangleSplitter {
 
 			const tri = triangles[ i ];
 
-			// TODO: this needs to be done elsewhere after clipping
-			performCoplanarIncrement( tri );
-
 			// skip the triangle if we don't intersect with it
 			if ( ! _splittingTriangle.intersectsTriangle( tri, _edge, true ) ) {
 
+				performCoplanarIncrement( tri );
 				continue;
 
 			}
@@ -278,17 +285,12 @@ export class TriangleSplitter {
 
 			}
 
-			if ( coplanarEdge ) {
-
-				continue;
-
-			}
-
 			// skip splitting if:
 			// - we have two points on the plane then the plane intersects the triangle exactly on an edge
 			// - the plane does not intersect on 2 points
 			// - the intersection edge is too small
-			if ( intersects === 2 && _foundEdge.distance() > COPLANAR_EPSILON ) {
+			// - we're not along a coplanar edge
+			if ( ! coplanarEdge && intersects === 2 && _foundEdge.distance() > COPLANAR_EPSILON ) {
 
 				if ( vertexSplitEnd !== - 1 ) {
 
@@ -296,18 +298,27 @@ export class TriangleSplitter {
 
 					// we're splitting along a vertex
 					let otherVert1 = 0;
-					if ( otherVert1 === vertexSplitEnd ) otherVert1 = ( otherVert1 + 1 ) % 3;
+					if ( otherVert1 === vertexSplitEnd ) {
+
+						otherVert1 = ( otherVert1 + 1 ) % 3;
+
+					}
 
 					let otherVert2 = otherVert1 + 1;
-					if ( otherVert2 === vertexSplitEnd ) otherVert2 = ( otherVert2 + 1 ) % 3;
+					if ( otherVert2 === vertexSplitEnd ) {
 
-					const nextTri = trianglePool.getTriangle();
+						otherVert2 = ( otherVert2 + 1 ) % 3;
+
+					}
+
+					const nextTri = trianglePool.getTriangle( tri );
 					nextTri.a.copy( arr[ otherVert2 ] );
 					nextTri.b.copy( _foundEdge.end );
 					nextTri.c.copy( _foundEdge.start );
 
 					if ( ! isTriDegenerate( nextTri ) ) {
 
+						performCoplanarIncrement( nextTri );
 						triangles.push( nextTri );
 
 					}
@@ -316,11 +327,16 @@ export class TriangleSplitter {
 					tri.b.copy( _foundEdge.start );
 					tri.c.copy( _foundEdge.end );
 
+					// finish off the adjusted triangle
 					if ( isTriDegenerate( tri ) ) {
 
 						triangles.splice( i, 1 );
 						i --;
 						l --;
+
+					} else {
+
+						performCoplanarIncrement( tri );
 
 					}
 
@@ -332,23 +348,20 @@ export class TriangleSplitter {
 							negSideVerts[ 0 ] :
 							posSideVerts[ 0 ];
 
+					// TODO: comment this
 					if ( singleVert === 0 ) {
 
 						let tmp = _foundEdge.start;
 						_foundEdge.start = _foundEdge.end;
 						_foundEdge.end = tmp;
 
-					} else if ( singleVert === - 1 ) {
-
-						continue;
-
 					}
 
 					const nextVert1 = ( singleVert + 1 ) % 3;
 					const nextVert2 = ( singleVert + 2 ) % 3;
 
-					const nextTri1 = trianglePool.getTriangle();
-					const nextTri2 = trianglePool.getTriangle();
+					const nextTri1 = trianglePool.getTriangle( tri );
+					const nextTri2 = trianglePool.getTriangle( tri );
 
 					// choose the triangle that has the larger areas (shortest split distance)
 					if ( arr[ nextVert1 ].distanceToSquared( _foundEdge.start ) < arr[ nextVert2 ].distanceToSquared( _foundEdge.end ) ) {
@@ -380,25 +393,28 @@ export class TriangleSplitter {
 					// don't add degenerate triangles to the list
 					if ( ! isTriDegenerate( nextTri1 ) ) {
 
+						performCoplanarIncrement( nextTri1 );
 						triangles.push( nextTri1 );
-						nextTri1.isCoplanar = tri.isCoplanar;
-						nextTri1.coplanarCount = tri.coplanarCount;
 
 					}
 
 					if ( ! isTriDegenerate( nextTri2 ) ) {
 
+						performCoplanarIncrement( nextTri2 );
 						triangles.push( nextTri2 );
-						nextTri2.isCoplanar = tri.isCoplanar;
-						nextTri2.coplanarCount = tri.coplanarCount;
 
 					}
 
+					// finish off the adjusted triangle
 					if ( isTriDegenerate( tri ) ) {
 
 						triangles.splice( i, 1 );
 						i --;
 						l --;
+
+					} else {
+
+						performCoplanarIncrement( tri );
 
 					}
 
@@ -407,6 +423,11 @@ export class TriangleSplitter {
 			} else if ( intersects === 3 ) {
 
 				console.warn( 'TriangleClipper: Coplanar clip not handled' );
+
+			} else {
+
+				// finish off the unadjusted triangle
+				performCoplanarIncrement( tri );
 
 			}
 
