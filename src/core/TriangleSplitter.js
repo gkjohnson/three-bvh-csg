@@ -189,22 +189,11 @@ export class TriangleSplitter {
 			// TODO: this needs to be done elsewhere after clipping
 			// detect whether the triangle is on the inside of planes being used to define the
 			// outside of the coplanar triangle
-			if ( incrementCoplanarity && ! tri.isCoplanar ) {
-
-				// plane positive direction is toward clipping triangle center
-				tri.getMidpoint( _center );
-				if ( plane.distanceToPoint( _center ) > 0 ) {
-
-					tri.coplanarCount ++;
-					tri.isCoplanar = tri.coplanarCount === 3;
-
-				}
-
-			}
 
 			// skip the triangle if we don't intersect with it
 			if ( ! _splittingTriangle.intersectsTriangle( tri, _edge, true ) ) {
 
+				performCoplanarIncrement( tri );
 				continue;
 
 			}
@@ -422,6 +411,28 @@ export class TriangleSplitter {
 				console.warn( 'TriangleClipper: Coplanar clip not handled' );
 
 			}
+
+		}
+
+		function performCoplanarIncrement( target ) {
+
+			if ( incrementCoplanarity ) target.isCoplanar = true;
+
+			// detect whether the triangle is on the inside of planes being used to define the
+			// outside of the coplanar triangle
+			if ( incrementCoplanarity && ! target.isCoplanar ) {
+
+				// plane positive direction is toward clipping triangle center
+				target.getMidpoint( _center );
+				if ( plane.distanceToPoint( _center ) > 0 ) {
+
+					target.coplanarCount ++;
+					target.isCoplanar = target.coplanarCount === 3;
+
+				}
+
+			}
+
 
 		}
 
