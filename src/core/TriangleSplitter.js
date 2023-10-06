@@ -3,12 +3,14 @@ import { ExtendedTriangle } from 'three-mesh-bvh';
 
 const EPSILON = 1e-14;
 const COPLANAR_EPSILON = 1e-10;
+const PARALLEL_EPSILON = 1e-10;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
-const _exTriangle = new ExtendedTriangle();
+const _splittingTriangle = new ExtendedTriangle();
+const _center = new Vector3();
 
 const _AB = new Vector3();
 const _AC = new Vector3();
@@ -52,7 +54,10 @@ class TrianglePool {
 
 		}
 
-		return this._pool[ this._index ++ ];
+		const result = this._pool[ this._index ++ ];
+		result.coplanarCount = 0;
+		result.isCoplanar = false;
+		return result;
 
 	}
 
@@ -129,7 +134,7 @@ export class TriangleSplitter {
 		const { normal, triangles } = this;
 		triangle.getPlane( _plane );
 
-		if ( Math.abs( 1.0 - Math.abs( _plane.normal.dot( normal ) ) ) < COPLANAR_EPSILON ) {
+		if ( Math.abs( 1.0 - Math.abs( _plane.normal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
 
 			// if the triangle is coplanar then split by the edge planes
 			const arr = [ triangle.a, triangle.b, triangle.c ];
@@ -144,7 +149,7 @@ export class TriangleSplitter {
 				_planeNormal.crossVectors( normal, _vec );
 				_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
 
-				this.splitByPlane( _plane, triangle, i );
+				this.splitByPlane( _plane, triangle, true );
 
 			}
 
@@ -166,37 +171,42 @@ export class TriangleSplitter {
 
 	// Split the triangles by the given plan. If a triangle is provided then we ensure we
 	// intersect the triangle before splitting the plane
-	splitByPlane( plane, triangle = null ) {
+	splitByPlane( plane, triangle, incrementCoplanarity = false ) {
 
 		const { triangles, trianglePool } = this;
 
+
 		// init our triangle to check for intersection
-		let splittingTriangle = null;
-		if ( triangle !== null ) {
-
-			splittingTriangle = _exTriangle;
-			splittingTriangle.copy( triangle );
-			splittingTriangle.needsUpdate = true;
-
-		}
+		_splittingTriangle.copy( triangle );
+		_splittingTriangle.needsUpdate = true;
 
 		// try to split every triangle in the class
 		for ( let i = 0, l = triangles.length; i < l; i ++ ) {
 
 			const tri = triangles[ i ];
-			const { a, b, c } = tri;
 
 			// skip the triangle if we don't intersect with it
-			if ( splittingTriangle ) {
+			if ( ! _splittingTriangle.intersectsTriangle( tri, _edge, true ) ) {
 
-				if ( ! splittingTriangle.intersectsTriangle( tri, _edge, true ) ) {
+				continue;
 
-					continue;
+			}
+
+			// detect whether the triangle is on the inside of planes being used to define the
+			// outside of the coplanar triangle
+			if ( incrementCoplanarity && ! tri.isCoplanar ) {
+
+				tri.getMidpoint( _center );
+				if ( plane.distanceToPoint( _center ) < 0 ) {
+
+					tri.coplanarCount ++;
+					tri.isCoplanar = tri.coplanarCount === 3;
 
 				}
 
 			}
 
+			const { a, b, c } = tri;
 			let intersects = 0;
 			let vertexSplitEnd = - 1;
 			let coplanarEdge = false;
@@ -381,12 +391,16 @@ export class TriangleSplitter {
 					if ( ! isTriDegenerate( nextTri1 ) ) {
 
 						triangles.push( nextTri1 );
+						nextTri1.isCoplanar = tri.isCoplanar;
+						nextTri1.coplanarCount = tri.coplanarCount;
 
 					}
 
 					if ( ! isTriDegenerate( nextTri2 ) ) {
 
 						triangles.push( nextTri2 );
+						nextTri2.isCoplanar = tri.isCoplanar;
+						nextTri2.coplanarCount = tri.coplanarCount;
 
 					}
 

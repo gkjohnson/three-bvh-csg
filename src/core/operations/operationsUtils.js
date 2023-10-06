@@ -41,7 +41,7 @@ export function setDebugContext( debugData ) {
 
 }
 
-export function getHitSideWholeTriangle( tri, bvh ) {
+export function getHitSide( tri, bvh ) {
 
 	tri.getMidpoint( _ray.origin );
 	_ray.direction.set( 0, 0, 1 );
@@ -52,7 +52,7 @@ export function getHitSideWholeTriangle( tri, bvh ) {
 
 }
 
-export function getHitSide( tri, bvh ) {
+export function getHitSideWithCoplanarCheck( tri, bvh ) {
 
 	// random function that returns [ - 0.5, 0.5 ];
 	function rand() {

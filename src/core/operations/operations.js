@@ -1,7 +1,7 @@
 import { Matrix4, Matrix3, Triangle } from 'three';
 import {
+	getHitSideWithCoplanarCheck,
 	getHitSide,
-	getHitSideWholeTriangle,
 	collectIntersectingTriangles,
 	appendAttributeFromTriangle,
 	appendAttributesFromIndices,
@@ -137,7 +137,10 @@ function performSplitTriangleOperations(
 
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach
-			const hitSide = getHitSide( clippedTri, bBVH );
+			const hitSide = clippedTri.isCoplanar ?
+				getHitSideWithCoplanarCheck( clippedTri, bBVH ) :
+				getHitSide( clippedTri, bBVH );
+
 			_attr.length = 0;
 			_actions.length = 0;
 			for ( let o = 0, lo = operations.length; o < lo; o ++ ) {
@@ -243,7 +246,7 @@ function performWholeTriangleOperations(
 		_tri.c.fromBufferAttribute( aPosition, i2 ).applyMatrix4( _matrix );
 
 		// get the side and decide if we need to cull the triangle based on the operation
-		const hitSide = getHitSideWholeTriangle( _tri, bBVH );
+		const hitSide = getHitSide( _tri, bBVH );
 
 		_actions.length = 0;
 		_attr.length = 0;
