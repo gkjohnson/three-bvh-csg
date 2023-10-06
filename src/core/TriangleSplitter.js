@@ -187,13 +187,11 @@ export class TriangleSplitter {
 			const tri = triangles[ i ];
 
 			// TODO: this needs to be done elsewhere after clipping
-			// detect whether the triangle is on the inside of planes being used to define the
-			// outside of the coplanar triangle
+			performCoplanarIncrement( tri );
 
 			// skip the triangle if we don't intersect with it
 			if ( ! _splittingTriangle.intersectsTriangle( tri, _edge, true ) ) {
 
-				performCoplanarIncrement( tri );
 				continue;
 
 			}
@@ -415,8 +413,6 @@ export class TriangleSplitter {
 		}
 
 		function performCoplanarIncrement( target ) {
-
-			if ( incrementCoplanarity ) target.isCoplanar = true;
 
 			// detect whether the triangle is on the inside of planes being used to define the
 			// outside of the coplanar triangle
