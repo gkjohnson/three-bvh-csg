@@ -3,9 +3,9 @@ import { areDistancesDegenerate, isEdgeDegenerate, sortEdgeFunc, toEdgeIndex, to
 import { hashRay, toNormalizedRay } from './utils/hashUtils.js';
 
 const _tempVec = new Vector3();
-const v0 = new Vector3();
-const v1 = new Vector3();
-const ray = new Ray();
+const _v0 = new Vector3();
+const _v1 = new Vector3();
+const _ray = new Ray();
 
 export function computeDisjointEdges(
 	geometry,
@@ -35,18 +35,18 @@ export function computeDisjointEdges(
 
 		}
 
-		v0.fromBufferAttribute( posAttr, i0 );
-		v1.fromBufferAttribute( posAttr, i1 );
+		_v0.fromBufferAttribute( posAttr, i0 );
+		_v1.fromBufferAttribute( posAttr, i1 );
 
 		// The ray will be pointing in the direction related to the triangles
 		// winding direction. The opposite edge will have an inverted ray
 		// direction
-		toNormalizedRay( v0, v1, ray );
+		toNormalizedRay( _v0, _v1, _ray );
 
-		const invRay = ray.clone();
+		const invRay = _ray.clone();
 		invRay.direction.multiplyScalar( - 1 );
 
-		const hash = hashRay( ray );
+		const hash = hashRay( _ray );
 		const invHash = hashRay( invRay );
 
 		let info, arr;
@@ -65,7 +65,7 @@ export function computeDisjointEdges(
 			info = {
 				edges: [],
 				others: [],
-				ray: ray.clone(),
+				ray: _ray.clone(),
 				otherHash: invHash,
 			};
 			arr = info.edges;
@@ -74,8 +74,8 @@ export function computeDisjointEdges(
 		}
 
 		const infoRay = info.ray;
-		let start = _tempVec.subVectors( v0, infoRay.origin ).dot( infoRay.direction );
-		let end = _tempVec.subVectors( v1, infoRay.origin ).dot( infoRay.direction );
+		let start = _tempVec.subVectors( _v0, infoRay.origin ).dot( infoRay.direction );
+		let end = _tempVec.subVectors( _v1, infoRay.origin ).dot( infoRay.direction );
 		if ( start > end ) {
 
 			[ start, end ] = [ end, start ];
