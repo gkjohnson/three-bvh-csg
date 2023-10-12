@@ -1,13 +1,13 @@
 import { Vector3, Ray } from 'three';
-import { toEdgeIndex, toTriIndex, matchEdges, getProjectedDistance } from './utils/halfEdgeUtils.js';
-import { toNormalizedRay } from './utils/hashUtils.js';
-import { RaySet } from './utils/RaySet.js';
+import { toEdgeIndex, toTriIndex, matchEdges, getProjectedDistance } from './halfEdgeUtils.js';
+import { toNormalizedRay } from './hashUtils.js';
+import { RaySet } from './RaySet.js';
 
 const _v0 = new Vector3();
 const _v1 = new Vector3();
 const _ray = new Ray();
 
-export function computeDisjointEdges_new(
+export function computeDisjointEdges(
 	geometry,
 	unmatchedSet,
 ) {

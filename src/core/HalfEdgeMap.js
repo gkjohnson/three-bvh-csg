@@ -1,8 +1,7 @@
 import { Vector2, Vector3, Vector4 } from 'three';
 import { hashNumber, hashVertex2, hashVertex3, hashVertex4 } from './utils/hashUtils.js';
 import { getTriCount } from './utils/geometryUtils.js';
-import { computeDisjointEdges } from './computeDisjointEdges.js';
-import { computeDisjointEdges_new } from './computeDisjointEdges_new.js';
+import { computeDisjointEdges } from './utils/computeDisjointEdges.js';
 
 const _vec2 = new Vector2();
 const _vec3 = new Vector3();
@@ -162,7 +161,7 @@ export class HalfEdgeMap {
 			const {
 				fragmentMap,
 				disjointConnectivityMap,
-			} = computeDisjointEdges_new( geometry, unmatchedSet );
+			} = computeDisjointEdges( geometry, unmatchedSet );
 
 			unmatchedSet.clear();
 			fragmentMap.forEach( ( { forward, reverse } ) => {
