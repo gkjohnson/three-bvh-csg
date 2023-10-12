@@ -1,4 +1,7 @@
+import { Vector3 } from 'three';
+
 const DEGENERATE_EPSILON = 1e-8;
+const _tempVec = new Vector3();
 
 export function toTriIndex( v ) {
 
@@ -27,6 +30,12 @@ export function areDistancesDegenerate( start, end ) {
 export function isEdgeDegenerate( e ) {
 
 	return e.end - e.start < DEGENERATE_EPSILON;
+
+}
+
+export function getProjectedDistance( ray, vec ) {
+
+	return _tempVec.subVectors( vec, ray.origin ).dot( ray.direction );
 
 }
 

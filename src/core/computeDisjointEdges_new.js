@@ -1,9 +1,8 @@
 import { Vector3, Ray } from 'three';
-import { toEdgeIndex, toTriIndex, matchEdges, sortEdgeFunc, hasOverlaps, getEdgeSetLength } from './utils/halfEdgeUtils.js';
+import { toEdgeIndex, toTriIndex, matchEdges, getProjectedDistance } from './utils/halfEdgeUtils.js';
 import { toNormalizedRay } from './utils/hashUtils.js';
 import { RaySet } from './utils/RaySet.js';
 
-const _tempVec = new Vector3();
 const _v0 = new Vector3();
 const _v1 = new Vector3();
 const _ray = new Ray();
@@ -85,7 +84,6 @@ export function computeDisjointEdges_new(
 
 	}
 
-
 	fragmentMap.forEach( ( { forward, reverse }, ray ) => {
 
 		matchEdges( forward, reverse, disjointConnectivityMap );
@@ -105,8 +103,3 @@ export function computeDisjointEdges_new(
 
 }
 
-function getProjectedDistance( ray, vec ) {
-
-	return _tempVec.subVectors( vec, ray.origin ).dot( ray.direction );
-
-}
