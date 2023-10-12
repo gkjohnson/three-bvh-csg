@@ -115,14 +115,14 @@ export class HalfEdgeHelper extends EdgesHelper {
 
 				halfEdges
 					.unmatchedDisjointEdges
-					.forEach( info => {
+					.forEach( ( { forward, reverse, ray } ) => {
 
-						[ ...info.edges, ...info.others ]
+						[ ...forward, ...reverse ]
 							.forEach( ( { start, end } ) => {
 
 								const edge = new Line3();
-								info.ray.at( start, edge.start );
-								info.ray.at( end, edge.end );
+								ray.at( start, edge.start );
+								ray.at( end, edge.end );
 								edges.push( edge );
 
 							} );

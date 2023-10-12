@@ -23,6 +23,7 @@ export function computeDisjointEdges_new(
 
 	for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
+		// get the triangle edge
 		const index = edges[ i ];
 		const triIndex = toTriIndex( index );
 		const edgeIndex = toEdgeIndex( index );
@@ -39,9 +40,10 @@ export function computeDisjointEdges_new(
 		_v0.fromBufferAttribute( posAttr, i0 );
 		_v1.fromBufferAttribute( posAttr, i1 );
 
-		// get the rays
+		// get the ray corresponding to the edge
 		toNormalizedRay( _v0, _v1, _ray );
 
+		// find the shared ray with other edges
 		let info;
 		let commonRay = rays.findClosestRay( _ray );
 		if ( commonRay === null ) {
@@ -57,6 +59,7 @@ export function computeDisjointEdges_new(
 
 				forward: [],
 				reverse: [],
+				ray: commonRay,
 
 			} );
 
@@ -64,6 +67,7 @@ export function computeDisjointEdges_new(
 
 		info = fragmentMap.get( commonRay );
 
+		// store the stride of edge endpoints along the ray
 		let start = getProjectedDistance( commonRay, _v0 );
 		let end = getProjectedDistance( commonRay, _v1 );
 		if ( start > end ) {
@@ -84,6 +88,7 @@ export function computeDisjointEdges_new(
 
 	}
 
+	// match the found sibling edges
 	fragmentMap.forEach( ( { forward, reverse }, ray ) => {
 
 		matchEdges( forward, reverse, disjointConnectivityMap );
