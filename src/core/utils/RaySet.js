@@ -1,3 +1,6 @@
+const DIST_EPSILON = 1e-5;
+const ANGLE_EPSILON = 1e-4;
+
 export class RaySet {
 
 	constructor() {
@@ -45,8 +48,8 @@ export class RaySet {
 
 		function skipRay( r0, r1 ) {
 
-			const distOutOfThreshold = r0.origin.distanceTo( r1.origin ) > 1e-5;
-			const angleOutOfThreshold = r0.direction.angleTo( r1.direction ) > 1e-4;
+			const distOutOfThreshold = r0.origin.distanceTo( r1.origin ) > DIST_EPSILON;
+			const angleOutOfThreshold = r0.direction.angleTo( r1.direction ) > ANGLE_EPSILON;
 			return angleOutOfThreshold || distOutOfThreshold;
 
 		}
@@ -55,7 +58,7 @@ export class RaySet {
 
 			const originDistance = r0.origin.distanceTo( r1.origin );
 			const angleDistance = r0.direction.angleTo( r1.direction );
-			return originDistance / 1e-5 + angleDistance / 1e-4;
+			return originDistance / DIST_EPSILON + angleDistance / ANGLE_EPSILON;
 
 		}
 

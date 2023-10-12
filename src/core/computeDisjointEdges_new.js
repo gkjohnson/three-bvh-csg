@@ -1,5 +1,5 @@
 import { Vector3, Ray } from 'three';
-import { toEdgeIndex, toTriIndex, matchEdges } from './utils/halfEdgeUtils.js';
+import { toEdgeIndex, toTriIndex, matchEdges, sortEdgeFunc, hasOverlaps, getEdgeSetLength } from './utils/halfEdgeUtils.js';
 import { toNormalizedRay } from './utils/hashUtils.js';
 import { RaySet } from './utils/RaySet.js';
 
@@ -58,7 +58,6 @@ export function computeDisjointEdges_new(
 
 				forward: [],
 				reverse: [],
-				ray: commonRay,
 
 			} );
 
@@ -86,40 +85,14 @@ export function computeDisjointEdges_new(
 
 	}
 
-	// fragmentMap.forEach( info => {
 
-	// 	let fwd = 0;
-	// 	let rev = 0;
-	// 	let tot = 0;
-	// 	info.forward.forEach( ( { start, end } ) => fwd += end - start );
-	// 	info.reverse.forEach( ( { start, end } ) => rev += end - start );
+	fragmentMap.forEach( ( { forward, reverse }, ray ) => {
 
-	// 	tot += Math.abs( fwd - rev );
-	// 	console.log('TOTAL', tot);
+		matchEdges( forward, reverse, disjointConnectivityMap );
 
-	// } );
+		if ( forward.length === 0 && forward.length === 0 ) {
 
-	fragmentMap.forEach( info => {
-
-		matchEdges( info.forward, info.reverse, disjointConnectivityMap );
-
-	} );
-
-	fragmentMap.forEach( info => {
-
-		let fwd = 0;
-		let rev = 0;
-		let tot = 0;
-		info.forward.forEach( ( { start, end } ) => fwd += end - start );
-		info.reverse.forEach( ( { start, end } ) => rev += end - start );
-
-		tot += Math.abs( fwd - rev );
-		// console.log('TOTAL', tot, fwd, rev );
-		if ( fwd > 0.0000001 ) {
-
-
-			console.log('TOTAL', tot, fwd, rev );
-			console.log(info);
+			fragmentMap.delete( ray );
 
 		}
 
@@ -134,7 +107,6 @@ export function computeDisjointEdges_new(
 
 function getProjectedDistance( ray, vec ) {
 
-	// TODO: rotate onto the line here?
 	return _tempVec.subVectors( vec, ray.origin ).dot( ray.direction );
 
 }

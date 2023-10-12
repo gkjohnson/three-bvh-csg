@@ -30,6 +30,34 @@ export function isEdgeDegenerate( e ) {
 
 }
 
+export function hasOverlaps( arr ) {
+
+	arr = [ ...arr ].sort( sortEdgeFunc );
+	for ( let i = 0, l = arr.length; i < l - 1; i ++ ) {
+
+		const info0 = arr[ i ];
+		const info1 = arr[ i + 1 ];
+
+		if ( info1.start < info0.end && Math.abs( info1.start - info0.end ) > 1e-5 ) {
+
+			return true;
+
+		}
+
+	}
+
+	return false;
+
+}
+
+export function getEdgeSetLength( arr ) {
+
+	let tot = 0;
+	arr.forEach( ( { start, end } ) => tot += end - start );
+	return tot;
+
+}
+
 export function matchEdges( forward, reverse, disjointConnectivityMap ) {
 
 	forward.sort( sortEdgeFunc );
@@ -44,7 +72,12 @@ export function matchEdges( forward, reverse, disjointConnectivityMap ) {
 			if ( e1.start > e0.end ) {
 
 				// e2 is completely after e1
-				break;
+				// break;
+
+				// NOTE: there are cases where there are overlaps due to precision issues or
+				// thin / degenerate triangles. Assuming the sibling side has the same issues
+				// we let the matching work here. Long term we should remove the degenerate
+				// triangles before this.
 
 			} else if ( e0.end < e1.start || e1.end < e0.start ) {
 
