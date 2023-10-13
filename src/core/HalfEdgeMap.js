@@ -2,6 +2,7 @@ import { Vector2, Vector3, Vector4 } from 'three';
 import { hashNumber, hashVertex2, hashVertex3, hashVertex4 } from './utils/hashUtils.js';
 import { getTriCount } from './utils/geometryUtils.js';
 import { computeDisjointEdges } from './utils/computeDisjointEdges.js';
+import { getEdgeSetLength } from './utils/halfEdgeUtils.js';
 
 const _vec2 = new Vector2();
 const _vec3 = new Vector3();
@@ -23,6 +24,7 @@ export class HalfEdgeMap {
 		this.useDrawRange = true;
 		this.useAllAttributes = false;
 		this.matchDisjointEdges = false;
+		this.degenerateEpsilon = 1e-6;
 
 		if ( geometry ) {
 
@@ -62,9 +64,15 @@ export class HalfEdgeMap {
 
 	}
 
+	isFullyConnected() {
+
+		return this.unmatchedEdges === 0;
+
+	}
+
 	updateFrom( geometry ) {
 
-		const { useAllAttributes, useDrawRange, matchDisjointEdges } = this;
+		const { useAllAttributes, useDrawRange, matchDisjointEdges, degenerateEpsilon } = this;
 		const hashFunction = useAllAttributes ? hashAllAttributes : hashPositionAttribute;
 
 		// runs on the assumption that there is a 1 : 1 match of edges
@@ -161,7 +169,7 @@ export class HalfEdgeMap {
 			const {
 				fragmentMap,
 				disjointConnectivityMap,
-			} = computeDisjointEdges( geometry, unmatchedSet );
+			} = computeDisjointEdges( geometry, unmatchedSet, degenerateEpsilon );
 
 			unmatchedSet.clear();
 			fragmentMap.forEach( ( { forward, reverse } ) => {
@@ -173,6 +181,7 @@ export class HalfEdgeMap {
 
 			this.unmatchedDisjointEdges = fragmentMap;
 			this.disjointConnections = disjointConnectivityMap;
+			matchedEdges = triCount * 3 - unmatchedSet.size;
 
 		}
 

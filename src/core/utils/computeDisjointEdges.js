@@ -10,6 +10,7 @@ const _ray = new Ray();
 export function computeDisjointEdges(
 	geometry,
 	unmatchedSet,
+	eps,
 ) {
 
 	const attributes = geometry.attributes;
@@ -91,9 +92,9 @@ export function computeDisjointEdges(
 	// match the found sibling edges
 	fragmentMap.forEach( ( { forward, reverse }, ray ) => {
 
-		matchEdges( forward, reverse, disjointConnectivityMap );
+		matchEdges( forward, reverse, disjointConnectivityMap, eps );
 
-		if ( forward.length === 0 && forward.length === 0 ) {
+		if ( forward.length === 0 && reverse.length === 0 ) {
 
 			fragmentMap.delete( ray );
 

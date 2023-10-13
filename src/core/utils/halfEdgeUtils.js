@@ -21,18 +21,6 @@ export function sortEdgeFunc( a, b ) {
 
 }
 
-export function areDistancesDegenerate( start, end ) {
-
-	return end - start < DEGENERATE_EPSILON;
-
-}
-
-export function isEdgeDegenerate( e ) {
-
-	return e.end - e.start < DEGENERATE_EPSILON;
-
-}
-
 export function getProjectedDistance( ray, vec ) {
 
 	return _tempVec.subVectors( vec, ray.origin ).dot( ray.direction );
@@ -67,7 +55,7 @@ export function getEdgeSetLength( arr ) {
 
 }
 
-export function matchEdges( forward, reverse, disjointConnectivityMap ) {
+export function matchEdges( forward, reverse, disjointConnectivityMap, eps = DEGENERATE_EPSILON ) {
 
 	forward.sort( sortEdgeFunc );
 	reverse.sort( sortEdgeFunc );
@@ -188,6 +176,36 @@ export function matchEdges( forward, reverse, disjointConnectivityMap ) {
 			}
 
 		}
+
+	}
+
+	cleanUpEdgeSet( forward );
+	cleanUpEdgeSet( reverse );
+
+	function cleanUpEdgeSet( arr ) {
+
+		for ( let i = 0; i < arr.length; i ++ ) {
+
+			if ( isEdgeDegenerate( arr[ i ] ) ) {
+
+				arr.splice( i, 1 );
+				i --;
+
+			}
+
+		}
+
+	}
+
+	function areDistancesDegenerate( start, end ) {
+
+		return Math.abs( end - start ) < eps;
+
+	}
+
+	function isEdgeDegenerate( e ) {
+
+		return Math.abs( e.end - e.start ) < eps;
 
 	}
 
