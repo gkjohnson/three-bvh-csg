@@ -344,7 +344,7 @@ export class TriangleSplitter {
 
 					// we're splitting with a quad and a triangle
 					const singleVert =
-						negSideVerts.length === 1 ?
+						posSideVerts.length >= 2 ?
 							negSideVerts[ 0 ] :
 							posSideVerts[ 0 ];
 
