@@ -18,7 +18,6 @@ import {
 	TorusGeometry,
 	TorusKnotGeometry,
 	BufferAttribute,
-	Matrix4,
 } from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
