@@ -23,7 +23,7 @@ export class HalfEdgeMap {
 		this.useDrawRange = true;
 		this.useAllAttributes = false;
 		this.matchDisjointEdges = false;
-		this.degenerateEpsilon = 1e-6;
+		this.degenerateEpsilon = 1e-8;
 
 		if ( geometry ) {
 
