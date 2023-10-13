@@ -2,7 +2,6 @@ import { Vector2, Vector3, Vector4 } from 'three';
 import { hashNumber, hashVertex2, hashVertex3, hashVertex4 } from './utils/hashUtils.js';
 import { getTriCount } from './utils/geometryUtils.js';
 import { computeDisjointEdges } from './utils/computeDisjointEdges.js';
-import { getEdgeSetLength } from './utils/halfEdgeUtils.js';
 
 const _vec2 = new Vector2();
 const _vec3 = new Vector3();
