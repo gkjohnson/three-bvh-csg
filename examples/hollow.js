@@ -59,6 +59,7 @@ async function init() {
 		new THREE.MeshStandardMaterial( {
 			vertexColors: true,
 			side: THREE.DoubleSide,
+			roughness: 0.2,
 		} ),
 	);
 
@@ -69,7 +70,7 @@ async function init() {
 			transparent: true,
 			depthWrite: false,
 			opacity: 0.1,
-			side: THREE.BackSide
+			side: THREE.BackSide,
 		} ),
 	);
 	brush2.scale.setScalar( 2 );
