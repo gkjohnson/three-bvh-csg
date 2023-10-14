@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>three-bvh-csg - Complex Geometry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <style type="text/css">
+        html, body {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+			font-family: monospace;
+			background-color: #111111;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+		#info {
+			position: absolute;
+			top: 0;
+			width: 100%;
+			color: white;
+			font-family: monospace;
+			text-align: center;
+			padding: 5px 0;
+		}
+    </style>
+</head>
+<body>
+	<div id="info">
+		Using HOLLOW_SUBTRACTION and HOLLOW_INTERSECTION operations to
+		<br/>
+		clip a non-watertight mesh using a watertight brush.
+	</div>
+	<div id="output"></div>
+    <script type="module" src="./hollow.js"></script>
+</body>
+</html>
