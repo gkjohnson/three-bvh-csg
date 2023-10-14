@@ -52,8 +52,6 @@ async function init() {
 	shadowCam.right = shadowCam.top = 3.5;
 	shadowCam.updateProjectionMatrix();
 
-
-
 	brush1 = new Brush(
 		generateTriangleGeometry(),
 		new THREE.MeshStandardMaterial( {

@@ -30,6 +30,8 @@ An _experimental, in progress_, flexible, memory compact, fast and dynamic [Cons
 
 [Complex Model CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/geometry.html)
 
+[Hollow Operations](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/hollow.html)
+
 [Multi Material CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/multimaterial.html)
 
 [Multi Operation CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/multiop.html)
