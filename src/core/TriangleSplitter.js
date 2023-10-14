@@ -343,6 +343,8 @@ export class TriangleSplitter {
 				} else {
 
 					// we're splitting with a quad and a triangle
+					// TODO: what happens when we find that about the pos and negative
+					// sides have only a single vertex?
 					const singleVert =
 						posSideVerts.length >= 2 ?
 							negSideVerts[ 0 ] :
