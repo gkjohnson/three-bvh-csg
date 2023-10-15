@@ -9,6 +9,7 @@ import {
 	SKIP_TRI, INVERT_TRI,
 } from './operationsUtils.js';
 import { getTriCount } from '../utils/geometryUtils.js';
+import { HOLLOW_INTERSECTION, HOLLOW_SUBTRACTION } from '../constants.js';
 
 const _matrix = new Matrix4();
 const _normalMatrix = new Matrix3();
@@ -47,9 +48,18 @@ export function performOperation(
 	performSplitTriangleOperations( a, b, aIntersections, operations, false, splitter, attributeData, groupOffset );
 	performWholeTriangleOperations( a, b, aIntersections, operations, false, attributeData, groupOffset );
 
-	groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
-	performSplitTriangleOperations( b, a, bIntersections, operations, true, splitter, attributeData, groupOffset );
-	performWholeTriangleOperations( b, a, bIntersections, operations, true, attributeData, groupOffset );
+	// find whether the set of operations contains a non-hollow operations. If it does then we need
+	// to perform the second set of triangle additions
+	const nonHollow = operations
+		.findIndex( op => op !== HOLLOW_INTERSECTION && op !== HOLLOW_SUBTRACTION ) !== - 1;
+
+	if ( nonHollow ) {
+
+		groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
+		performSplitTriangleOperations( b, a, bIntersections, operations, true, splitter, attributeData, groupOffset );
+		performWholeTriangleOperations( b, a, bIntersections, operations, true, attributeData, groupOffset );
+
+	}
 
 	_attr.length = 0;
 	_actions.length = 0;

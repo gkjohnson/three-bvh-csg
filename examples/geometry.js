@@ -12,6 +12,8 @@ import {
 	REVERSE_SUBTRACTION,
 	INTERSECTION,
 	DIFFERENCE,
+	HOLLOW_SUBTRACTION,
+	HOLLOW_INTERSECTION,
 } from '..';
 
 const params = {
@@ -184,7 +186,10 @@ async function init() {
 
 	// gui
 	gui = new GUI();
-	gui.add( params, 'operation', { ADDITION, SUBTRACTION, REVERSE_SUBTRACTION, INTERSECTION, DIFFERENCE } ).onChange( () => {
+	gui.add( params, 'operation', {
+		ADDITION, SUBTRACTION, REVERSE_SUBTRACTION, INTERSECTION,
+		DIFFERENCE, HOLLOW_SUBTRACTION, HOLLOW_INTERSECTION,
+	} ).onChange( () => {
 
 		updateCSG();
 
