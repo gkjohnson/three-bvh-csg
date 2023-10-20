@@ -135,12 +135,13 @@ function assignBufferData( geometry, attributeData, groupOrder ) {
 	// initialize the groups
 	let groupOffset = 0;
 	geometry.clearGroups();
-	for ( let i = 0, l = attributeData.groupCount; i < l; i ++ ) {
+	for ( let i = 0, l = Math.min( groupOrder.length, attributeData.groupCount ); i < l; i ++ ) {
 
-		const vertCount = attributeData.getCount( i );
+		const { index, materialIndex } = groupOrder[ i ];
+		const vertCount = attributeData.getCount( index );
 		if ( vertCount !== 0 ) {
 
-			geometry.addGroup( groupOffset, vertCount, groupOrder[ i ].materialIndex );
+			geometry.addGroup( groupOffset, vertCount, materialIndex );
 			groupOffset += vertCount;
 
 		}
