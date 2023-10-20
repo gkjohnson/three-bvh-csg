@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.12] - 2023-10-20
+### Fixed
+- Evaluator.conslidateGroups not working as expected when groups need to be reordered and merged.
+- Cases where triangles are culled incorrectly.
+
+### Removed
+- Evaluator.evaluateHierarchy since it does not work correctly.
+
 ## [0.0.11] - 2023-10-17
 ### Added
 - Small performance improvement to HalfEdge structure generation resulting in up to 4-5% time improvement on operations.
