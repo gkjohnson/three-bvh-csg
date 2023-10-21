@@ -7,6 +7,7 @@ const PARALLEL_EPSILON = 1e-10;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
+const _triangleNormal = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _splittingTriangle = new ExtendedTriangle();
@@ -142,9 +143,9 @@ export class TriangleSplitter {
 	splitByTriangle( triangle ) {
 
 		const { normal, triangles } = this;
-		triangle.getPlane( _plane );
+		triangle.getNormal( _triangleNormal ).normalize();
 
-		if ( Math.abs( 1.0 - Math.abs( _plane.normal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
+		if ( Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
 
 			for ( let i = 0, l = triangles.length; i < l; i ++ ) {
 
@@ -164,7 +165,7 @@ export class TriangleSplitter {
 
 				// plane positive direction is toward triangle center
 				_vec.subVectors( v1, v0 ).normalize();
-				_planeNormal.crossVectors( normal, _vec );
+				_planeNormal.crossVectors( _triangleNormal, _vec );
 				_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
 
 				this.splitByPlane( _plane, triangle, true );
@@ -174,6 +175,7 @@ export class TriangleSplitter {
 		} else {
 
 			// otherwise split by the triangle plane
+			triangle.getPlane( _plane );
 			this.splitByPlane( _plane, triangle );
 
 		}
