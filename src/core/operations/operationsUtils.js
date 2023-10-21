@@ -43,8 +43,8 @@ export function setDebugContext( debugData ) {
 
 export function getHitSide( tri, bvh ) {
 
-	tri.getMidpoint( _ray.origin );
 	tri.getNormal( _ray.direction );
+	tri.getMidpoint( _ray.origin ).addScaledVector( _ray.direction, OFFSET_EPSILON );
 
 	const hit = bvh.raycastFirst( _ray, DoubleSide );
 	const hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
