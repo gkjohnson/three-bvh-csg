@@ -7,6 +7,7 @@ const PARALLEL_EPSILON = 1e-10;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
+const _triangleNormal = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _splittingTriangle = new ExtendedTriangle();
@@ -46,7 +47,7 @@ class TrianglePool {
 
 	}
 
-	getTriangle( reference = null ) {
+	getTriangle() {
 
 		if ( this._index >= this._pool.length ) {
 
@@ -54,20 +55,7 @@ class TrianglePool {
 
 		}
 
-		const result = this._pool[ this._index ++ ];
-		if ( reference ) {
-
-			result.coplanarCount = reference.coplanarCount;
-			result.isCoplanar = reference.isCoplanar;
-
-		} else {
-
-			result.coplanarCount = 0;
-			result.isCoplanar = false;
-
-		}
-
-		return result;
+		return this._pool[ this._index ++ ];
 
 	}
 
@@ -94,16 +82,16 @@ export class TriangleSplitter {
 		this.trianglePool = new TrianglePool();
 		this.triangles = [];
 		this.normal = new Vector3();
+		this.coplanarTriangleUsed = false;
 
 	}
 
 	// initialize the class with a triangle
 	initialize( tri ) {
 
-		const { triangles, trianglePool, normal } = this;
-		triangles.length = 0;
-		trianglePool.clear();
+		this.reset();
 
+		const { triangles, trianglePool, normal } = this;
 		if ( Array.isArray( tri ) ) {
 
 			for ( let i = 0, l = tri.length; i < l; i ++ ) {
@@ -142,9 +130,15 @@ export class TriangleSplitter {
 	splitByTriangle( triangle ) {
 
 		const { normal, triangles } = this;
-		triangle.getPlane( _plane );
+		triangle.getNormal( _triangleNormal ).normalize();
 
-		if ( Math.abs( 1.0 - Math.abs( _plane.normal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
+		if ( Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
+
+			if ( this.coplanarTriangleUsed === false ) {
+
+				this.coplanarTriangleUsed = true;
+
+			}
 
 			for ( let i = 0, l = triangles.length; i < l; i ++ ) {
 
@@ -164,16 +158,17 @@ export class TriangleSplitter {
 
 				// plane positive direction is toward triangle center
 				_vec.subVectors( v1, v0 ).normalize();
-				_planeNormal.crossVectors( normal, _vec );
+				_planeNormal.crossVectors( _triangleNormal, _vec );
 				_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
 
-				this.splitByPlane( _plane, triangle, true );
+				this.splitByPlane( _plane, triangle );
 
 			}
 
 		} else {
 
 			// otherwise split by the triangle plane
+			triangle.getPlane( _plane );
 			this.splitByPlane( _plane, triangle );
 
 		}
@@ -182,7 +177,7 @@ export class TriangleSplitter {
 
 	// Split the triangles by the given plan. If a triangle is provided then we ensure we
 	// intersect the triangle before splitting the plane
-	splitByPlane( plane, clippingTriangle, incrementCoplanarity = false ) {
+	splitByPlane( plane, clippingTriangle ) {
 
 		const { triangles, trianglePool } = this;
 
@@ -198,7 +193,6 @@ export class TriangleSplitter {
 			// skip the triangle if we don't intersect with it
 			if ( ! _splittingTriangle.intersectsTriangle( tri, _edge, true ) ) {
 
-				performCoplanarIncrement( tri );
 				continue;
 
 			}
@@ -311,14 +305,13 @@ export class TriangleSplitter {
 
 					}
 
-					const nextTri = trianglePool.getTriangle( tri );
+					const nextTri = trianglePool.getTriangle();
 					nextTri.a.copy( arr[ otherVert2 ] );
 					nextTri.b.copy( _foundEdge.end );
 					nextTri.c.copy( _foundEdge.start );
 
 					if ( ! isTriDegenerate( nextTri ) ) {
 
-						performCoplanarIncrement( nextTri );
 						triangles.push( nextTri );
 
 					}
@@ -333,10 +326,6 @@ export class TriangleSplitter {
 						triangles.splice( i, 1 );
 						i --;
 						l --;
-
-					} else {
-
-						performCoplanarIncrement( tri );
 
 					}
 
@@ -364,8 +353,8 @@ export class TriangleSplitter {
 					const nextVert1 = ( singleVert + 1 ) % 3;
 					const nextVert2 = ( singleVert + 2 ) % 3;
 
-					const nextTri1 = trianglePool.getTriangle( tri );
-					const nextTri2 = trianglePool.getTriangle( tri );
+					const nextTri1 = trianglePool.getTriangle();
+					const nextTri2 = trianglePool.getTriangle();
 
 					// choose the triangle that has the larger areas (shortest split distance)
 					if ( arr[ nextVert1 ].distanceToSquared( _foundEdge.start ) < arr[ nextVert2 ].distanceToSquared( _foundEdge.end ) ) {
@@ -397,14 +386,12 @@ export class TriangleSplitter {
 					// don't add degenerate triangles to the list
 					if ( ! isTriDegenerate( nextTri1 ) ) {
 
-						performCoplanarIncrement( nextTri1 );
 						triangles.push( nextTri1 );
 
 					}
 
 					if ( ! isTriDegenerate( nextTri2 ) ) {
 
-						performCoplanarIncrement( nextTri2 );
 						triangles.push( nextTri2 );
 
 					}
@@ -416,10 +403,6 @@ export class TriangleSplitter {
 						i --;
 						l --;
 
-					} else {
-
-						performCoplanarIncrement( tri );
-
 					}
 
 				}
@@ -428,32 +411,7 @@ export class TriangleSplitter {
 
 				console.warn( 'TriangleClipper: Coplanar clip not handled' );
 
-			} else {
-
-				// finish off the unadjusted triangle
-				performCoplanarIncrement( tri );
-
 			}
-
-		}
-
-		function performCoplanarIncrement( target ) {
-
-			// detect whether the triangle is on the inside of planes being used to define the
-			// outside of the coplanar triangle
-			if ( incrementCoplanarity && ! target.isCoplanar ) {
-
-				// plane positive direction is toward clipping triangle center
-				target.getMidpoint( _center );
-				if ( plane.distanceToPoint( _center ) > 0 ) {
-
-					target.coplanarCount ++;
-					target.isCoplanar = target.coplanarCount === 3;
-
-				}
-
-			}
-
 
 		}
 
@@ -462,6 +420,8 @@ export class TriangleSplitter {
 	reset() {
 
 		this.triangles.length = 0;
+		this.trianglePool.clear();
+		this.coplanarTriangleUsed = false;
 
 	}
 

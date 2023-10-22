@@ -121,6 +121,7 @@ function performSplitTriangleOperations(
 		_triA.c.fromBufferAttribute( aPosition, ia2 ).applyMatrix4( _matrix );
 
 		// initialize the splitter with the triangle from geometry A
+		splitter.reset();
 		splitter.initialize( _triA );
 
 		// split the triangle with the intersecting triangles from B
@@ -147,7 +148,7 @@ function performSplitTriangleOperations(
 
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach
-			const hitSide = clippedTri.isCoplanar ?
+			const hitSide = splitter.coplanarTriangleUsed ?
 				getHitSideWithCoplanarCheck( clippedTri, bBVH ) :
 				getHitSide( clippedTri, bBVH );
 
