@@ -9,7 +9,7 @@ import {
 	HOLLOW_SUBTRACTION,
 	HOLLOW_INTERSECTION,
 } from '../constants.js';
-import { isTriDegenerate } from '../TriangleSplitter.js';
+import { isTriDegenerate } from '../utils/triangleUtils.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();

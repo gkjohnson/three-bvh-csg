@@ -1,5 +1,6 @@
 import { Triangle, Line3, Vector3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
+import { isTriDegenerate } from './utils/triangleUtils.js';
 
 const EPSILON = 1e-14;
 const COPLANAR_EPSILON = 1e-10;
@@ -11,30 +12,6 @@ const _triangleNormal = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _splittingTriangle = new ExtendedTriangle();
-
-const _AB = new Vector3();
-const _AC = new Vector3();
-const _CB = new Vector3();
-
-export function isTriDegenerate( tri ) {
-
-	// compute angles to determine whether they're degenerate
-	_AB.subVectors( tri.b, tri.a );
-	_AC.subVectors( tri.c, tri.a );
-	_CB.subVectors( tri.c, tri.b );
-
-	const angle1 = _AB.angleTo( _AC );				// AB v AC
-	const angle2 = _AB.angleTo( _CB ) - Math.PI;	// AB v BC - 180deg
-	const angle3 = Math.PI - angle1 - angle2;		// 180deg - angle1 - angle2
-
-	return Math.abs( angle1 ) < EPSILON ||
-		Math.abs( angle2 ) < EPSILON ||
-		Math.abs( angle3 ) < EPSILON ||
-		tri.a.distanceToSquared( tri.b ) < EPSILON ||
-		tri.a.distanceToSquared( tri.c ) < EPSILON ||
-		tri.b.distanceToSquared( tri.c ) < EPSILON;
-
-}
 
 // A pool of triangles to avoid unnecessary triangle creation
 class TrianglePool {
@@ -309,7 +286,7 @@ export class TriangleSplitter {
 					nextTri.b.copy( _foundEdge.end );
 					nextTri.c.copy( _foundEdge.start );
 
-					if ( ! isTriDegenerate( nextTri ) ) {
+					if ( ! isTriDegenerate( nextTri, EPSILON ) ) {
 
 						triangles.push( nextTri );
 
@@ -320,7 +297,7 @@ export class TriangleSplitter {
 					tri.c.copy( _foundEdge.end );
 
 					// finish off the adjusted triangle
-					if ( isTriDegenerate( tri ) ) {
+					if ( isTriDegenerate( tri, EPSILON ) ) {
 
 						triangles.splice( i, 1 );
 						i --;
@@ -383,20 +360,20 @@ export class TriangleSplitter {
 					tri.c.copy( _foundEdge.start );
 
 					// don't add degenerate triangles to the list
-					if ( ! isTriDegenerate( nextTri1 ) ) {
+					if ( ! isTriDegenerate( nextTri1, EPSILON ) ) {
 
 						triangles.push( nextTri1 );
 
 					}
 
-					if ( ! isTriDegenerate( nextTri2 ) ) {
+					if ( ! isTriDegenerate( nextTri2, EPSILON ) ) {
 
 						triangles.push( nextTri2 );
 
 					}
 
 					// finish off the adjusted triangle
-					if ( isTriDegenerate( tri ) ) {
+					if ( isTriDegenerate( tri, EPSILON ) ) {
 
 						triangles.splice( i, 1 );
 						i --;
