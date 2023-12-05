@@ -9,6 +9,7 @@ import {
 	HOLLOW_SUBTRACTION,
 	HOLLOW_INTERSECTION,
 } from '../constants.js';
+import { isTriDegenerate } from '../TriangleSplitter.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
@@ -131,7 +132,7 @@ export function collectIntersectingTriangles( a, b ) {
 
 		intersectsTriangles( triangleA, triangleB, ia, ib ) {
 
-			if ( triangleA.intersectsTriangle( triangleB, _edge, true ) ) {
+			if ( ! isTriDegenerate( triangleA ) && ! isTriDegenerate( triangleB ) && triangleA.intersectsTriangle( triangleB, _edge, true ) ) {
 
 				let va = a.geometry.boundsTree.resolveTriangleIndex( ia );
 				let vb = b.geometry.boundsTree.resolveTriangleIndex( ib );

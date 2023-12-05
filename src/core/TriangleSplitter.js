@@ -11,7 +11,6 @@ const _triangleNormal = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _splittingTriangle = new ExtendedTriangle();
-const _center = new Vector3();
 
 const _AB = new Vector3();
 const _AC = new Vector3();
