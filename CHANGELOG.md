@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.14] - 2023-12-05
+### Fixed
+- Case where extraneous points could be generated causing incorrectly large bounding boxes when brushes contain degenerate triangles.
+
 ## [0.0.13] - 2023-10-22
 ### Fixed
 - Case where coplanar faces may not be clipped together.
