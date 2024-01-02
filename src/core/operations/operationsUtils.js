@@ -35,6 +35,8 @@ export const INVERT_TRI = 0;
 export const ADD_TRI = 1;
 export const SKIP_TRI = 2;
 
+const FLOATING_COPLANAR_EPSILON = 1e-14;
+
 let _debugContext = null;
 export function setDebugContext( debugData ) {
 
@@ -132,17 +134,40 @@ export function collectIntersectingTriangles( a, b ) {
 
 		intersectsTriangles( triangleA, triangleB, ia, ib ) {
 
-			if ( ! isTriDegenerate( triangleA ) && ! isTriDegenerate( triangleB ) && triangleA.intersectsTriangle( triangleB, _edge, true ) ) {
+			if ( ! isTriDegenerate( triangleA ) && ! isTriDegenerate( triangleB ) ) {
 
-				let va = a.geometry.boundsTree.resolveTriangleIndex( ia );
-				let vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
-				aIntersections.add( va, vb );
-				bIntersections.add( vb, va );
+				// due to floating point error it's possible that we can have two overlapping, coplanar triangles
+				// that are a _tiny_ fraction of a value away from each other. If we find that case then check the
+				// distance between triangles and if it's small enough consider them intersecting.
+				let intersected = triangleA.intersectsTriangle( triangleB, _edge, true );
+				if ( ! intersected ) {
 
-				if ( _debugContext ) {
+					const pa = triangleA.plane;
+					const pb = triangleB.plane;
+					const na = pa.normal;
+					const nb = pb.normal;
 
-					_debugContext.addEdge( _edge );
-					_debugContext.addIntersectingTriangles( ia, triangleA, ib, triangleB );
+					if ( na.dot( nb ) === 1 && Math.abs( pa.constant - pb.constant ) < FLOATING_COPLANAR_EPSILON ) {
+
+						intersected = true;
+
+					}
+
+				}
+
+				if ( intersected ) {
+
+					let va = a.geometry.boundsTree.resolveTriangleIndex( ia );
+					let vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
+					aIntersections.add( va, vb );
+					bIntersections.add( vb, va );
+
+					if ( _debugContext ) {
+
+						_debugContext.addEdge( _edge );
+						_debugContext.addIntersectingTriangles( ia, triangleA, ib, triangleB );
+
+					}
 
 				}
 
