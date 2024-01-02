@@ -10,6 +10,7 @@ import {
 } from './operationsUtils.js';
 import { getTriCount } from '../utils/geometryUtils.js';
 import { HOLLOW_INTERSECTION, HOLLOW_SUBTRACTION } from '../constants.js';
+import { isTriDegenerate } from '../utils/triangleUtils.js';
 
 const _matrix = new Matrix4();
 const _normalMatrix = new Matrix3();
@@ -296,12 +297,19 @@ function performWholeTriangleOperations(
 				const i2 = aIndex.getX( i3 + 2 );
 				const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ currId ] + groupOffset;
 
-				for ( let k = 0, lk = _attr.length; k < lk; k ++ ) {
+				_tri.a.fromBufferAttribute( aPosition, i0 );
+				_tri.b.fromBufferAttribute( aPosition, i1 );
+				_tri.c.fromBufferAttribute( aPosition, i2 );
+				if ( ! isTriDegenerate( _tri ) ) {
 
-					const action = _actions[ k ];
-					const attrSet = _attr[ k ].getGroupAttrSet( groupIndex );
-					const invertTri = action === INVERT_TRI;
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
+					for ( let k = 0, lk = _attr.length; k < lk; k ++ ) {
+
+						const action = _actions[ k ];
+						const attrSet = _attr[ k ].getGroupAttrSet( groupIndex );
+						const invertTri = action === INVERT_TRI;
+						appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
+
+					}
 
 				}
 
