@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.16] - Unreleased
+### Fixed
+- A couple cases relating missing triangles during clip
+- Cases where degenerate triangles could make their way into the result and potentially cause incorrectly large bounding boxes.
+
 ## [0.0.15] - 2023-12-05
 ### Fixed
 - Case where extraneous points could be generated causing incorrectly large bounding boxes when brushes contain degenerate triangles.
