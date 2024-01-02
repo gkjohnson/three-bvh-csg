@@ -112,11 +112,7 @@ export class TriangleSplitter {
 
 		if ( Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
 
-			if ( this.coplanarTriangleUsed === false ) {
-
-				this.coplanarTriangleUsed = true;
-
-			}
+			this.coplanarTriangleUsed = true;
 
 			for ( let i = 0, l = triangles.length; i < l; i ++ ) {
 
