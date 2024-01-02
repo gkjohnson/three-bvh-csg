@@ -2,7 +2,9 @@ import { Triangle, Line3, Vector3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 import { isTriDegenerate } from './utils/triangleUtils.js';
 
-const EPSILON = 1e-14;
+// NOTE: these epsilons likely should all be the same since they're used to measure the
+// distance from a point to a plane which needs to be done consistently
+const EPSILON = 1e-10;
 const COPLANAR_EPSILON = 1e-10;
 const PARALLEL_EPSILON = 1e-10;
 const _edge = new Line3();
@@ -198,13 +200,6 @@ export class TriangleSplitter {
 
 				}
 
-				// we only don't consider this an intersection if the start points hits the plane
-				if ( Math.abs( startDist ) < COPLANAR_EPSILON ) {
-
-					continue;
-
-				}
-
 				if ( startDist > 0 ) {
 
 					posSideVerts.push( t );
@@ -212,6 +207,13 @@ export class TriangleSplitter {
 				} else {
 
 					negSideVerts.push( t );
+
+				}
+
+				// we only don't consider this an intersection if the start points hits the plane
+				if ( Math.abs( startDist ) < COPLANAR_EPSILON ) {
+
+					continue;
 
 				}
 
