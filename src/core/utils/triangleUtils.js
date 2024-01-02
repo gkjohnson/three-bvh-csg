@@ -13,7 +13,7 @@ export function isTriDegenerate( tri, eps = EPSILON ) {
 	_CB.subVectors( tri.c, tri.b );
 
 	const angle1 = _AB.angleTo( _AC );				// AB v AC
-	const angle2 = _AB.angleTo( _CB ) - Math.PI;	// AB v BC - 180deg
+	const angle2 = _AB.angleTo( _CB );				// AB v BC
 	const angle3 = Math.PI - angle1 - angle2;		// 180deg - angle1 - angle2
 
 	return Math.abs( angle1 ) < eps ||
