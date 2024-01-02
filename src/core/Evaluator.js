@@ -32,6 +32,8 @@ function joinGroups( groups ) {
 // the given reference geometry
 function prepareAttributesData( referenceGeometry, targetGeometry, attributeData, relevantAttributes ) {
 
+	attributeData.clear();
+
 	// initialize and clear unused data from the attribute buffers and vice versa
 	const aAttributes = referenceGeometry.attributes;
 	for ( let i = 0, l = relevantAttributes.length; i < l; i ++ ) {
@@ -62,8 +64,6 @@ function prepareAttributesData( referenceGeometry, targetGeometry, attributeData
 		}
 
 	}
-
-	attributeData.clear();
 
 }
 

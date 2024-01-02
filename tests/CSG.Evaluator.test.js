@@ -23,7 +23,7 @@ describe( 'Evaluator', () => {
 
 	} );
 
-	it( 'it not fail if multiple operations with different buffer types.', () => {
+	it( 'should not fail if multiple operations with different buffer types.', () => {
 
 		const geo1 = new SphereGeometry();
 		const geo2 = new SphereGeometry();
