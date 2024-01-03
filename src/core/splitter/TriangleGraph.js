@@ -35,7 +35,7 @@ export class TriangleGraph {
 		invFrame.copy( frame ).invert();
 
 		initialTri.copy( tri );
-		transformToFrame( initialTri, frame );
+		transformToFrame( initialTri, invFrame );
 
 		points.push(
 			tri.a.clone(),
@@ -56,10 +56,10 @@ export class TriangleGraph {
 
 	splitBy( tri ) {
 
-		const { plane, frame, initialTri } = this;
+		const { plane, invFrame, initialTri, points, connections } = this;
 
 		tri = tri.clone();
-		transformToFrame( tri, frame );
+		transformToFrame( tri, invFrame );
 
 		const line = new Line3();
 		const hitPoint = new Vector3();
@@ -67,6 +67,7 @@ export class TriangleGraph {
 		const planePoints = [];
 		let coplanarPoints = 0;
 
+		// find the points on the plane surface
 		for ( let i = 0; i < 3; i ++ ) {
 
 			const ni = ( i + 1 ) % 3;
@@ -101,6 +102,7 @@ export class TriangleGraph {
 
 		}
 
+		// find the edges that intersect with the triangle itself
 		const edges = [];
 		if ( coplanarPoints === 3 ) {
 
