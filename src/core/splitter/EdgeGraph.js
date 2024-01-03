@@ -1,6 +1,21 @@
-import { Vector3, Line3 } from 'three';
+import { Vector3, Line3, Triangle } from 'three';
 
-class IndexedLine3 extends Line3 {
+class GraphTriangle extends Triangle {
+
+	constructor( ...args ) {
+
+		super( ...args );
+
+		this.ab = null;
+		this.bc = null;
+		this.ca = null;
+		this.edges = [ null, null, null ];
+
+	}
+
+}
+
+class GraphEdge extends Line3 {
 
 	constructor( ...args ) {
 
@@ -29,20 +44,20 @@ export class EdgeGraph {
 
 	insertEdge( edge ) {
 
-		// TODO: check intersections?
-
 		const { points, edges } = this;
 		const { start, end } = edge;
 		const i0 = this.insertPoint( start );
 		const i1 = this.insertPoint( end );
 
-		const line = new IndexedLine3();
+		const line = new GraphEdge();
 		line.start.copy( points[ i0 ] );
 		line.startIndex = i0;
 		line.end.copy( points[ i1 ] );
 		line.endIndex = i1;
 
 		edges.push( line );
+
+		// TODO: check and swap intersections
 
 	}
 
@@ -73,14 +88,14 @@ export class EdgeGraph {
 				const e = edges[ intersectingEdge ];
 				edges.splice( intersectingEdge, 1 );
 
-				const l0 = new IndexedLine3();
+				const l0 = new GraphEdge();
 				l0.start.copy( e.start );
 				l0.startIndex = e.startIndex;
 				l0.end.copy( point );
 				l0.endIndex = index;
 				l0.required = true;
 
-				const l1 = new IndexedLine3();
+				const l1 = new GraphEdge();
 				l1.start.copy( point );
 				l1.startIndex = index;
 				l1.end.copy( e.end );
