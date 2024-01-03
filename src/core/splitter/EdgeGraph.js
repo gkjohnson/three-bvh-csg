@@ -55,7 +55,7 @@ export class EdgeGraph {
 			const vec = new Vector3();
 			const intersectingEdge = edges.findIndex( e => {
 
-				e.closestPointToPoint( point, vec );
+				e.closestPointToPoint( point, true, vec );
 				return vec.distanceTo( point ) < EPSILON;
 
 			} );

@@ -57,7 +57,7 @@ export class TriangleGraph {
 
 	}
 
-	splitBy( tri ) {
+	splitByTriangle( tri ) {
 
 		const { plane, invFrame, initialTri, graph } = this;
 
