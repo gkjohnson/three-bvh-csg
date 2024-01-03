@@ -149,8 +149,8 @@ export function getIntersectedLine( line, tri, target ) {
 	for ( let i = 0; i < 3; i ++ ) {
 
 		const ni = ( i + 1 ) % 3;
-		edge.start.set( arr[ i ] );
-		edge.end.set( arr[ ni ] );
+		edge.start.copy( arr[ i ] );
+		edge.end.copy( arr[ ni ] );
 
 		if ( lineIntersect( edge, line, vec ) ) {
 

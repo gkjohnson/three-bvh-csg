@@ -29,14 +29,15 @@ export class TriangleGraph {
 		right.subVectors( tri.a, tri.b ).normalize();
 		up.crossVectors( norm, right );
 
-		const { frame, invFrame, initialTri, graph } = this;
+		const { frame, invFrame, initialTri, graph, plane } = this;
+		tri.getPlane( plane );
 		frame.makeBasis( right, up, norm ).setPosition( tri.a );
 		invFrame.copy( frame ).invert();
 
 		initialTri.copy( tri );
 		transformToFrame( initialTri, invFrame );
 
-		const arr = [ tri.a, tri.b, tri.c ];
+		const arr = [ initialTri.a, initialTri.b, initialTri.c ];
 		for ( let i = 0; i < 3; i ++ ) {
 
 			const line = new Line3();
@@ -59,10 +60,9 @@ export class TriangleGraph {
 
 	splitByTriangle( tri ) {
 
-		const { plane, invFrame, initialTri, graph } = this;
+		const { plane, invFrame, frame, initialTri, graph } = this;
 
 		tri = tri.clone();
-		transformToFrame( tri, invFrame );
 
 		const line = new Line3();
 		const hitPoint = new Vector3();
@@ -105,6 +105,13 @@ export class TriangleGraph {
 
 		}
 
+		planePoints.forEach( p => {
+
+			p.applyMatrix4( invFrame );
+			p.z = 0;
+
+		} );
+
 		// find the edges that intersect with the triangle itself
 		const edges = [];
 		if ( coplanarPoints === 3 ) {
@@ -146,6 +153,7 @@ export class TriangleGraph {
 			const edge = new Line3();
 			edge.start.copy( planePoints[ 0 ] );
 			edge.end.copy( planePoints[ 1 ] );
+
 			if ( getIntersectedLine( edge, initialTri, result ) ) {
 
 				edges.push( result.clone() );
