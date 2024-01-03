@@ -37,18 +37,7 @@ export class TriangleGraph {
 		initialTri.copy( tri );
 		transformToFrame( initialTri, invFrame );
 
-		const arr = [ initialTri.a, initialTri.b, initialTri.c ];
-		for ( let i = 0; i < 3; i ++ ) {
-
-			const line = new Line3();
-			const ni = ( i + 1 ) % 3;
-
-			line.start.copy( arr[ i ] );
-			line.end.copy( arr[ ni ] );
-			graph.insertEdge( line );
-
-
-		}
+		graph.initialize( initialTri );
 
 	}
 
