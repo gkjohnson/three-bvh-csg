@@ -1,5 +1,6 @@
 import { Triangle, Matrix4, Line3, Plane, Vector3 } from 'three';
 import { getIntersectedLine, transformToFrame } from './utils';
+import { EdgeGraph } from './EdgeGraph';
 
 const EPSILON = 1e-10;
 
@@ -7,9 +8,7 @@ export class TriangleGraph {
 
 	constructor() {
 
-		this.points = [];
-		this.connections = [];
-		this.triangles = [];
+		this.graph = new EdgeGraph();
 
 		this.initialTri = new Triangle();
 		this.plane = new Plane();
@@ -30,33 +29,37 @@ export class TriangleGraph {
 		right.subVectors( tri.a, tri.b ).normalize();
 		up.crossVectors( norm, right );
 
-		const { frame, invFrame, initialTri, points } = this;
+		const { frame, invFrame, initialTri, graph } = this;
 		frame.makeBasis( right, up, norm ).setPosition( tri.a );
 		invFrame.copy( frame ).invert();
 
 		initialTri.copy( tri );
 		transformToFrame( initialTri, invFrame );
 
-		points.push(
-			tri.a.clone(),
-			tri.b.clone(),
-			tri.c.clone(),
-		);
+		const arr = [ tri.a, tri.b, tri.c ];
+		for ( let i = 0; i < 3; i ++ ) {
+
+			const line = new Line3();
+			const ni = ( i + 1 ) % 3;
+
+			line.start.copy( arr[ i ] );
+			line.end.copy( arr[ ni ] );
+			graph.insertEdge( line );
+
+
+		}
 
 	}
 
 	reset() {
 
-		// TODO: use a pool of objects here
-		this.points = [];
-		this.connections = [];
-		this.triangles = [];
+		this.graph = new EdgeGraph();
 
 	}
 
 	splitBy( tri ) {
 
-		const { plane, invFrame, initialTri, points, connections } = this;
+		const { plane, invFrame, initialTri, graph } = this;
 
 		tri = tri.clone();
 		transformToFrame( tri, invFrame );
@@ -154,33 +157,9 @@ export class TriangleGraph {
 		// deduplicate and add edges
 		for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
-			const edge = edges[ i ];
-			let startIndex = this.findClosestPointIndex( edge.start );
-			if ( startIndex === null ) {
-
-				startIndex = points.length;
-				points.push( edge.start.clone() );
-
-			}
-
-			let endIndex = this.findClosestPointIndex( edge.start );
-			if ( endIndex === null ) {
-
-				endIndex = points.length;
-				points.push( edge.end.clone() );
-
-			}
-
-			connections.push( { start: startIndex, end: endIndex } );
+			graph.insertEdge( edges[ i ] );
 
 		}
-
-
-		// TODO: insert edges
-		// - detect crossings with other edges and swap them to insert
-		// - possibly need to store triangles to swap
-
-
 
 		// TODO
 		// - find intersection edge
@@ -192,32 +171,6 @@ export class TriangleGraph {
 		// - confirm on edges cross??
 		// OR
 		// - just clip into separate shapes? Use earcut to triangulate?
-
-	}
-
-	findClosestPointIndex( p ) {
-
-		const points = this.points;
-		let closestIndex = null;
-		let closestDist = Infinity;
-		for ( let i = 0, l = points.length; i < l; i ++ ) {
-
-			const d = p.distanceTo( points[ i ] );
-			if ( d < EPSILON && d < closestDist ) {
-
-				closestIndex = i;
-				closestDist = d;
-
-			}
-
-		}
-
-		return closestIndex;
-
-	}
-
-	forEachTriangle( cb ) {
-
 
 	}
 
