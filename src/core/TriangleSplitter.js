@@ -284,7 +284,7 @@ export class TriangleSplitter {
 					nextTri.b.copy( _foundEdge.end );
 					nextTri.c.copy( _foundEdge.start );
 
-					if ( ! isTriDegenerate( nextTri, EPSILON ) ) {
+					if ( ! isTriDegenerate( nextTri ) ) {
 
 						triangles.push( nextTri );
 
@@ -295,7 +295,7 @@ export class TriangleSplitter {
 					tri.c.copy( _foundEdge.end );
 
 					// finish off the adjusted triangle
-					if ( isTriDegenerate( tri, EPSILON ) ) {
+					if ( isTriDegenerate( tri ) ) {
 
 						triangles.splice( i, 1 );
 						i --;
@@ -358,20 +358,20 @@ export class TriangleSplitter {
 					tri.c.copy( _foundEdge.start );
 
 					// don't add degenerate triangles to the list
-					if ( ! isTriDegenerate( nextTri1, EPSILON ) ) {
+					if ( ! isTriDegenerate( nextTri1 ) ) {
 
 						triangles.push( nextTri1 );
 
 					}
 
-					if ( ! isTriDegenerate( nextTri2, EPSILON ) ) {
+					if ( ! isTriDegenerate( nextTri2 ) ) {
 
 						triangles.push( nextTri2 );
 
 					}
 
 					// finish off the adjusted triangle
-					if ( isTriDegenerate( tri, EPSILON ) ) {
+					if ( isTriDegenerate( tri ) ) {
 
 						triangles.splice( i, 1 );
 						i --;
