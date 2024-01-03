@@ -8,8 +8,8 @@ class IndexedLine3 extends Line3 {
 		this.startIndex = - 1;
 		this.endIndex = - 1;
 
-		this.positiveTriangle = - 1;
-		this.negativeTriangle = - 1;
+		this.triangle = null;
+		this.reverseTriangle = null;
 
 		this.required = false;
 
