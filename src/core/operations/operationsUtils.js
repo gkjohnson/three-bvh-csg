@@ -9,6 +9,7 @@ import {
 	HOLLOW_SUBTRACTION,
 	HOLLOW_INTERSECTION,
 } from '../constants.js';
+import { isTriDegenerate } from '../utils/triangleUtils.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
@@ -34,6 +35,8 @@ export const INVERT_TRI = 0;
 export const ADD_TRI = 1;
 export const SKIP_TRI = 2;
 
+const FLOATING_COPLANAR_EPSILON = 1e-14;
+
 let _debugContext = null;
 export function setDebugContext( debugData ) {
 
@@ -44,7 +47,7 @@ export function setDebugContext( debugData ) {
 export function getHitSide( tri, bvh ) {
 
 	tri.getMidpoint( _ray.origin );
-	_ray.direction.set( 0, 0, 1 );
+	tri.getNormal( _ray.direction );
 
 	const hit = bvh.raycastFirst( _ray, DoubleSide );
 	const hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
@@ -131,25 +134,40 @@ export function collectIntersectingTriangles( a, b ) {
 
 		intersectsTriangles( triangleA, triangleB, ia, ib ) {
 
-			if ( triangleA.intersectsTriangle( triangleB, _edge, true ) ) {
+			if ( ! isTriDegenerate( triangleA ) && ! isTriDegenerate( triangleB ) ) {
 
-				// if the edge distance is zero (and not from being coplanar) then exit early and don't include the
-				// triangle in the set of intersecting triangles
-				if ( _edge.distanceSq() === 0 && triangleA.plane.normal.dot( triangleB.plane.normal ) < 1.0 - 1e-10 ) {
+				// due to floating point error it's possible that we can have two overlapping, coplanar triangles
+				// that are a _tiny_ fraction of a value away from each other. If we find that case then check the
+				// distance between triangles and if it's small enough consider them intersecting.
+				let intersected = triangleA.intersectsTriangle( triangleB, _edge, true );
+				if ( ! intersected ) {
 
-					return false;
+					const pa = triangleA.plane;
+					const pb = triangleB.plane;
+					const na = pa.normal;
+					const nb = pb.normal;
+
+					if ( na.dot( nb ) === 1 && Math.abs( pa.constant - pb.constant ) < FLOATING_COPLANAR_EPSILON ) {
+
+						intersected = true;
+
+					}
 
 				}
 
-				let va = a.geometry.boundsTree.resolveTriangleIndex( ia );
-				let vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
-				aIntersections.add( va, vb );
-				bIntersections.add( vb, va );
+				if ( intersected ) {
 
-				if ( _debugContext ) {
+					let va = a.geometry.boundsTree.resolveTriangleIndex( ia );
+					let vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
+					aIntersections.add( va, vb );
+					bIntersections.add( vb, va );
 
-					_debugContext.addEdge( _edge );
-					_debugContext.addIntersectingTriangles( ia, triangleA, ib, triangleB );
+					if ( _debugContext ) {
+
+						_debugContext.addEdge( _edge );
+						_debugContext.addIntersectingTriangles( ia, triangleA, ib, triangleB );
+
+					}
 
 				}
 

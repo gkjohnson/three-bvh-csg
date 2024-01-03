@@ -32,6 +32,8 @@ function joinGroups( groups ) {
 // the given reference geometry
 function prepareAttributesData( referenceGeometry, targetGeometry, attributeData, relevantAttributes ) {
 
+	attributeData.clear();
+
 	// initialize and clear unused data from the attribute buffers and vice versa
 	const aAttributes = referenceGeometry.attributes;
 	for ( let i = 0, l = relevantAttributes.length; i < l; i ++ ) {
@@ -62,8 +64,6 @@ function prepareAttributesData( referenceGeometry, targetGeometry, attributeData
 		}
 
 	}
-
-	attributeData.clear();
 
 }
 
@@ -135,12 +135,13 @@ function assignBufferData( geometry, attributeData, groupOrder ) {
 	// initialize the groups
 	let groupOffset = 0;
 	geometry.clearGroups();
-	for ( let i = 0, l = attributeData.groupCount; i < l; i ++ ) {
+	for ( let i = 0, l = Math.min( groupOrder.length, attributeData.groupCount ); i < l; i ++ ) {
 
-		const vertCount = attributeData.getCount( i );
+		const { index, materialIndex } = groupOrder[ i ];
+		const vertCount = attributeData.getCount( index );
 		if ( vertCount !== 0 ) {
 
-			geometry.addGroup( groupOffset, vertCount, groupOrder[ i ].materialIndex );
+			geometry.addGroup( groupOffset, vertCount, materialIndex );
 			groupOffset += vertCount;
 
 		}

@@ -10,6 +10,7 @@ import {
 } from './operationsUtils.js';
 import { getTriCount } from '../utils/geometryUtils.js';
 import { HOLLOW_INTERSECTION, HOLLOW_SUBTRACTION } from '../constants.js';
+import { isTriDegenerate } from '../utils/triangleUtils.js';
 
 const _matrix = new Matrix4();
 const _normalMatrix = new Matrix3();
@@ -121,6 +122,7 @@ function performSplitTriangleOperations(
 		_triA.c.fromBufferAttribute( aPosition, ia2 ).applyMatrix4( _matrix );
 
 		// initialize the splitter with the triangle from geometry A
+		splitter.reset();
 		splitter.initialize( _triA );
 
 		// split the triangle with the intersecting triangles from B
@@ -147,7 +149,7 @@ function performSplitTriangleOperations(
 
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach
-			const hitSide = clippedTri.isCoplanar ?
+			const hitSide = splitter.coplanarTriangleUsed ?
 				getHitSideWithCoplanarCheck( clippedTri, bBVH ) :
 				getHitSide( clippedTri, bBVH );
 
@@ -295,12 +297,19 @@ function performWholeTriangleOperations(
 				const i2 = aIndex.getX( i3 + 2 );
 				const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ currId ] + groupOffset;
 
-				for ( let k = 0, lk = _attr.length; k < lk; k ++ ) {
+				_tri.a.fromBufferAttribute( aPosition, i0 );
+				_tri.b.fromBufferAttribute( aPosition, i1 );
+				_tri.c.fromBufferAttribute( aPosition, i2 );
+				if ( ! isTriDegenerate( _tri ) ) {
 
-					const action = _actions[ k ];
-					const attrSet = _attr[ k ].getGroupAttrSet( groupIndex );
-					const invertTri = action === INVERT_TRI;
-					appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
+					for ( let k = 0, lk = _attr.length; k < lk; k ++ ) {
+
+						const action = _actions[ k ];
+						const attrSet = _attr[ k ].getGroupAttrSet( groupIndex );
+						const invertTri = action === INVERT_TRI;
+						appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
+
+					}
 
 				}
 

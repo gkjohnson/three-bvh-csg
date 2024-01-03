@@ -15,4 +15,3 @@ export * from './objects/PointsHelper.js';
 export * from './objects/HalfEdgeHelper.js';
 
 export * from './utils/computeMeshVolume.js';
-export * from './utils/isWaterTight.js';

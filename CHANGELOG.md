@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.16] - Unreleased
+### Fixed
+- A couple cases relating missing triangles during clip
+- Cases where degenerate triangles could make their way into the result and potentially cause incorrectly large bounding boxes.
+
+## [0.0.15] - 2023-12-05
+### Fixed
+- Case where extraneous points could be generated causing incorrectly large bounding boxes when brushes contain degenerate triangles.
+
+## [0.0.14] - 2023-12-05
+Unpublished
+
+## [0.0.13] - 2023-10-22
+### Fixed
+- Case where coplanar faces may not be clipped together.
+- Case where coplanar faces may not be removed correctly.
+
+## [0.0.12] - 2023-10-20
+### Fixed
+- Evaluator.conslidateGroups not working as expected when groups need to be reordered and merged.
+- Cases where triangles are culled incorrectly.
+
 ## [0.0.11] - 2023-10-17
 ### Added
 - Small performance improvement to HalfEdge structure generation resulting in up to 4-5% time improvement on operations.
