@@ -8,6 +8,11 @@ class IndexedLine3 extends Line3 {
 		this.startIndex = - 1;
 		this.endIndex = - 1;
 
+		this.positiveTriangle = - 1;
+		this.negativeTriangle = - 1;
+
+		this.required = false;
+
 	}
 
 }
@@ -73,12 +78,14 @@ export class EdgeGraph {
 				l0.startIndex = e.startIndex;
 				l0.end.copy( point );
 				l0.endIndex = index;
+				l0.required = true;
 
 				const l1 = new IndexedLine3();
 				l1.start.copy( point );
 				l1.startIndex = index;
 				l1.end.copy( e.end );
 				l1.endIndex = e.endIndex;
+				l1.required = true;
 
 				edges.push( l0, l1 );
 
