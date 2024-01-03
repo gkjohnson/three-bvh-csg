@@ -64,7 +64,7 @@ export class TriangleGraph {
 		const line = new Line3();
 		const hitPoint = new Vector3();
 		const arr = [ tri.a, tri.b, tri.c ];
-		const points = [];
+		const planePoints = [];
 		let coplanarPoints = 0;
 
 		for ( let i = 0; i < 3; i ++ ) {
@@ -97,7 +97,7 @@ export class TriangleGraph {
 
 			}
 
-			points.push( hitPoint.clone() );
+			planePoints.push( hitPoint.clone() );
 
 		}
 
@@ -139,8 +139,8 @@ export class TriangleGraph {
 
 			const result = new Line3();
 			const edge = new Line3();
-			edge.start.copy( points[ 0 ] );
-			edge.end.copy( points[ 1 ] );
+			edge.start.copy( planePoints[ 0 ] );
+			edge.end.copy( planePoints[ 1 ] );
 			if ( getIntersectedLine( edge, initialTri, result ) ) {
 
 				edges.push( result.clone() );
@@ -169,7 +169,10 @@ export class TriangleGraph {
 
 			}
 
+			connections.push( { start: startIndex, end: endIndex } );
+
 		}
+
 
 		// TODO: insert edges
 		// - detect crossings with other edges and swap them to insert
