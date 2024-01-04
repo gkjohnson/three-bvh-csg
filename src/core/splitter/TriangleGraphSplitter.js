@@ -82,8 +82,10 @@ export class TriangleGraphSplitter {
 			line.start.copy( p0 );
 			line.end.copy( p1 );
 
+			// consider the end point to be not hittable
 			if ( ! plane.intersectLine( line, hitPoint ) || hitPoint.distanceTo( p1 ) < EPSILON ) {
 
+				// add buffer for the start point
 				if ( d0 < EPSILON ) {
 
 					hitPoint.copy( p0 );
@@ -114,30 +116,20 @@ export class TriangleGraphSplitter {
 			this.coplanarTriangleUsed = true;
 			for ( let i = 0; i < 3; i ++ ) {
 
+				const result = new Line3();
+				const edge = new Line3();
+
 				const ni = ( i + 1 ) % 3;
-				const p0 = planePoints[ i ];
-				const p1 = planePoints[ ni ];
+				edge.start.copy( planePoints[ i ] );
+				edge.end.copy( planePoints[ ni ] );
 
-				const c0 = initialTri.containsPoint( p0 );
-				const c1 = initialTri.containsPoint( p1 );
-				if ( c0 && c1 ) {
+				if ( getIntersectedLine( edge, initialTri, result ) ) {
 
-					const line = new Line3();
-					line.start.copy( p0 );
-					line.end.copy( p1 );
-					edges.push( line );
+					edges.push( result.clone() );
 
-				} else {
+				} else if ( initialTri.containsPoint( edge.start ) || initialTri.containsPoint( edge.end ) ) {
 
-					const result = new Line3();
-					const edge = new Line3();
-					edge.start.copy( p0 );
-					edge.end.copy( p1 );
-					if ( getIntersectedLine( edge, initialTri, result ) ) {
-
-						edges.push( result.clone() );
-
-					}
+					edges.push( edge.clone() );
 
 				}
 
@@ -147,13 +139,15 @@ export class TriangleGraphSplitter {
 
 			const result = new Line3();
 			const edge = new Line3();
+
 			edge.start.copy( planePoints[ 0 ] );
 			edge.end.copy( planePoints[ 1 ] );
+
 			if ( getIntersectedLine( edge, initialTri, result ) ) {
 
 				edges.push( result.clone() );
 
-			} else if ( initialTri.containsPoint( edge.start ) ) {
+			} else if ( initialTri.containsPoint( edge.start ) || initialTri.containsPoint( edge.end ) ) {
 
 				edges.push( edge.clone() );
 
@@ -178,12 +172,14 @@ export class TriangleGraphSplitter {
 			v.applyMatrix4( frame );
 
 		} );
+
 		graph.edges.forEach( e => {
 
 			e.start.applyMatrix4( frame );
 			e.end.applyMatrix4( frame );
 
 		} );
+
 		graph.triangles.forEach( t => {
 
 			t.a.applyMatrix4( frame );
