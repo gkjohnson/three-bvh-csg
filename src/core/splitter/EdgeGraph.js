@@ -261,7 +261,6 @@ export class EdgeGraph {
 					insertedEdge.startIndex = index;
 					insertedEdge.end.copy( triangle.points[ nextEdgeIndex ] );
 					insertedEdge.endIndex = triangle.getVertexIndex( nextEdgeIndex );
-					edges.push( insertedEdge );
 
 					const finalEdgeIndex0 = ( edgeIndex + 2 ) % 3;
 					const newTri0 = new GraphTriangle();
@@ -293,7 +292,6 @@ export class EdgeGraph {
 					insertedEdge.startIndex = index;
 					insertedEdge.end.copy( triangle.points[ nextEdgeIndex ] );
 					insertedEdge.endIndex = triangle.getVertexIndex( nextEdgeIndex );
-					edges.push( insertedEdge );
 
 					const finalEdgeIndex0 = ( edgeIndex + 2 ) % 3;
 					const newTri0 = new GraphTriangle();

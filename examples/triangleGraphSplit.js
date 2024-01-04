@@ -112,12 +112,21 @@ function render() {
 	_vec.set( 0, 0, 1 ).transformDirection( planeObject.matrixWorld );
 	plane.setFromNormalAndCoplanarPoint( _vec, planeObject.position );
 
-	splitter.initialize( ogTris[ 0 ] );
-	tris.forEach( t => {
+	if ( ! window.UPDATED ) {
 
-		splitter.splitByTriangle( t );
+		splitter.initialize( ogTris[ 0 ] );
+		tris.forEach( t => {
 
-	} );
+			splitter.splitByTriangle( t );
+
+		} );
+
+		splitter.complete();
+
+		window.UPDATED = true;
+		window.SPLITTER = splitter;
+
+	}
 
 	planeHelper.visible = false;
 	transformControls.visible = false;
@@ -126,10 +135,8 @@ function render() {
 	pointsHelper.setPoints( splitter.graph.points );
 	edgesHelper.setEdges( splitter.graph.edges );
 
-	clippedTris.setTriangles( ogTris );
-	initialTris.setTriangles( tris );
-	// clippedTris.setTriangles( splitter.triangles );
-	// initialTris.setTriangles( [ ...ogTris, ...tris ] );
+	clippedTris.setTriangles( splitter.graph.triangles );
+	initialTris.setTriangles( [ ...ogTris, ...tris ] );
 
 	renderer.render( scene, camera );
 

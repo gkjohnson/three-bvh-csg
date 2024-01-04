@@ -157,16 +157,29 @@ export class TriangleGraph {
 
 		}
 
-		// TODO
-		// - find intersection edge
-		// - transform tri or intersection edge into og tri frame w/ z up
-		// - which triangles the points line up on (or which edges they may lie on) to split and insert
-		// 	  - possibly split the main triangle edges
-		// - triangulate the points
-		// - swap so the required edges are present
-		// - confirm on edges cross??
-		// OR
-		// - just clip into separate shapes? Use earcut to triangulate?
+	}
+
+	complete() {
+
+		const { graph, frame } = this;
+		graph.points.forEach( v => {
+
+			v.applyMatrix4( frame );
+
+		} );
+		graph.edges.forEach( e => {
+
+			e.start.applyMatrix4( frame );
+			e.end.applyMatrix4( frame );
+
+		} );
+		graph.triangles.forEach( t => {
+
+			t.a.applyMatrix4( frame );
+			t.b.applyMatrix4( frame );
+			t.c.applyMatrix4( frame );
+
+		} );
 
 	}
 
