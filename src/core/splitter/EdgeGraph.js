@@ -1,5 +1,6 @@
 import { Vector3, Line3, Triangle } from 'three';
-import { lineIntersect } from './utils';
+import { lineIntersect } from './utils.js';
+import { ObjectPool } from './ObjectPool.js';
 
 class GraphTriangle extends Triangle {
 
@@ -91,6 +92,41 @@ export class EdgeGraph {
 		this.points = [];
 		this.edges = [];
 		this.triangles = [];
+
+		this.pointsPool = new ObjectPool(
+			() => new Vector3(),
+		);
+
+		this.edgesPool = new ObjectPool(
+			() => new GraphEdge(),
+			e => {
+
+				e.startIndex = - 1;
+				e.endIndex = - 1;
+
+				e.triangle = null;
+				e.reverseTriangle = null;
+
+				e.required = false;
+
+			},
+		);
+
+		this.trianglePool = new ObjectPool(
+			() => new GraphTriangle(),
+			t => {
+
+				const edges = t.edges;
+				for ( let i = 0; i < 3; i ++ ) {
+
+					const info = edges[ i ];
+					info.reversed = false;
+					info.edge = null;
+
+				}
+
+			},
+		);
 
 	}
 
