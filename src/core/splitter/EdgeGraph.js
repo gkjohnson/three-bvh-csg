@@ -303,6 +303,36 @@ export class EdgeGraph {
 
 	}
 
+	swapEdge( edge ) {
+
+		const { triangle, reverseTriangle } = edge;
+		if ( ! triangle || ! reverseTriangle ) {
+
+			return false;
+
+		}
+
+		const e0Index = triangle.getEdgeIndex( edge );
+		const e1Index = reverseTriangle.getEdgeIndex( edge );
+
+		const v0Index = ( e0Index + 2 ) % 3;
+		const v1Index = ( e1Index + 2 ) % 3;
+
+		const v0 = triangle.points[ v0Index ];
+		const v1 = reverseTriangle.points[ v1Index ];
+
+		edge.start.copy( v0 );
+		edge.startIndex = triangle.getVertexIndex( v0Index );
+		edge.end.copy( v1 );
+		edge.endIndex = reverseTriangle.getVertexIndex( v1Index );
+
+		triangle.setEdge( e0Index, edge, triangle.edges[ e0Index ].reversed );
+		reverseTriangle.setEdge( e1Index, edge, reverseTriangle.edges[ e0Index ].reversed );
+
+		return true;
+
+	}
+
 	validateState() {
 
 		// TODO: validate state
