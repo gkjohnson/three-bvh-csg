@@ -168,7 +168,7 @@ export class EdgeGraph {
 
 	insertEdge( edge ) {
 
-		const { points, edges } = this;
+		const { points, edges, edgePool, pointPool } = this;
 		const { start, end } = edge;
 
 		// insert the edge points into the graph
@@ -176,7 +176,7 @@ export class EdgeGraph {
 		const endIndex = this.insertPoint( end );
 
 		// the edge we're trying to insert
-		const inserting = new GraphEdge();
+		const inserting = edgePool.getInstance();
 		inserting.start.copy( points[ startIndex ] );
 		inserting.startIndex = startIndex;
 		inserting.end.copy( points[ endIndex ] );
@@ -193,7 +193,7 @@ export class EdgeGraph {
 				other.endIndex !== inserting.endIndex
 			) {
 
-				const point = new Vector3();
+				const point = pointPool.getInstance();
 				if ( lineIntersect( inserting, other, point ) ) {
 
 					if ( other.required ) {
@@ -239,13 +239,13 @@ export class EdgeGraph {
 
 	insertPoint( point ) {
 
-		const { edges, points, triangles } = this;
+		const { edges, points, triangles, edgePool, pointPool, trianglePool } = this;
 		let index = this.findMatchingPointIndex( point );
 
 		if ( index === null ) {
 
 			// if we haven't been able to match a point see if we can find an existing edge it sits on
-			const vec = new Vector3();
+			const vec = pointPool.getInstance();
 			const intersectingEdge = edges.findIndex( e => {
 
 				e.closestPointToPoint( point, true, vec );
@@ -257,7 +257,7 @@ export class EdgeGraph {
 
 				// if we didn't find an edge then try to find the triangle the point is in
 				index = points.length;
-				points.push( point.clone() );
+				points.push( pointPool.getInstance().copy( point ) );
 
 				const containingTriangle = triangles.findIndex( t => t.containsPoint( point ) );
 				if ( containingTriangle === - 1 ) {
@@ -275,7 +275,7 @@ export class EdgeGraph {
 					for ( let i = 0; i < 3; i ++ ) {
 
 						const other = triangle.points[ i ];
-						const edge = new GraphEdge();
+						const edge = edgePool.getInstance();
 						edge.start.copy( point );
 						edge.startIndex = index;
 						edge.end.copy( other );
@@ -293,7 +293,7 @@ export class EdgeGraph {
 						const e1 = triangle.edges[ i ].edge;
 						const e2 = newEdges[ ni ];
 
-						const newTriangle = new GraphTriangle();
+						const newTriangle = trianglePool.getInstance();
 						const reversed = triangle.edges[ i ].reversed;
 						newTriangle.setEdge( 0, e0, false );
 						newTriangle.setEdge( 1, e1, reversed );
@@ -312,7 +312,7 @@ export class EdgeGraph {
 
 				// if we are sitting on an edge
 				index = points.length;
-				points.push( point.clone() );
+				points.push( pointPool.getInstance().copy( point ) );
 
 				// NOTE: if the edge is required here then we have a problem - it shouldn't have to be split
 				const e = edges[ intersectingEdge ];
@@ -323,14 +323,14 @@ export class EdgeGraph {
 				}
 
 				// construct the edges
-				const l0 = new GraphEdge();
+				const l0 = edgePool.getInstance();
 				l0.start.copy( e.start );
 				l0.startIndex = e.startIndex;
 				l0.end.copy( point );
 				l0.endIndex = index;
 				l0.required = e.required;
 
-				const l1 = new GraphEdge();
+				const l1 = edgePool.getInstance();
 				l1.start.copy( point );
 				l1.startIndex = index;
 				l1.end.copy( e.end );
@@ -347,20 +347,20 @@ export class EdgeGraph {
 					const edgeIndex = triangle.getEdgeIndex( e );
 					const nextEdgeIndex = ( edgeIndex + 2 ) % 3;
 
-					const insertedEdge = new GraphEdge();
+					const insertedEdge = edgePool.getInstance();
 					insertedEdge.start.copy( point );
 					insertedEdge.startIndex = index;
 					insertedEdge.end.copy( triangle.points[ nextEdgeIndex ] );
 					insertedEdge.endIndex = triangle.getVertexIndex( nextEdgeIndex );
 
 					const finalEdgeIndex0 = ( edgeIndex + 2 ) % 3;
-					const newTri0 = new GraphTriangle();
+					const newTri0 = trianglePool.getInstance();
 					newTri0.setEdge( 0, l0, triangle.edges[ edgeIndex ].reversed );
 					newTri0.setEdge( 1, insertedEdge, false );
 					newTri0.setEdge( 2, triangle.edges[ finalEdgeIndex0 ].edge, triangle.edges[ finalEdgeIndex0 ].reversed );
 
 					const finalEdgeIndex1 = ( edgeIndex + 1 ) % 3;
-					const newTri1 = new GraphTriangle();
+					const newTri1 = trianglePool.getInstance();
 					newTri1.setEdge( 0, l1, triangle.edges[ edgeIndex ].reversed );
 					newTri1.setEdge( 1, triangle.edges[ finalEdgeIndex1 ].edge, triangle.edges[ finalEdgeIndex1 ].reversed );
 					newTri1.setEdge( 2, insertedEdge, true );
@@ -378,20 +378,20 @@ export class EdgeGraph {
 					const edgeIndex = triangle.getEdgeIndex( e );
 					const nextEdgeIndex = ( edgeIndex + 2 ) % 3;
 
-					const insertedEdge = new GraphEdge();
+					const insertedEdge = edgePool.getInstance();
 					insertedEdge.start.copy( point );
 					insertedEdge.startIndex = index;
 					insertedEdge.end.copy( triangle.points[ nextEdgeIndex ] );
 					insertedEdge.endIndex = triangle.getVertexIndex( nextEdgeIndex );
 
 					const finalEdgeIndex0 = ( edgeIndex + 2 ) % 3;
-					const newTri0 = new GraphTriangle();
+					const newTri0 = trianglePool.getInstance();
 					newTri0.setEdge( 0, l0, triangle.edges[ edgeIndex ].reversed );
 					newTri0.setEdge( 1, insertedEdge, true );
 					newTri0.setEdge( 2, triangle.edges[ finalEdgeIndex0 ].edge, triangle.edges[ finalEdgeIndex0 ].reversed );
 
 					const finalEdgeIndex1 = ( edgeIndex + 1 ) % 3;
-					const newTri1 = new GraphTriangle();
+					const newTri1 = trianglePool.getInstance();
 					newTri1.setEdge( 0, l1, triangle.edges[ edgeIndex ].reversed );
 					newTri1.setEdge( 1, triangle.edges[ finalEdgeIndex1 ].edge, triangle.edges[ finalEdgeIndex1 ].reversed );
 					newTri1.setEdge( 2, insertedEdge, true );
