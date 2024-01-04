@@ -137,16 +137,16 @@ export class EdgeGraph {
 	initialize( tri ) {
 
 		const arr = [ tri.a, tri.b, tri.c ];
-		const { triangles, points, edges } = this;
+		const { triangles, points, edges, trianglePool, edgePool, pointPool } = this;
 
 		// initialize the first triangle that we will be splitting
-		const newTriangle = new GraphTriangle();
+		const newTriangle = trianglePool.getInstance();
 		for ( let i = 0; i < 3; i ++ ) {
 
 			const ni = ( i + 1 ) % 3;
 			const p0 = arr[ i ];
 			const p1 = arr[ ni ];
-			const edge = new GraphEdge();
+			const edge = edgePool.getInstance();
 			edge.start.copy( p0 );
 			edge.startIndex = i;
 			edge.end.copy( p1 );
@@ -158,7 +158,11 @@ export class EdgeGraph {
 		}
 
 		triangles.push( newTriangle );
-		points.push( tri.a.clone(), tri.b.clone(), tri.c.clone() );
+		points.push(
+			pointPool.getInstance().copy( tri.a ),
+			pointPool.getInstance().copy( tri.b ),
+			pointPool.getInstance().copy( tri.c ),
+		);
 
 	}
 
