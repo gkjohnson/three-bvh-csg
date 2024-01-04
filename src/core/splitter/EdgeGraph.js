@@ -177,18 +177,19 @@ export class EdgeGraph {
 
 			if ( intersectingEdge === - 1 ) {
 
+				index = points.length;
+				points.push( point.clone() );
+
 				const containingTriangle = triangles.findIndex( t => t.containsPoint( point ) );
 				if ( containingTriangle === - 1 ) {
 
 					// TODO: this should never happen
-					index = points.length;
-					points.push( point.clone() );
 
 				} else {
 
 					// TODO: split into three triangles
 					const triangle = triangles[ containingTriangle ];
-					const edges = [ null, null, null ];
+					const newEdges = [ null, null, null ];
 					for ( let i = 0; i < 3; i ++ ) {
 
 						const other = triangle.points[ i ];
@@ -198,16 +199,16 @@ export class EdgeGraph {
 						edge.end.copy( other );
 						edge.endIndex = triangle.getVertexIndex( i );
 
-						edges[ i ] = edge;
+						newEdges[ i ] = edge;
 
 					}
 
 					for ( let i = 0; i < 3; i ++ ) {
 
 						const ni = ( i + 1 ) % 3;
-						const e0 = edges[ i ];
+						const e0 = newEdges[ i ];
 						const e1 = triangle.edges[ i ].edge;
-						const e2 = edges[ ni ];
+						const e2 = newEdges[ ni ];
 
 						const newTriangle = new GraphTriangle();
 						const reversed = triangle.edges[ i ].reversed;
@@ -219,8 +220,7 @@ export class EdgeGraph {
 
 					}
 
-					index = points.length;
-					points.push( point.clone() );
+					edges.push( ...newEdges );
 					triangles.splice( triangles.indexOf( triangle ), 1 );
 
 				}
