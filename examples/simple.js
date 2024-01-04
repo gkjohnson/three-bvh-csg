@@ -280,6 +280,9 @@ async function init() {
 		brush2.material.vertexColors = v;
 		brush2.material.needsUpdate = true;
 
+		originalMaterial.vertexColors = v;
+		originalMaterial.needsUpdate = true;
+
 		materialMap.forEach( m => {
 
 			m.vertexColors = v;
