@@ -1,5 +1,5 @@
 import { BufferAttribute } from 'three';
-import { TriangleSplitter } from './TriangleSplitter.js';
+import { LegacyTriangleSplitter } from './splitter/LegacyTriangleSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
@@ -188,7 +188,7 @@ export class Evaluator {
 
 	constructor() {
 
-		this.triangleSplitter = new TriangleSplitter();
+		this.triangleSplitter = new LegacyTriangleSplitter();
 		this.attributeData = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
