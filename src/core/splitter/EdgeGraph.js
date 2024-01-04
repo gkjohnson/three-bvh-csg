@@ -363,8 +363,28 @@ export class EdgeGraph {
 		edge.end.copy( v1 );
 		edge.endIndex = reverseTriangle.getVertexIndex( v1Index );
 
-		triangle.setEdge( e0Index, edge, triangle.edges[ e0Index ].reversed );
-		reverseTriangle.setEdge( e1Index, edge, reverseTriangle.edges[ e0Index ].reversed );
+		// TODO: we should be able to get by with only adjusting two edges per triangle
+		const t0a = edge;
+		const t0ar = false;
+		const t0b = reverseTriangle.edges[ ( e1Index + 2 ) % 3 ].edge;
+		const t0br = reverseTriangle.edges[ ( e1Index + 2 ) % 3 ].reversed;
+		const t0c = triangle.edges[ ( e0Index + 1 ) % 3 ].edge;
+		const t0cr = triangle.edges[ ( e0Index + 1 ) % 3 ].reversed;
+
+		const t1a = edge;
+		const t1ar = true;
+		const t1b = triangle.edges[ ( e0Index + 2 ) % 3 ].edge;
+		const t1br = triangle.edges[ ( e0Index + 2 ) % 3 ].reversed;
+		const t1c = reverseTriangle.edges[ ( e1Index + 1 ) % 3 ].edge;
+		const t1cr = reverseTriangle.edges[ ( e1Index + 1 ) % 3 ].reversed;
+
+		triangle.setEdge( 0, t0a, t0ar );
+		triangle.setEdge( 1, t0b, t0br );
+		triangle.setEdge( 2, t0c, t0cr );
+
+		reverseTriangle.setEdge( 0, t1a, t1ar );
+		reverseTriangle.setEdge( 1, t1b, t1br );
+		reverseTriangle.setEdge( 2, t1c, t1cr );
 
 		return true;
 
