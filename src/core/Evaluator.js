@@ -1,4 +1,4 @@
-import { BufferAttribute, Triangle } from 'three';
+import { BufferAttribute } from 'three';
 import { LegacyTriangleSplitter } from './splitter/LegacyTriangleSplitter.js';
 import { TriangleGraphSplitter } from './splitter/TriangleGraphSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
