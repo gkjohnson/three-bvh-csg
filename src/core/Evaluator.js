@@ -1,5 +1,6 @@
-import { BufferAttribute } from 'three';
+import { BufferAttribute, Triangle } from 'three';
 import { LegacyTriangleSplitter } from './splitter/LegacyTriangleSplitter.js';
+import { TriangleGraphSplitter } from './splitter/TriangleGraphSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
@@ -186,9 +187,26 @@ function getMaterialList( groups, materials ) {
 // Utility class for performing CSG operations
 export class Evaluator {
 
+	set useLegacySplitter( v ) {
+
+		if ( this.useLegacySplitter !== v ) {
+
+			this.triangleSplitter = v ? new LegacyTriangleSplitter() : new TriangleGraphSplitter();
+
+		}
+
+	}
+
+	get useLegacySplitter() {
+
+		return this.triangleSplitter instanceof LegacyTriangleSplitter;
+
+	}
+
 	constructor() {
 
-		this.triangleSplitter = new LegacyTriangleSplitter();
+		this.useLegacySplitter = false;
+		this.triangleSplitter = new TriangleGraphSplitter();
 		this.attributeData = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;

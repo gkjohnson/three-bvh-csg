@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { EdgesHelper, PointsHelper, TriangleSetHelper } from '../src/index.js';
-import { TriangleGraph } from '../src/core/splitter/TriangleGraph.js';
+import { TriangleGraphSplitter } from '../src/core/splitter/TriangleGraphSplitter.js';
 
 let renderer, camera, scene;
 let controls, transformControls;
@@ -90,7 +90,7 @@ function init() {
 	pointsHelper = new PointsHelper();
 	edgesHelper = new EdgesHelper();
 
-	splitter = new TriangleGraph();
+	splitter = new TriangleGraphSplitter();
 
 	scene.add( initialTris, clippedTris, pointsHelper, edgesHelper );
 
