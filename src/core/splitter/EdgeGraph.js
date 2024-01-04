@@ -1,4 +1,5 @@
 import { Vector3, Line3, Triangle } from 'three';
+import { lineIntersect } from './utils';
 
 class GraphTriangle extends Triangle {
 
@@ -104,20 +105,58 @@ export class EdgeGraph {
 
 		const { points, edges } = this;
 		const { start, end } = edge;
-		const i0 = this.insertPoint( start );
-		const i1 = this.insertPoint( end );
+		const startIndex = this.insertPoint( start );
+		const endIndex = this.insertPoint( end );
 
-		// const line = new GraphEdge();
-		// line.start.copy( points[ i0 ] );
-		// line.startIndex = i0;
-		// line.end.copy( points[ i1 ] );
-		// line.endIndex = i1;
+		const inserting = new GraphEdge();
+		inserting.start.copy( points[ startIndex ] );
+		inserting.startIndex = startIndex;
+		inserting.end.copy( points[ endIndex ] );
+		inserting.endIndex = endIndex;
 
-		// edges.push( line );
+		for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
-		// TODO: check for intersections and swap triangle orientations, then add
-		// a required edge
-		// TODO: after swapping and making way for new edges we may want to mark edges as "required"
+			// swap the edge if we don't emanate from the same point
+			const other = edges[ i ];
+			if (
+				other.startIndex !== inserting.startIndex &&
+				other.startIndex !== inserting.endIndex &&
+				other.endIndex !== inserting.startIndex &&
+				other.endIndex !== inserting.endIndex
+			) {
+
+				const point = new Vector3();
+				if ( lineIntersect( inserting, other, point ) ) {
+
+					if ( other.required ) {
+
+						// TODO
+						console.error( 'FAILURE' );
+
+					} else {
+
+						this.swapEdge( other );
+
+					}
+
+				}
+
+			}
+
+			// if we found the edge that matches the target edge then mark it as required and continue
+			if ( (
+				other.startIndex === inserting.startIndex &&
+				other.endIndex === inserting.endIndex
+			) || (
+				other.startIndex === inserting.endIndex &&
+				other.endIndex === inserting.startIndex
+			) ) {
+
+				other.required = true;
+
+			}
+
+		}
 
 	}
 
