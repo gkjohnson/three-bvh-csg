@@ -357,42 +357,34 @@ export class EdgeGraph {
 
 		}
 
-		const e0Index = triangle.getEdgeIndex( edge );
-		const e1Index = reverseTriangle.getEdgeIndex( edge );
+		const t0EdgeIndex = triangle.getEdgeIndex( edge );
+		const t1EdgeIndex = reverseTriangle.getEdgeIndex( edge );
 
-		const v0Index = ( e0Index + 2 ) % 3;
-		const v1Index = ( e1Index + 2 ) % 3;
+		const t0SwapIndex = ( t0EdgeIndex + 2 ) % 3;
+		const t1SwapIndex = ( t1EdgeIndex + 2 ) % 3;
 
-		const v0 = triangle.points[ v0Index ];
-		const v1 = reverseTriangle.points[ v1Index ];
+		edge.start.copy( triangle.points[ t0SwapIndex ] );
+		edge.startIndex = triangle.getVertexIndex( t0SwapIndex );
+		edge.end.copy( reverseTriangle.points[ t1SwapIndex ] );
+		edge.endIndex = reverseTriangle.getVertexIndex( t1SwapIndex );
 
-		edge.start.copy( v0 );
-		edge.startIndex = triangle.getVertexIndex( v0Index );
-		edge.end.copy( v1 );
-		edge.endIndex = reverseTriangle.getVertexIndex( v1Index );
-
-		// TODO: we should be able to get by with only adjusting two edges per triangle
+		// adjust both triangles in place
 		const t0a = edge;
 		const t0ar = false;
-		const t0b = reverseTriangle.edges[ ( e1Index + 2 ) % 3 ].edge;
-		const t0br = reverseTriangle.edges[ ( e1Index + 2 ) % 3 ].reversed;
-		const t0c = triangle.edges[ ( e0Index + 1 ) % 3 ].edge;
-		const t0cr = triangle.edges[ ( e0Index + 1 ) % 3 ].reversed;
+		const t0b = reverseTriangle.edges[ t1SwapIndex ].edge;
+		const t0br = reverseTriangle.edges[ t1SwapIndex ].reversed;
 
 		const t1a = edge;
 		const t1ar = true;
-		const t1b = triangle.edges[ ( e0Index + 2 ) % 3 ].edge;
-		const t1br = triangle.edges[ ( e0Index + 2 ) % 3 ].reversed;
-		const t1c = reverseTriangle.edges[ ( e1Index + 1 ) % 3 ].edge;
-		const t1cr = reverseTriangle.edges[ ( e1Index + 1 ) % 3 ].reversed;
+		const t1b = triangle.edges[ t0SwapIndex ].edge;
+		const t1br = triangle.edges[ t0SwapIndex ].reversed;
 
-		triangle.setEdge( 0, t0a, t0ar );
-		triangle.setEdge( 1, t0b, t0br );
-		triangle.setEdge( 2, t0c, t0cr );
+		// one edge on each triangle can remain in place
+		triangle.setEdge( t0SwapIndex, t0a, t0ar );
+		triangle.setEdge( ( t0SwapIndex + 1 ) % 3, t0b, t0br );
 
-		reverseTriangle.setEdge( 0, t1a, t1ar );
-		reverseTriangle.setEdge( 1, t1b, t1br );
-		reverseTriangle.setEdge( 2, t1c, t1cr );
+		reverseTriangle.setEdge( t1SwapIndex, t1a, t1ar );
+		reverseTriangle.setEdge( ( t1SwapIndex + 1 ) % 3, t1b, t1br );
 
 		return true;
 
