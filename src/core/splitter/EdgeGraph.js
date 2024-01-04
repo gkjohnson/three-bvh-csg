@@ -9,7 +9,7 @@ class GraphTriangle extends Triangle {
 		super( ...args );
 
 		// the set of points and edge info associated with this triangle
-		this.edges = [ null, null, null ];
+		this.edges = [ { edge: null, reversed: false }, { edge: null, reversed: false }, { edge: null, reversed: false } ];
 		this.points = [ this.a, this.b, this.c ];
 
 	}
@@ -19,17 +19,9 @@ class GraphTriangle extends Triangle {
 	setEdge( index, edge, reversed ) {
 
 		const { edges, points } = this;
-		if ( edges[ index ] === null ) {
-
-			edges[ index ] = { edge, reversed };
-
-		} else {
-
-			const info = edges[ index ];
-			info.edge = edge;
-			info.reversed = reversed;
-
-		}
+		const info = edges[ index ];
+		info.edge = edge;
+		info.reversed = reversed;
 
 		if ( reversed ) {
 

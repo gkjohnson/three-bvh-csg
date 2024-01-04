@@ -10,7 +10,7 @@ export class ObjectPool {
 
 	}
 
-	get() {
+	getInstance() {
 
 		const pool = this._pool;
 		if ( this._index === pool.length ) {
