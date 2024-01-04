@@ -385,8 +385,17 @@ export class EdgeGraph {
 
 			}
 
-			foundTriangleSet.add( edge.triangle );
-			foundTriangleSet.add( edge.reverseTriangle );
+			if ( edge.triangle ) {
+
+				foundTriangleSet.add( edge.triangle );
+
+			}
+
+			if ( edge.reverseTriangle ) {
+
+				foundTriangleSet.add( edge.reverseTriangle );
+
+			}
 
 		} );
 
