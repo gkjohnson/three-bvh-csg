@@ -51,8 +51,6 @@ export class TriangleGraph {
 
 		const { plane, invFrame, initialTri, graph } = this;
 
-		tri = tri.clone();
-
 		const line = new Line3();
 		const hitPoint = new Vector3();
 		const arr = [ tri.a, tri.b, tri.c ];
@@ -65,7 +63,7 @@ export class TriangleGraph {
 			const ni = ( i + 1 ) % 3;
 			const p0 = arr[ i ];
 			const p1 = arr[ ni ];
-			const d0 = plane.distanceToPoint( p0 );
+			const d0 = Math.abs( plane.distanceToPoint( p0 ) );
 
 			if ( d0 < EPSILON ) {
 
