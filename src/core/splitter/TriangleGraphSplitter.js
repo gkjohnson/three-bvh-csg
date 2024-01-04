@@ -4,11 +4,12 @@ import { EdgeGraph } from './EdgeGraph';
 
 const EPSILON = 1e-10;
 
-export class TriangleGraph {
+export class TriangleGraphSplitter {
 
 	constructor() {
 
 		this.graph = new EdgeGraph();
+		this.coplanarTriangleUsed = false;
 
 		this.initialTri = new Triangle();
 		this.plane = new Plane();
@@ -43,7 +44,8 @@ export class TriangleGraph {
 
 	reset() {
 
-		this.graph = new EdgeGraph();
+		this.graph.reset();
+		this.coplanarTriangleUsed = false;
 
 	}
 
@@ -103,6 +105,7 @@ export class TriangleGraph {
 		const edges = [];
 		if ( coplanarPoints === 3 ) {
 
+			this.coplanarTriangleUsed = true;
 			for ( let i = 0; i < 3; i ++ ) {
 
 				const ni = ( i + 1 ) % 3;

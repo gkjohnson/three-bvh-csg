@@ -73,6 +73,14 @@ export class EdgeGraph {
 
 	}
 
+	reset() {
+
+		this.points.length = 0;
+		this.edges.length = 0;
+		this.triangles.length = 0;
+
+	}
+
 	initialize( tri ) {
 
 		const arr = [ tri.a, tri.b, tri.c ];
