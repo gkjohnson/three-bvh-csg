@@ -370,9 +370,63 @@ export class EdgeGraph {
 
 	}
 
-	validateState() {
+	validate() {
 
-		// TODO: validate state
+		const { points, edges, triangles } = this;
+
+		edges.forEach( edge => {
+
+			const { start, end, startIndex, endIndex } = edge;
+			if ( ! start.equals( points[ startIndex ] ) || ! end.equals( points[ endIndex ] ) ) {
+
+				throw new Error( 'Edge indices do not match' );
+
+			}
+
+		} );
+
+		const foundEdgeSet = new Set();
+		triangles.forEach( triangle => {
+
+			triangle.edges.forEach( ( info, i ) => {
+
+				const { edge, reversed } = info;
+
+				foundEdgeSet.add( edge );
+
+				if (
+					reversed && edge.reverseTriangle !== triangle ||
+					! reversed && edge.triangle !== triangle
+				) {
+
+					throw new Error( 'Edge triangles do not match' );
+
+				}
+
+				const ni = ( i + 1 ) % 3;
+				let start = triangle.points[ i ];
+				let end = triangle.points[ ni ];
+				if ( reversed ) {
+
+					[ start, end ] = [ end, start ];
+
+				}
+
+				if ( ! edge.start.equals( start ) || ! edge.end.equals( end ) ) {
+
+					throw new Error( 'Edges incorrectly assigned' );
+
+				}
+
+			} );
+
+		} );
+
+		if ( foundEdgeSet.size !== edges.length ) {
+
+			throw new Error( 'Edge counts do not match' );
+
+		}
 
 	}
 

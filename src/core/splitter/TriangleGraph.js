@@ -146,6 +146,10 @@ export class TriangleGraph {
 
 				edges.push( result.clone() );
 
+			} else if ( initialTri.containsPoint( edge.start ) ) {
+
+				edges.push( edge.clone() );
+
 			}
 
 		}
