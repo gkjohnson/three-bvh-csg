@@ -109,8 +109,8 @@ export class TriangleGraphSplitter {
 			for ( let i = 0; i < 3; i ++ ) {
 
 				const ni = ( i + 1 ) % 3;
-				const p0 = arr[ i ];
-				const p1 = arr[ ni ];
+				const p0 = planePoints[ i ];
+				const p1 = planePoints[ ni ];
 
 				const c0 = initialTri.containsPoint( p0 );
 				const c1 = initialTri.containsPoint( p1 );
