@@ -1,8 +1,17 @@
 import { Triangle, Matrix4, Line3, Plane, Vector3 } from 'three';
-import { getIntersectedLine, transformToFrame } from './utils';
-import { EdgeGraph } from './EdgeGraph';
+import { getIntersectedLine, transformToFrame } from './utils.js';
+import { EdgeGraph } from './EdgeGraph.js';
 
 const EPSILON = 1e-10;
+
+const _norm = new Vector3();
+const _right = new Vector3();
+const _up = new Vector3();
+
+const _hitPoint = new Vector3();
+
+const _result = new Line3();
+const _edge = new Line3();
 
 export class TriangleGraphSplitter {
 
@@ -28,17 +37,14 @@ export class TriangleGraphSplitter {
 
 		this.reset();
 
-		const norm = new Vector3();
-		const right = new Vector3();
-		const up = new Vector3();
-
-		tri.getNormal( norm );
-		right.subVectors( tri.a, tri.b ).normalize();
-		up.crossVectors( norm, right );
-
 		const { frame, invFrame, initialTri, graph, plane } = this;
+
+		tri.getNormal( _norm );
+		_right.subVectors( tri.a, tri.b ).normalize();
+		_up.crossVectors( _norm, _right );
+
 		tri.getPlane( plane );
-		frame.makeBasis( right, up, norm ).setPosition( tri.a );
+		frame.makeBasis( _right, _up, _norm ).setPosition( tri.a );
 		invFrame.copy( frame ).invert();
 
 		initialTri.copy( tri );
@@ -59,8 +65,6 @@ export class TriangleGraphSplitter {
 
 		const { plane, invFrame, initialTri, graph } = this;
 
-		const line = new Line3();
-		const hitPoint = new Vector3();
 		const arr = [ tri.a, tri.b, tri.c ];
 		const planePoints = [];
 		let coplanarPoints = 0;
@@ -79,16 +83,16 @@ export class TriangleGraphSplitter {
 
 			}
 
-			line.start.copy( p0 );
-			line.end.copy( p1 );
+			_edge.start.copy( p0 );
+			_edge.end.copy( p1 );
 
 			// consider the end point to be not hittable
-			if ( ! plane.intersectLine( line, hitPoint ) || hitPoint.distanceTo( p1 ) < EPSILON ) {
+			if ( ! plane.intersectLine( _edge, _hitPoint ) || _hitPoint.distanceTo( p1 ) < EPSILON ) {
 
 				// add buffer for the start point
 				if ( d0 < EPSILON ) {
 
-					hitPoint.copy( p0 );
+					_hitPoint.copy( p0 );
 
 				} else {
 
@@ -98,7 +102,7 @@ export class TriangleGraphSplitter {
 
 			}
 
-			planePoints.push( hitPoint.clone() );
+			planePoints.push( _hitPoint.clone() );
 
 		}
 
@@ -116,20 +120,17 @@ export class TriangleGraphSplitter {
 			this.coplanarTriangleUsed = true;
 			for ( let i = 0; i < 3; i ++ ) {
 
-				const result = new Line3();
-				const edge = new Line3();
-
 				const ni = ( i + 1 ) % 3;
-				edge.start.copy( planePoints[ i ] );
-				edge.end.copy( planePoints[ ni ] );
+				_edge.start.copy( planePoints[ i ] );
+				_edge.end.copy( planePoints[ ni ] );
 
-				if ( getIntersectedLine( edge, initialTri, result ) ) {
+				if ( getIntersectedLine( _edge, initialTri, _result ) ) {
 
-					edges.push( result.clone() );
+					edges.push( _result.clone() );
 
-				} else if ( initialTri.containsPoint( edge.start ) || initialTri.containsPoint( edge.end ) ) {
+				} else if ( initialTri.containsPoint( _edge.start ) || initialTri.containsPoint( _edge.end ) ) {
 
-					edges.push( edge.clone() );
+					edges.push( _edge.clone() );
 
 				}
 
@@ -137,19 +138,16 @@ export class TriangleGraphSplitter {
 
 		} else {
 
-			const result = new Line3();
-			const edge = new Line3();
+			_edge.start.copy( planePoints[ 0 ] );
+			_edge.end.copy( planePoints[ 1 ] );
 
-			edge.start.copy( planePoints[ 0 ] );
-			edge.end.copy( planePoints[ 1 ] );
+			if ( getIntersectedLine( _edge, initialTri, _result ) ) {
 
-			if ( getIntersectedLine( edge, initialTri, result ) ) {
+				edges.push( _result.clone() );
 
-				edges.push( result.clone() );
+			} else if ( initialTri.containsPoint( _edge.start ) || initialTri.containsPoint( _edge.end ) ) {
 
-			} else if ( initialTri.containsPoint( edge.start ) || initialTri.containsPoint( edge.end ) ) {
-
-				edges.push( edge.clone() );
+				edges.push( _edge.clone() );
 
 			}
 
