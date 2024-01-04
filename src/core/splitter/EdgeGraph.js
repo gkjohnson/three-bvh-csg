@@ -2,6 +2,8 @@ import { Vector3, Line3, Triangle } from 'three';
 import { lineIntersect } from './utils.js';
 import { ObjectPool } from './ObjectPool.js';
 
+const _vec = new Vector3();
+
 class GraphTriangle extends Triangle {
 
 	constructor( ...args ) {
@@ -193,6 +195,7 @@ export class EdgeGraph {
 				other.endIndex !== inserting.endIndex
 			) {
 
+				// TODO: remove this point?
 				const point = pointPool.getInstance();
 				if ( lineIntersect( inserting, other, point ) ) {
 
@@ -245,11 +248,10 @@ export class EdgeGraph {
 		if ( index === null ) {
 
 			// if we haven't been able to match a point see if we can find an existing edge it sits on
-			const vec = pointPool.getInstance();
 			const intersectingEdge = edges.findIndex( e => {
 
-				e.closestPointToPoint( point, true, vec );
-				return vec.distanceTo( point ) < EPSILON;
+				e.closestPointToPoint( point, true, _vec );
+				return _vec.distanceTo( point ) < EPSILON;
 
 			} );
 
