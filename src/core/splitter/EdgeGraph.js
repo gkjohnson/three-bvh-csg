@@ -7,35 +7,52 @@ class GraphTriangle extends Triangle {
 
 		super( ...args );
 
+		// the set of points and edge info associated with this triangle
 		this.edges = [ null, null, null ];
 		this.points = [ this.a, this.b, this.c ];
 
 	}
 
+	// add the edge to the triangle at the given index and store whether
+	// this triangle is attached to the reversed half-edge
 	setEdge( index, edge, reversed ) {
 
-		this.edges[ index ] = { edge, reversed };
+		const { edges, points } = this;
+		if ( edges[ index ] === null ) {
+
+			edges[ index ] = { edge, reversed };
+
+		} else {
+
+			const info = edges[ index ];
+			info.edge = edge;
+			info.reversed = reversed;
+
+		}
 
 		if ( reversed ) {
 
 			edge.reverseTriangle = this;
-			this.points[ index ].copy( edge.end );
+			points[ index ].copy( edge.end );
 
 		} else {
 
 			edge.triangle = this;
-			this.points[ index ].copy( edge.start );
+			points[ index ].copy( edge.start );
 
 		}
 
 	}
 
+	// Returns the index of the given edge
 	getEdgeIndex( edge ) {
 
 		return this.edges.findIndex( info => info.edge === edge );
 
 	}
 
+	// Returns the vertex index associated with the vertex at the given
+	// point in the range [0, 2]
 	getVertexIndex( index ) {
 
 		const info = this.edges[ index ];
@@ -50,12 +67,16 @@ class GraphEdge extends Line3 {
 	constructor( ...args ) {
 
 		super( ...args );
+
+		// store the vertex index associated with the start, end points
 		this.startIndex = - 1;
 		this.endIndex = - 1;
 
+		// stores the half edge triangle connections
 		this.triangle = null;
 		this.reverseTriangle = null;
 
+		// whether this edge is required to stay in the graph
 		this.required = false;
 
 	}
@@ -86,21 +107,21 @@ export class EdgeGraph {
 		const arr = [ tri.a, tri.b, tri.c ];
 		const { triangles, points, edges } = this;
 
-		// initialize the first triangle if we find three points
+		// initialize the first triangle that we will be splitting
 		const newTriangle = new GraphTriangle();
 		for ( let i = 0; i < 3; i ++ ) {
 
 			const ni = ( i + 1 ) % 3;
 			const p0 = arr[ i ];
 			const p1 = arr[ ni ];
-			const line = new GraphEdge();
-			line.start.copy( p0 );
-			line.startIndex = i;
-			line.end.copy( p1 );
-			line.endIndex = ni;
+			const edge = new GraphEdge();
+			edge.start.copy( p0 );
+			edge.startIndex = i;
+			edge.end.copy( p1 );
+			edge.endIndex = ni;
 
-			newTriangle.setEdge( i, line, false );
-			edges.push( line );
+			newTriangle.setEdge( i, edge, false );
+			edges.push( edge );
 
 		}
 
@@ -113,9 +134,12 @@ export class EdgeGraph {
 
 		const { points, edges } = this;
 		const { start, end } = edge;
+
+		// insert the edge points into the graph
 		const startIndex = this.insertPoint( start );
 		const endIndex = this.insertPoint( end );
 
+		// the edge we're trying to insert
 		const inserting = new GraphEdge();
 		inserting.start.copy( points[ startIndex ] );
 		inserting.startIndex = startIndex;
@@ -139,7 +163,16 @@ export class EdgeGraph {
 					if ( other.required ) {
 
 						// TODO
+						// THESE ARE NOT INTERSECTING?!
 						console.error( 'FAILURE' );
+						console.log(
+							inserting.clone(),
+							other.clone(),
+							point.clone(),
+
+							inserting.closestPointToPointParameter( point, false ),
+							other.closestPointToPointParameter( point, false ),
+						);
 
 					} else {
 
@@ -171,10 +204,11 @@ export class EdgeGraph {
 	insertPoint( point ) {
 
 		const { edges, points, triangles } = this;
-		let index = this.findClosestPointIndex( point );
+		let index = this.findMatchingPointIndex( point );
 
 		if ( index === null ) {
 
+			// if we haven't been able to match a point see if we can find an existing edge it sits on
 			const vec = new Vector3();
 			const intersectingEdge = edges.findIndex( e => {
 
@@ -185,6 +219,7 @@ export class EdgeGraph {
 
 			if ( intersectingEdge === - 1 ) {
 
+				// if we didn't find an edge then try to find the triangle the point is in
 				index = points.length;
 				points.push( point.clone() );
 
@@ -196,9 +231,11 @@ export class EdgeGraph {
 
 				} else {
 
-					// TODO: split into three triangles
+					// split into three triangles
 					const triangle = triangles[ containingTriangle ];
 					const newEdges = [ null, null, null ];
+
+					// construct the new edges emanating from the point
 					for ( let i = 0; i < 3; i ++ ) {
 
 						const other = triangle.points[ i ];
@@ -212,6 +249,7 @@ export class EdgeGraph {
 
 					}
 
+					// construct the triangles
 					for ( let i = 0; i < 3; i ++ ) {
 
 						const ni = ( i + 1 ) % 3;
@@ -236,11 +274,19 @@ export class EdgeGraph {
 
 			} else {
 
+				// if we are sitting on an edge
 				index = points.length;
 				points.push( point.clone() );
 
 				// NOTE: if the edge is required here then we have a problem - it shouldn't have to be split
 				const e = edges[ intersectingEdge ];
+				if ( e.required ) {
+
+					console.error( 'WE ARE ON A REQUIRED EDGE' );
+
+				}
+
+				// construct the edges
 				const l0 = new GraphEdge();
 				l0.start.copy( e.start );
 				l0.startIndex = e.startIndex;
@@ -328,8 +374,9 @@ export class EdgeGraph {
 
 	}
 
-	findClosestPointIndex( p ) {
+	findMatchingPointIndex( p ) {
 
+		// find the matching vertex for the give point if it exists in the graph
 		const points = this.points;
 		let closestIndex = null;
 		let closestDist = Infinity;
@@ -358,12 +405,14 @@ export class EdgeGraph {
 
 		}
 
+		// get the vertices to swap to
 		const t0EdgeIndex = triangle.getEdgeIndex( edge );
 		const t1EdgeIndex = reverseTriangle.getEdgeIndex( edge );
 
 		const t0SwapIndex = ( t0EdgeIndex + 2 ) % 3;
 		const t1SwapIndex = ( t1EdgeIndex + 2 ) % 3;
 
+		// swap the edge direction
 		edge.start.copy( triangle.points[ t0SwapIndex ] );
 		edge.startIndex = triangle.getVertexIndex( t0SwapIndex );
 		edge.end.copy( reverseTriangle.points[ t1SwapIndex ] );
