@@ -107,11 +107,11 @@ export class EdgeGraph {
 		const i0 = this.insertPoint( start );
 		const i1 = this.insertPoint( end );
 
-		const line = new GraphEdge();
-		line.start.copy( points[ i0 ] );
-		line.startIndex = i0;
-		line.end.copy( points[ i1 ] );
-		line.endIndex = i1;
+		// const line = new GraphEdge();
+		// line.start.copy( points[ i0 ] );
+		// line.startIndex = i0;
+		// line.end.copy( points[ i1 ] );
+		// line.endIndex = i1;
 
 		// edges.push( line );
 
@@ -125,6 +125,7 @@ export class EdgeGraph {
 
 		const { edges, points, triangles } = this;
 		let index = this.findClosestPointIndex( point );
+
 		if ( index === null ) {
 
 			const vec = new Vector3();
@@ -147,6 +148,41 @@ export class EdgeGraph {
 				} else {
 
 					// TODO: split into three triangles
+					const triangle = triangles[ containingTriangle ];
+					const edges = [ null, null, null ];
+					for ( let i = 0; i < 3; i ++ ) {
+
+						const other = triangle.points[ i ];
+						const edge = new GraphEdge();
+						edge.start.copy( point );
+						edge.startIndex = index;
+						edge.end.copy( other );
+						edge.endIndex = triangle.getVertexIndex( i );
+
+						edges[ i ] = edge;
+
+					}
+
+					for ( let i = 0; i < 3; i ++ ) {
+
+						const ni = ( i + 1 ) % 3;
+						const e0 = edges[ i ];
+						const e1 = triangle.edges[ i ].edge;
+						const e2 = edges[ ni ];
+
+						const newTriangle = new GraphTriangle();
+						const reversed = triangle.edges[ i ].reversed;
+						newTriangle.setEdge( 0, e0, reversed );
+						newTriangle.setEdge( 1, e1, reversed );
+						newTriangle.setEdge( 2, e2, ! reversed );
+
+						triangles.push( newTriangle );
+
+					}
+
+					index = points.length;
+					points.push( point.clone() );
+					triangles.splice( triangles.indexOf( triangle ), 1 );
 
 				}
 
@@ -174,39 +210,67 @@ export class EdgeGraph {
 				edges.push( l0, l1 );
 				edges.splice( intersectingEdge, 1 );
 
+				// split the forward side triangle
 				if ( e.triangle ) {
 
-					const edgeIndex = e.triangle.getEdgeIndex( e );
+					const triangle = e.triangle;
+					const edgeIndex = triangle.getEdgeIndex( e );
 					const nextEdgeIndex = ( edgeIndex + 2 ) % 3;
 
 					const insertedEdge = new GraphEdge();
 					insertedEdge.start.copy( point );
 					insertedEdge.startIndex = index;
-					insertedEdge.end.copy( e.triangle.points[ nextEdgeIndex ] );
-					insertedEdge.endIndex = e.triangle.getVertexIndex( nextEdgeIndex );
+					insertedEdge.end.copy( triangle.points[ nextEdgeIndex ] );
+					insertedEdge.endIndex = triangle.getVertexIndex( nextEdgeIndex );
 					edges.push( insertedEdge );
 
 					const finalEdgeIndex0 = ( edgeIndex + 2 ) % 3;
 					const newTri0 = new GraphTriangle();
-					newTri0.setEdge( 0, l0, e.triangle.edges[ edgeIndex ].reversed );
+					newTri0.setEdge( 0, l0, triangle.edges[ edgeIndex ].reversed );
 					newTri0.setEdge( 1, insertedEdge, false );
-					newTri0.setEdge( 2, e.triangle.edges[ finalEdgeIndex0 ].edge, e.triangle.edges[ finalEdgeIndex0 ].reversed );
+					newTri0.setEdge( 2, triangle.edges[ finalEdgeIndex0 ].edge, triangle.edges[ finalEdgeIndex0 ].reversed );
 
 					const finalEdgeIndex1 = ( edgeIndex + 1 ) % 3;
 					const newTri1 = new GraphTriangle();
-					newTri1.setEdge( 0, l1, e.triangle.edges[ edgeIndex ].reversed );
-					newTri1.setEdge( 1, e.triangle.edges[ finalEdgeIndex1 ].edge, e.triangle.edges[ finalEdgeIndex1 ].reversed );
+					newTri1.setEdge( 0, l1, triangle.edges[ edgeIndex ].reversed );
+					newTri1.setEdge( 1, triangle.edges[ finalEdgeIndex1 ].edge, triangle.edges[ finalEdgeIndex1 ].reversed );
 					newTri1.setEdge( 2, insertedEdge, true );
 
-					triangles.splice( triangles.indexOf( e.triangle ), 1 );
+					triangles.splice( triangles.indexOf( triangle ), 1 );
 					triangles.push( newTri0, newTri1 );
 					edges.push( insertedEdge );
 
 				}
 
+				// split the reverse side triangle
 				if ( e.reverseTriangle ) {
 
-					// TODO: insert the other side
+					const triangle = e.reverseTriangle;
+					const edgeIndex = triangle.getEdgeIndex( e );
+					const nextEdgeIndex = ( edgeIndex + 2 ) % 3;
+
+					const insertedEdge = new GraphEdge();
+					insertedEdge.start.copy( point );
+					insertedEdge.startIndex = index;
+					insertedEdge.end.copy( triangle.points[ nextEdgeIndex ] );
+					insertedEdge.endIndex = triangle.getVertexIndex( nextEdgeIndex );
+					edges.push( insertedEdge );
+
+					const finalEdgeIndex0 = ( edgeIndex + 2 ) % 3;
+					const newTri0 = new GraphTriangle();
+					newTri0.setEdge( 0, l0, triangle.edges[ edgeIndex ].reversed );
+					newTri0.setEdge( 1, insertedEdge, true );
+					newTri0.setEdge( 2, triangle.edges[ finalEdgeIndex0 ].edge, triangle.edges[ finalEdgeIndex0 ].reversed );
+
+					const finalEdgeIndex1 = ( edgeIndex + 1 ) % 3;
+					const newTri1 = new GraphTriangle();
+					newTri1.setEdge( 0, l1, triangle.edges[ edgeIndex ].reversed );
+					newTri1.setEdge( 1, triangle.edges[ finalEdgeIndex1 ].edge, triangle.edges[ finalEdgeIndex1 ].reversed );
+					newTri1.setEdge( 2, insertedEdge, true );
+
+					triangles.splice( triangles.indexOf( triangle ), 1 );
+					triangles.push( newTri0, newTri1 );
+					edges.push( insertedEdge );
 
 				}
 

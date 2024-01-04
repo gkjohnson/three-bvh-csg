@@ -49,7 +49,7 @@ export class TriangleGraph {
 
 	splitByTriangle( tri ) {
 
-		const { plane, invFrame, frame, initialTri, graph } = this;
+		const { plane, invFrame, initialTri, graph } = this;
 
 		tri = tri.clone();
 
@@ -142,7 +142,6 @@ export class TriangleGraph {
 			const edge = new Line3();
 			edge.start.copy( planePoints[ 0 ] );
 			edge.end.copy( planePoints[ 1 ] );
-
 			if ( getIntersectedLine( edge, initialTri, result ) ) {
 
 				edges.push( result.clone() );

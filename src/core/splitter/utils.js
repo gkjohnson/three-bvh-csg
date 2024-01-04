@@ -156,7 +156,8 @@ export function getIntersectedLine( line, tri, target ) {
 
 			if ( setCount === 2 ) {
 
-				// UH OH
+				// TODO
+				console.error( 'This shouldn\'t happen' );
 
 			} else if ( setCount === 1 ) {
 
@@ -178,12 +179,12 @@ export function getIntersectedLine( line, tri, target ) {
 
 		if ( tri.containsPoint( line.start ) ) {
 
-			target.end.copy( line.start );
+			target.start.copy( line.start );
 			setCount ++;
 
 		} else if ( tri.containsPoint( line.end ) ) {
 
-			target.end.copy( line.end );
+			target.start.copy( line.end );
 			setCount ++;
 
 		}
