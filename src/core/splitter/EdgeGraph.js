@@ -212,9 +212,9 @@ export class EdgeGraph {
 
 						const newTriangle = new GraphTriangle();
 						const reversed = triangle.edges[ i ].reversed;
-						newTriangle.setEdge( 0, e0, reversed );
+						newTriangle.setEdge( 0, e0, false );
 						newTriangle.setEdge( 1, e1, reversed );
-						newTriangle.setEdge( 2, e2, ! reversed );
+						newTriangle.setEdge( 2, e2, true );
 
 						triangles.push( newTriangle );
 
@@ -373,6 +373,8 @@ export class EdgeGraph {
 	validate() {
 
 		const { points, edges, triangles } = this;
+		const foundTriangleSet = new Set();
+		const foundEdgeSet = new Set();
 
 		edges.forEach( edge => {
 
@@ -383,9 +385,11 @@ export class EdgeGraph {
 
 			}
 
+			foundTriangleSet.add( edge.triangle );
+			foundTriangleSet.add( edge.reverseTriangle );
+
 		} );
 
-		const foundEdgeSet = new Set();
 		triangles.forEach( triangle => {
 
 			triangle.edges.forEach( ( info, i ) => {
@@ -425,6 +429,12 @@ export class EdgeGraph {
 		if ( foundEdgeSet.size !== edges.length ) {
 
 			throw new Error( 'Edge counts do not match' );
+
+		}
+
+		if ( foundTriangleSet.size !== triangles.length ) {
+
+			throw new Error( 'Triangle counts do not match' );
 
 		}
 
