@@ -65,6 +65,7 @@ export class TriangleGraphSplitter {
 
 		const { plane, invFrame, initialTri, graph } = this;
 
+		// TODO: remove array instantiations
 		const arr = [ tri.a, tri.b, tri.c ];
 		const planePoints = [];
 		let coplanarPoints = 0;
@@ -102,6 +103,7 @@ export class TriangleGraphSplitter {
 
 			}
 
+			// TODO: use a pool for these points?
 			planePoints.push( _hitPoint.clone() );
 
 		}
@@ -114,6 +116,7 @@ export class TriangleGraphSplitter {
 		} );
 
 		// find the edges that intersect with the triangle itself
+		// TODO: just insert the edges immediately so we don't have to clone the points
 		const edges = [];
 		if ( coplanarPoints === 3 ) {
 

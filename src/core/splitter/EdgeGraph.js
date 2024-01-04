@@ -270,6 +270,7 @@ export class EdgeGraph {
 				} else {
 
 					// split into three triangles
+					// TODO: remove this array instantiation?
 					const triangle = triangles[ containingTriangle ];
 					const newEdges = [ null, null, null ];
 
