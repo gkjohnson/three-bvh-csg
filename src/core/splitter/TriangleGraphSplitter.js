@@ -6,6 +6,12 @@ const EPSILON = 1e-10;
 
 export class TriangleGraphSplitter {
 
+	get triangles() {
+
+		return this.graph.triangles;
+
+	}
+
 	constructor() {
 
 		this.graph = new EdgeGraph();

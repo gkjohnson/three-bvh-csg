@@ -192,6 +192,7 @@ export class EdgeGraph {
 				if ( containingTriangle === - 1 ) {
 
 					// TODO: this should never happen
+					console.error( 'CANT FIND TRIANGLE' );
 
 				} else {
 
