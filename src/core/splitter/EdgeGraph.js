@@ -85,11 +85,11 @@ export class EdgeGraph {
 		this.edges = [];
 		this.triangles = [];
 
-		this.pointsPool = new ObjectPool(
+		this.pointPool = new ObjectPool(
 			() => new Vector3(),
 		);
 
-		this.edgesPool = new ObjectPool(
+		this.edgePool = new ObjectPool(
 			() => new GraphEdge(),
 			e => {
 
@@ -127,6 +127,10 @@ export class EdgeGraph {
 		this.points.length = 0;
 		this.edges.length = 0;
 		this.triangles.length = 0;
+
+		this.pointPool.reset();
+		this.edgePool.reset();
+		this.trianglePool.reset();
 
 	}
 
