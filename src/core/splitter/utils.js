@@ -165,22 +165,22 @@ export function getTriangleLineIntersection( line, tri, target ) {
 
 		if ( areEdgesParallel( edge, line ) ) {
 
-			let sp = edge.closestPointToPointParameter( line.start, false );
-			let ep = edge.closestPointToPointParameter( line.end, false );
-			if ( ! (
-				sp < 0 && ep < 0 ||
-				sp > 1 && ep > 1
-			) ) {
+			// let sp = edge.closestPointToPointParameter( line.start, false );
+			// let ep = edge.closestPointToPointParameter( line.end, false );
+			// if ( ! (
+			// 	sp < 0 && ep < 0 ||
+			// 	sp > 1 && ep > 1
+			// ) ) {
 
-				sp = MathUtils.clamp( sp, 0, 1 );
-				ep = MathUtils.clamp( ep, 0, 1 );
+			// 	sp = MathUtils.clamp( sp, 0, 1 );
+			// 	ep = MathUtils.clamp( ep, 0, 1 );
 
-				edge.at( sp, target.start );
-				edge.at( ep, target.end );
+			// 	edge.at( sp, target.start );
+			// 	edge.at( ep, target.end );
 
-				return true;
+			// 	return true;
 
-			}
+			// }
 
 		} else if ( lineIntersect( edge, line, vec ) ) {
 
@@ -205,17 +205,50 @@ export function getTriangleLineIntersection( line, tri, target ) {
 
 	}
 
-	if ( setCount === 1 ) {
+	if ( setCount === 0 || setCount === 1 ) {
 
-		if ( tri.containsPoint( line.start ) ) {
+		const cs = tri.containsPoint( line.start );
+		const ce = tri.containsPoint( line.end );
+		if ( setCount === 0 ) {
 
-			target.start.copy( line.start );
-			setCount ++;
+			if ( cs && ce ) {
 
-		} else if ( tri.containsPoint( line.end ) ) {
+				target.copy( line );
+				setCount += 2;
 
-			target.start.copy( line.end );
-			setCount ++;
+			} else {
+
+				console.error('UH OH');
+
+			}
+
+		}
+
+		if ( setCount === 1 ) {
+
+			if ( cs && ce ) {
+
+				if ( line.start.distanceTo( target.end ) > line.end.distanceTo( target.end ) ) {
+
+					target.start.copy( line.start );
+
+				} else {
+
+					target.start.copy( line.end );
+
+				}
+
+			} else if ( cs ) {
+
+				target.start.copy( line.start );
+				setCount ++;
+
+			} else if ( ce ) {
+
+				target.start.copy( line.end );
+				setCount ++;
+
+			}
 
 		}
 

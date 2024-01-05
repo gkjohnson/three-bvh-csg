@@ -131,10 +131,6 @@ export class TriangleGraphSplitter {
 
 					edges.push( _result.clone() );
 
-				} else if ( initialTri.containsPoint( _edge.start ) || initialTri.containsPoint( _edge.end ) ) {
-
-					edges.push( _edge.clone() );
-
 				}
 
 			}
@@ -147,10 +143,6 @@ export class TriangleGraphSplitter {
 			if ( getTriangleLineIntersection( _edge, initialTri, _result ) ) {
 
 				edges.push( _result.clone() );
-
-			} else if ( initialTri.containsPoint( _edge.start ) || initialTri.containsPoint( _edge.end ) ) {
-
-				edges.push( _edge.clone() );
 
 			}
 
