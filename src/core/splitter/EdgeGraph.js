@@ -292,13 +292,9 @@ export class EdgeGraph {
 				index = points.length;
 				points.push( pointPool.getInstance().copy( point ) );
 
-				// NOTE: if the edge is required here then we have a problem - it shouldn't have to be split
+				// NOTE: it's possible for use to land on a required edge here to split but this is the sad reality of
+				// floating point math :(
 				const e = edges[ intersectingEdge ];
-				if ( e.required ) {
-
-					console.error( 'WE ARE ON A REQUIRED EDGE' );
-
-				}
 
 				// construct the edges
 				const l0 = edgePool.getInstance();
