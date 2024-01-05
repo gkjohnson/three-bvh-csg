@@ -152,13 +152,6 @@ function assignBufferData( geometry, attributeData, groupOrder ) {
 	// update the draw range
 	geometry.setDrawRange( 0, drawRange );
 
-	// remove the bounds tree if it exists because its now out of date
-	// TODO: can we have this dispose in the same way that a brush does?
-	// TODO: why are half edges and group indices not removed here?
-	geometry.boundsTree = null;
-	geometry.halfEdges = null;
-	geometry.groupIndices = null;
-
 	if ( needsDisposal ) {
 
 		geometry.dispose();
@@ -364,6 +357,9 @@ export class Evaluator {
 				joinGroups( targetGeometry.groups );
 
 			}
+
+			// dispose the cached data if it exists because its now out of date
+			brush.disposeCacheData();
 
 		} );
 
