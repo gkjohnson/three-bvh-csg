@@ -78,6 +78,17 @@ export function getIntersectionOnAPoint( line1, line2 ) {
 }
 
 
+const _delta1 = new Vector3();
+const _delta2 = new Vector3();
+export function areEdgesParallel( l1, l2 ) {
+
+	const EPS = 1e-10;
+	l1.delta( _delta1 ).normalize();
+	l2.delta( _delta2 ).normalize();
+	return Math.abs( _delta1.dot( _delta2 ) ) > 1 - EPS;
+
+}
+
 // Determine the intersection point of two line segments
 // Return FALSE if the lines don't intersect
 // https://paulbourke.net/geometry/pointlineplane/
@@ -152,7 +163,26 @@ export function getTriangleLineIntersection( line, tri, target ) {
 		edge.start.copy( arr[ i ] );
 		edge.end.copy( arr[ ni ] );
 
-		if ( lineIntersect( edge, line, vec ) ) {
+		if ( areEdgesParallel( edge, line ) ) {
+
+			let sp = edge.closestPointToPointParameter( line.start, false );
+			let ep = edge.closestPointToPointParameter( line.end, false );
+			if ( ! (
+				sp < 0 && ep < 0 ||
+				sp > 1 && ep > 1
+			) ) {
+
+				sp = MathUtils.clamp( sp, 0, 1 );
+				ep = MathUtils.clamp( ep, 0, 1 );
+
+				edge.at( sp, target.start );
+				edge.at( ep, target.end );
+
+				return true;
+
+			}
+
+		} else if ( lineIntersect( edge, line, vec ) ) {
 
 			if ( setCount === 2 ) {
 
