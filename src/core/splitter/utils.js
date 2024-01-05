@@ -204,19 +204,29 @@ export function getTriangleLineIntersection( line, tri, target ) {
 			if ( setCount === 2 ) {
 
 				// TODO
-				console.error( 'This shouldn\'t happen' );
+				const d0 = target.start.distanceTo( vec );
+				const d1 = target.end.distanceTo( vec );
+				if ( d0 > EPS && d1 > EPS ) {
+
+					console.error( 'This shouldn\'t happen' );
+
+				}
 
 			} else if ( setCount === 1 ) {
 
-				target.start.copy( vec );
+				if ( vec.distanceTo( target.end ) > EPS ) {
+
+					target.start.copy( vec );
+					setCount ++;
+
+				}
 
 			} else {
 
 				target.end.copy( vec );
+				setCount ++;
 
 			}
-
-			setCount ++;
 
 		}
 
