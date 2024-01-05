@@ -20,20 +20,28 @@ const ogTris = [
 ];
 
 const tris = [
-	// new THREE.Triangle(
-	// 	new THREE.Vector3( - 0.5, 0.5, - 0.5 ),
-	// 	new THREE.Vector3( - 0.5, - 0.5, - 0.5 ),
-	// 	new THREE.Vector3( - 0.5, 0.5, 0.5 ),
-	// ),
+
 	new THREE.Triangle(
-		new THREE.Vector3( - 0.5, 0.5, - 0.5 ),
-		new THREE.Vector3( - 0.5, 0.5, 0.5 ),
-		new THREE.Vector3( 0.5, 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.35, 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.35, - 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.35, 0.5, 0.5 ),
 	),
+	new THREE.Triangle(
+		new THREE.Vector3( - 0.35, 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.35, 0.5, 0.5 ),
+		new THREE.Vector3( 0.35, 0.5, - 0.5 ),
+	),
+	new THREE.Triangle(
+		new THREE.Vector3( - 0.5, 0.7, - 0.5 ),
+		new THREE.Vector3( - 0.5, - 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.5, 0.7, 0.5 ),
+	),
+
+
 	// new THREE.Triangle(
-	// 	new THREE.Vector3( -0.5, 0.5, 0.5 ),
-	// 	new THREE.Vector3( 0.5, 0.5, 0.5 ),
-	// 	new THREE.Vector3( 0.5, 0.5, -0.5 ),
+	// 	new THREE.Vector3( -0.5, 0.75, 0.5 ),
+	// 	new THREE.Vector3( 0.5, 0.75, 0.5 ),
+	// 	new THREE.Vector3( 0.5, 0.75, -0.5 ),
 	// ),
 ];
 
@@ -62,7 +70,7 @@ function init() {
 
 	// camera setup
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
-	camera.position.set( 1, 2, 4 );
+	camera.position.set( - 1.5, 2, - 2 );
 	camera.far = 100;
 	camera.updateProjectionMatrix();
 
@@ -115,9 +123,9 @@ function render() {
 	if ( ! window.UPDATED ) {
 
 		splitter.initialize( ogTris[ 0 ] );
-		tris.forEach( t => {
+		tris.forEach( ( t, i ) => {
 
-			splitter.splitByTriangle( t );
+			splitter.splitByTriangle( t, i === 2 );
 
 		} );
 
@@ -128,15 +136,18 @@ function render() {
 
 	}
 
+	splitter.graph.validate();
+
 	planeHelper.visible = false;
 	transformControls.visible = false;
 	transformControls.enabled = false;
 
-	pointsHelper.setPoints( splitter.graph.points );
-	edgesHelper.setEdges( splitter.graph.edges );
+	// pointsHelper.setPoints( splitter.graph.points );
+	// edgesHelper.setEdges( splitter.graph.edges );
 
+	clippedTris.color.set( 0x00ff00 )
 	clippedTris.setTriangles( splitter.graph.triangles );
-	initialTris.setTriangles( [ ...ogTris, ...tris ] );
+	initialTris.setTriangles( [ ...tris ] );
 
 	renderer.render( scene, camera );
 
