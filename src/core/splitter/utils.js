@@ -140,7 +140,7 @@ export function lineIntersect( l1, l2, target ) {
 
 }
 
-export function getIntersectedLine( line, tri, target ) {
+export function getTriangleLineIntersection( line, tri, target ) {
 
 	let setCount = 0;
 	const vec = new Vector3();

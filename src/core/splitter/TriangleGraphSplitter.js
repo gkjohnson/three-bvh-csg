@@ -1,5 +1,5 @@
 import { Triangle, Matrix4, Line3, Plane, Vector3 } from 'three';
-import { getIntersectedLine, transformToFrame } from './utils.js';
+import { getTriangleLineIntersection, transformToFrame } from './utils.js';
 import { EdgeGraph } from './EdgeGraph.js';
 
 const EPSILON = 1e-10;
@@ -127,7 +127,7 @@ export class TriangleGraphSplitter {
 				_edge.start.copy( planePoints[ i ] );
 				_edge.end.copy( planePoints[ ni ] );
 
-				if ( getIntersectedLine( _edge, initialTri, _result ) ) {
+				if ( getTriangleLineIntersection( _edge, initialTri, _result ) ) {
 
 					edges.push( _result.clone() );
 
@@ -144,7 +144,7 @@ export class TriangleGraphSplitter {
 			_edge.start.copy( planePoints[ 0 ] );
 			_edge.end.copy( planePoints[ 1 ] );
 
-			if ( getIntersectedLine( _edge, initialTri, _result ) ) {
+			if ( getTriangleLineIntersection( _edge, initialTri, _result ) ) {
 
 				edges.push( _result.clone() );
 
