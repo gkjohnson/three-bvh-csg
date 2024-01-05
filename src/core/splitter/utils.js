@@ -1,4 +1,5 @@
 import { Vector3, Line3 } from 'three';
+import { closestPointsSegmentToSegment } from 'three-mesh-bvh/src/math/MathUtilities.js';
 
 export function transformToFrame( tri, frame ) {
 
@@ -77,7 +78,6 @@ export function getIntersectionOnAPoint( line1, line2 ) {
 
 }
 
-
 const _delta1 = new Vector3();
 const _delta2 = new Vector3();
 export function areEdgesParallel( l1, l2 ) {
@@ -89,11 +89,18 @@ export function areEdgesParallel( l1, l2 ) {
 
 }
 
-// Determine the intersection point of two line segments
-// Return FALSE if the lines don't intersect
-// https://paulbourke.net/geometry/pointlineplane/
 export function lineIntersect( l1, l2, target ) {
 
+	const tg1 = new Vector3();
+	const tg2 = new Vector3();
+	closestPointsSegmentToSegment( l1, l2, tg1, tg2 );
+	target.copy( tg1 );
+
+	return tg1.distanceTo( tg2 ) < 1e-10;
+
+	// Determine the intersection point of two line segments
+	// Return FALSE if the lines don't intersect
+	// https://paulbourke.net/geometry/pointlineplane/
 	const x1 = l1.start.x;
 	const y1 = l1.start.y;
 
@@ -165,6 +172,9 @@ export function getTriangleLineIntersection( line, tri, target ) {
 
 		if ( areEdgesParallel( edge, line ) ) {
 
+			// TODO: we need to check if the lines are actually on each other
+			continue;
+
 			// let sp = edge.closestPointToPointParameter( line.start, false );
 			// let ep = edge.closestPointToPointParameter( line.end, false );
 			// if ( ! (
@@ -218,7 +228,8 @@ export function getTriangleLineIntersection( line, tri, target ) {
 
 			} else {
 
-				console.error('UH OH');
+				// TODO
+				console.error( 'This shouldn\'t happen' );
 
 			}
 

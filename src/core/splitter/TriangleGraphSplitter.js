@@ -181,6 +181,13 @@ export class TriangleGraphSplitter {
 
 		} );
 
+		const issues = this.graph.validate();
+		if ( issues.length ) {
+
+			issues.forEach( msg => console.warn( msg ) );
+
+		}
+
 	}
 
 }
