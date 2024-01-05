@@ -156,6 +156,8 @@ function assignBufferData( geometry, attributeData, groupOrder ) {
 	// TODO: can we have this dispose in the same way that a brush does?
 	// TODO: why are half edges and group indices not removed here?
 	geometry.boundsTree = null;
+	geometry.halfEdges = null;
+	geometry.groupIndices = null;
 
 	if ( needsDisposal ) {
 
