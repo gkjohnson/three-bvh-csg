@@ -170,7 +170,7 @@ export class EdgeGraph {
 
 	insertEdge( edge ) {
 
-		const { points, edges, edgePool, pointPool } = this;
+		const { points, edges, edgePool } = this;
 		const { start, end } = edge;
 
 		// insert the edge points into the graph

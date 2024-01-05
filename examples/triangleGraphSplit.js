@@ -125,9 +125,21 @@ function render() {
 		splitter.initialize( ogTris[ 0 ] );
 		tris.forEach( ( t, i ) => {
 
-			splitter.splitByTriangle( t, i === 2 );
+			splitter.splitByTriangle( t, i === 1 );
 
 		} );
+
+		const errors = splitter.graph.validate();
+		if ( errors.length > 0 ) {
+
+			console.error( 'INVALID' );
+			errors.forEach( e => {
+
+				console.error( e );
+
+			} );
+
+		}
 
 		splitter.complete();
 
@@ -136,7 +148,6 @@ function render() {
 
 	}
 
-	splitter.graph.validate();
 
 	planeHelper.visible = false;
 	transformControls.visible = false;
@@ -145,7 +156,7 @@ function render() {
 	// pointsHelper.setPoints( splitter.graph.points );
 	// edgesHelper.setEdges( splitter.graph.edges );
 
-	clippedTris.color.set( 0x00ff00 )
+	clippedTris.color.set( 0x00ff00 );
 	clippedTris.setTriangles( splitter.graph.triangles );
 	initialTris.setTriangles( [ ...tris ] );
 
