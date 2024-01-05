@@ -1,10 +1,20 @@
-import { Vector3, Line3, Triangle } from 'three';
-import { lineIntersect } from './utils.js';
+import { Vector3, Line3, Triangle, Line } from 'three';
+import { areEdgesParallel, lineIntersect } from './utils.js';
 import { ObjectPool } from './ObjectPool.js';
 
 const _vec = new Vector3();
 const _triangleVertices = new Array( 3 );
 const _edgesToAdd = new Array( 3 );
+const _edgesToSwap = [];
+const SWAP_ITERATIONS = 3;
+
+function doEdgesMatch( a, b ) {
+
+	const forwardMatch = b.startIndex === a.startIndex && b.endIndex === a.endIndex;
+	const reverseMatch = b.startIndex === a.endIndex && b.endIndex === a.startIndex;
+	return forwardMatch || reverseMatch;
+
+}
 
 class GraphTriangle extends Triangle {
 
@@ -175,7 +185,7 @@ export class EdgeGraph {
 
 	insertEdge( edge ) {
 
-		const { points, edges, edgePool } = this;
+		const { points, edgePool } = this;
 		const { start, end } = edge;
 
 		// insert the edge points into the graph
@@ -189,55 +199,11 @@ export class EdgeGraph {
 		inserting.end.copy( points[ endIndex ] );
 		inserting.endIndex = endIndex;
 
-		for ( let i = 0, l = edges.length; i < l; i ++ ) {
+		// swap the edges
+		if ( ! this.markMatchingEdgeRequired( inserting ) ) {
 
-			// swap the edge if we don't emanate from the same point
-			const other = edges[ i ];
-			if (
-				other.startIndex !== inserting.startIndex &&
-				other.startIndex !== inserting.endIndex &&
-				other.endIndex !== inserting.startIndex &&
-				other.endIndex !== inserting.endIndex
-			) {
-
-				if ( lineIntersect( inserting, other, _vec ) ) {
-
-					if ( other.required ) {
-
-						// TODO
-						// THESE ARE NOT INTERSECTING?!
-						console.error( 'FAILURE' );
-						console.log(
-							inserting.clone(),
-							other.clone(),
-							_vec.clone(),
-
-							inserting.closestPointToPointParameter( _vec, false ),
-							other.closestPointToPointParameter( _vec, false ),
-						);
-
-					} else {
-
-						this.swapEdge( other );
-
-					}
-
-				}
-
-			}
-
-			// if we found the edge that matches the target edge then mark it as required and continue
-			if ( (
-				other.startIndex === inserting.startIndex &&
-				other.endIndex === inserting.endIndex
-			) || (
-				other.startIndex === inserting.endIndex &&
-				other.endIndex === inserting.startIndex
-			) ) {
-
-				other.required = true;
-
-			}
+			// TODO
+			console.error( 'Matching edge could not be found' );
 
 		}
 
@@ -434,6 +400,86 @@ export class EdgeGraph {
 		}
 
 		return closestIndex;
+
+	}
+
+	markMatchingEdgeRequired( inserting ) {
+
+		const { edges } = this;
+
+		_edgesToSwap.length = 0;
+		for ( let i = 0, l = edges.length; i < l; i ++ ) {
+
+			// swap the edge if we don't emanate from the same point
+			const other = edges[ i ];
+			if (
+				other.startIndex !== inserting.startIndex &&
+				other.startIndex !== inserting.endIndex &&
+				other.endIndex !== inserting.startIndex &&
+				other.endIndex !== inserting.endIndex
+			) {
+
+				// TODO
+				// if ( areEdgesParallel( inserting, other ) ) {
+
+				// 	let sp = inserting.closestPointToPointParameter( other.start, false );
+				// 	let ep = inserting.closestPointToPointParameter( other.end, false );
+
+				// 	if ( ! (
+				// 		sp < 0 && ep < 0 ||
+				// 		sp > 1 && ep > 1
+				// 	) ) {
+
+				// 		// TODO: but do they overlap
+				// 		// console.log( 'THEYRE PARALLEL', sp, ep );
+
+				// 	}
+
+				// }
+
+				if ( lineIntersect( inserting, other, _vec ) ) {
+
+					_edgesToSwap.push( other );
+
+				}
+
+			} else {
+
+				// if we found an edge that matches without swapping then theres no need
+				// to continue
+				if ( doEdgesMatch( inserting, other ) ) {
+
+					other.required = true;
+					return true;
+
+				}
+
+			}
+
+		}
+
+		// try for a few iterations to swap edges until they work
+		for ( let i = 0; i < SWAP_ITERATIONS; i ++ ) {
+
+			for ( let j = 0, l = _edgesToSwap.length; j < l; j ++ ) {
+
+				const other = _edgesToSwap[ j ];
+
+				this.swapEdge( other );
+
+				// check if the edge swapped into the form we needed
+				if ( doEdgesMatch( inserting, other ) ) {
+
+					other.required = true;
+					return true;
+
+				}
+
+			}
+
+		}
+
+		return false;
 
 	}
 
