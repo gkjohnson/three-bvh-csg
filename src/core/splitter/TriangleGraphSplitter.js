@@ -13,6 +13,8 @@ const _hitPoint = new Vector3();
 const _result = new Line3();
 const _edge = new Line3();
 
+const _triangleVertices = new Array( 3 );
+
 export class TriangleGraphSplitter {
 
 	get triangles() {
@@ -65,16 +67,19 @@ export class TriangleGraphSplitter {
 
 		const { plane, invFrame, initialTri, graph } = this;
 
-		const arr = [ tri.a, tri.b, tri.c ];
 		const planePoints = [];
 		let coplanarPoints = 0;
+
+		_triangleVertices[ 0 ] = tri.a;
+		_triangleVertices[ 1 ] = tri.b;
+		_triangleVertices[ 2 ] = tri.c;
 
 		// find the points on the plane surface
 		for ( let i = 0; i < 3; i ++ ) {
 
 			const ni = ( i + 1 ) % 3;
-			const p0 = arr[ i ];
-			const p1 = arr[ ni ];
+			const p0 = _triangleVertices[ i ];
+			const p1 = _triangleVertices[ ni ];
 			const d0 = Math.abs( plane.distanceToPoint( p0 ) );
 
 			if ( d0 < EPSILON ) {

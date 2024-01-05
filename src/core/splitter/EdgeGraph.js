@@ -3,6 +3,8 @@ import { lineIntersect } from './utils.js';
 import { ObjectPool } from './ObjectPool.js';
 
 const _vec = new Vector3();
+const _triangleVertices = new Array( 3 );
+const _edgesToAdd = new Array( 3 );
 
 class GraphTriangle extends Triangle {
 
@@ -138,16 +140,19 @@ export class EdgeGraph {
 
 	initialize( tri ) {
 
-		const arr = [ tri.a, tri.b, tri.c ];
 		const { triangles, points, edges, trianglePool, edgePool, pointPool } = this;
+
+		_triangleVertices[ 0 ] = tri.a;
+		_triangleVertices[ 1 ] = tri.b;
+		_triangleVertices[ 2 ] = tri.c;
 
 		// initialize the first triangle that we will be splitting
 		const newTriangle = trianglePool.getInstance();
 		for ( let i = 0; i < 3; i ++ ) {
 
 			const ni = ( i + 1 ) % 3;
-			const p0 = arr[ i ];
-			const p1 = arr[ ni ];
+			const p0 = _triangleVertices[ i ];
+			const p1 = _triangleVertices[ ni ];
 			const edge = edgePool.getInstance();
 			edge.start.copy( p0 );
 			edge.startIndex = i;
@@ -269,7 +274,7 @@ export class EdgeGraph {
 
 					// split into three triangles
 					const triangle = triangles[ containingTriangle ];
-					const newEdges = [ null, null, null ];
+					_edgesToAdd.fill( null );
 
 					// construct the new edges emanating from the point
 					for ( let i = 0; i < 3; i ++ ) {
@@ -281,7 +286,7 @@ export class EdgeGraph {
 						edge.end.copy( other );
 						edge.endIndex = triangle.getVertexIndex( i );
 
-						newEdges[ i ] = edge;
+						_edgesToAdd[ i ] = edge;
 
 					}
 
@@ -289,9 +294,9 @@ export class EdgeGraph {
 					for ( let i = 0; i < 3; i ++ ) {
 
 						const ni = ( i + 1 ) % 3;
-						const e0 = newEdges[ i ];
+						const e0 = _edgesToAdd[ i ];
 						const e1 = triangle.edges[ i ].edge;
-						const e2 = newEdges[ ni ];
+						const e2 = _edgesToAdd[ ni ];
 
 						const newTriangle = trianglePool.getInstance();
 						const reversed = triangle.edges[ i ].reversed;
@@ -303,7 +308,7 @@ export class EdgeGraph {
 
 					}
 
-					edges.push( ...newEdges );
+					edges.push( ..._edgesToAdd );
 					triangles.splice( triangles.indexOf( triangle ), 1 );
 
 				}
