@@ -1,12 +1,12 @@
 import { Vector3, Triangle } from 'three';
-import { LegacyTriangleSplitter } from '../src';
+import { TriangleGraphSplitter } from '../src';
 
-describe( 'LegacyTriangleSplitter', () => {
+describe( 'TriangleGraphSplitter', () => {
 
 	let splitter;
 	beforeEach( () => {
 
-		splitter = new LegacyTriangleSplitter();
+		splitter = new TriangleGraphSplitter();
 
 	} );
 

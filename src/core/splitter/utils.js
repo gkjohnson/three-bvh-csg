@@ -249,6 +249,8 @@ export function getTriangleLineIntersection( line, tri, target ) {
 
 				}
 
+				setCount ++;
+
 			} else if ( cs ) {
 
 				target.start.copy( line.start );

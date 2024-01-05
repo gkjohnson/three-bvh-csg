@@ -132,7 +132,7 @@ export class TriangleGraphSplitter {
 
 			}
 
-		} else {
+		} else if ( planePoints.length >= 2 ) {
 
 			_edge.start.copy( planePoints[ 0 ] );
 			_edge.end.copy( planePoints[ 1 ] );
@@ -142,6 +142,10 @@ export class TriangleGraphSplitter {
 				graph.insertEdge( _result );
 
 			}
+
+		} else {
+
+			// we only touch at a single vertex so do nothing
 
 		}
 

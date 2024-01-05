@@ -195,9 +195,7 @@ export class EdgeGraph {
 				other.endIndex !== inserting.endIndex
 			) {
 
-				// TODO: remove this point?
-				const point = pointPool.getInstance();
-				if ( lineIntersect( inserting, other, point ) ) {
+				if ( lineIntersect( inserting, other, _vec ) ) {
 
 					if ( other.required ) {
 
@@ -207,10 +205,10 @@ export class EdgeGraph {
 						console.log(
 							inserting.clone(),
 							other.clone(),
-							point.clone(),
+							_vec.clone(),
 
-							inserting.closestPointToPointParameter( point, false ),
-							other.closestPointToPointParameter( point, false ),
+							inserting.closestPointToPointParameter( _vec, false ),
+							other.closestPointToPointParameter( _vec, false ),
 						);
 
 					} else {
@@ -270,7 +268,6 @@ export class EdgeGraph {
 				} else {
 
 					// split into three triangles
-					// TODO: remove this array instantiation?
 					const triangle = triangles[ containingTriangle ];
 					const newEdges = [ null, null, null ];
 
