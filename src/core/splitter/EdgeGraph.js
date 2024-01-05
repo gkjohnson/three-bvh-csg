@@ -340,9 +340,6 @@ export class EdgeGraph {
 				l1.endIndex = e.endIndex;
 				l1.required = e.required;
 
-				edges.push( l0, l1 );
-				edges.splice( intersectingEdge, 1 );
-
 				// split the forward side triangle
 				if ( e.triangle ) {
 
@@ -358,13 +355,13 @@ export class EdgeGraph {
 
 					const finalEdgeIndex0 = ( edgeIndex + 2 ) % 3;
 					const newTri0 = trianglePool.getInstance();
-					newTri0.setEdge( 0, l0, triangle.edges[ edgeIndex ].reversed );
+					newTri0.setEdge( 0, l0, false );
 					newTri0.setEdge( 1, insertedEdge, false );
 					newTri0.setEdge( 2, triangle.edges[ finalEdgeIndex0 ].edge, triangle.edges[ finalEdgeIndex0 ].reversed );
 
 					const finalEdgeIndex1 = ( edgeIndex + 1 ) % 3;
 					const newTri1 = trianglePool.getInstance();
-					newTri1.setEdge( 0, l1, triangle.edges[ edgeIndex ].reversed );
+					newTri1.setEdge( 0, l1, false );
 					newTri1.setEdge( 1, triangle.edges[ finalEdgeIndex1 ].edge, triangle.edges[ finalEdgeIndex1 ].reversed );
 					newTri1.setEdge( 2, insertedEdge, true );
 
@@ -387,23 +384,26 @@ export class EdgeGraph {
 					insertedEdge.end.copy( triangle.points[ nextEdgeIndex ] );
 					insertedEdge.endIndex = triangle.getVertexIndex( nextEdgeIndex );
 
-					const finalEdgeIndex0 = ( edgeIndex + 2 ) % 3;
+					const finalEdgeIndex0 = ( edgeIndex + 1 ) % 3;
 					const newTri0 = trianglePool.getInstance();
-					newTri0.setEdge( 0, l0, triangle.edges[ edgeIndex ].reversed );
-					newTri0.setEdge( 1, insertedEdge, true );
-					newTri0.setEdge( 2, triangle.edges[ finalEdgeIndex0 ].edge, triangle.edges[ finalEdgeIndex0 ].reversed );
+					newTri0.setEdge( 0, l0, true );
+					newTri0.setEdge( 1, triangle.edges[ finalEdgeIndex0 ].edge, triangle.edges[ finalEdgeIndex0 ].reversed );
+					newTri0.setEdge( 2, insertedEdge, true );
 
-					const finalEdgeIndex1 = ( edgeIndex + 1 ) % 3;
+					const finalEdgeIndex1 = ( edgeIndex + 2 ) % 3;
 					const newTri1 = trianglePool.getInstance();
-					newTri1.setEdge( 0, l1, triangle.edges[ edgeIndex ].reversed );
-					newTri1.setEdge( 1, triangle.edges[ finalEdgeIndex1 ].edge, triangle.edges[ finalEdgeIndex1 ].reversed );
-					newTri1.setEdge( 2, insertedEdge, true );
+					newTri1.setEdge( 0, l1, true );
+					newTri1.setEdge( 1, insertedEdge, false );
+					newTri1.setEdge( 2, triangle.edges[ finalEdgeIndex1 ].edge, triangle.edges[ finalEdgeIndex1 ].reversed );
 
 					triangles.splice( triangles.indexOf( triangle ), 1 );
 					triangles.push( newTri0, newTri1 );
 					edges.push( insertedEdge );
 
 				}
+
+				edges.push( l0, l1 );
+				edges.splice( intersectingEdge, 1 );
 
 			}
 
@@ -484,13 +484,14 @@ export class EdgeGraph {
 		const { points, edges, triangles } = this;
 		const foundTriangleSet = new Set();
 		const foundEdgeSet = new Set();
+		const messages = [];
 
 		edges.forEach( edge => {
 
 			const { start, end, startIndex, endIndex } = edge;
 			if ( ! start.equals( points[ startIndex ] ) || ! end.equals( points[ endIndex ] ) ) {
 
-				throw new Error( 'Edge indices do not match' );
+				messages.push( 'Edge indices do not match' );
 
 			}
 
@@ -521,7 +522,7 @@ export class EdgeGraph {
 					! reversed && edge.triangle !== triangle
 				) {
 
-					throw new Error( 'Edge triangles do not match' );
+					messages.push( 'Edge triangles do not match' );
 
 				}
 
@@ -536,7 +537,7 @@ export class EdgeGraph {
 
 				if ( ! edge.start.equals( start ) || ! edge.end.equals( end ) ) {
 
-					throw new Error( 'Edges incorrectly assigned' );
+					messages.push( 'Edges incorrectly assigned' );
 
 				}
 
@@ -546,15 +547,17 @@ export class EdgeGraph {
 
 		if ( foundEdgeSet.size !== edges.length ) {
 
-			throw new Error( 'Edge counts do not match' );
+			messages.push( 'Edge counts do not match' );
 
 		}
 
 		if ( foundTriangleSet.size !== triangles.length ) {
 
-			throw new Error( 'Triangle counts do not match' );
+			messages.push( 'Triangle counts do not match' );
 
 		}
+
+		return messages;
 
 	}
 
