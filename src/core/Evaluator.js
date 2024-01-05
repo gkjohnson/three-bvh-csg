@@ -182,9 +182,9 @@ function getMaterialList( groups, materials ) {
 // Utility class for performing CSG operations
 export class Evaluator {
 
-	set useLegacySplitter( v ) {
+	set useLegacyTriangleSplitter( v ) {
 
-		if ( this.useLegacySplitter !== v ) {
+		if ( this.useLegacyTriangleSplitter !== v ) {
 
 			this.triangleSplitter = v ? new LegacyTriangleSplitter() : new TriangleGraphSplitter();
 
@@ -192,7 +192,7 @@ export class Evaluator {
 
 	}
 
-	get useLegacySplitter() {
+	get useLegacyTriangleSplitter() {
 
 		return this.triangleSplitter instanceof LegacyTriangleSplitter;
 
@@ -200,7 +200,7 @@ export class Evaluator {
 
 	constructor() {
 
-		this.useLegacySplitter = false;
+		this.useLegacyTriangleSplitter = false;
 		this.triangleSplitter = new TriangleGraphSplitter();
 		this.attributeData = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
