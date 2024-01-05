@@ -1,4 +1,4 @@
-import { Vector3, Line3 } from 'three';
+import { Vector3, Line3, MathUtils } from 'three';
 import { closestPointsSegmentToSegment } from 'three-mesh-bvh/src/math/MathUtilities.js';
 
 export function transformToFrame( tri, frame ) {
@@ -164,6 +164,7 @@ export function getTriangleLineIntersection( line, tri, target ) {
 	const vec = new Vector3();
 	const edge = new Line3();
 	const arr = [ tri.a, tri.b, tri.c ];
+	const EPS = 1e-10;
 	for ( let i = 0; i < 3; i ++ ) {
 
 		const ni = ( i + 1 ) % 3;
@@ -173,24 +174,30 @@ export function getTriangleLineIntersection( line, tri, target ) {
 		if ( areEdgesParallel( edge, line ) ) {
 
 			// TODO: we need to check if the lines are actually on each other
+			edge.closestPointToPoint( line.start, false, vec );
+			if ( line.start.distanceTo( vec ) < EPS ) {
+
+				let sp = edge.closestPointToPointParameter( line.start, false );
+				let ep = edge.closestPointToPointParameter( line.end, false );
+				if ( ! (
+					sp < 0 && ep < 0 ||
+					sp > 1 && ep > 1
+				) ) {
+
+					sp = MathUtils.clamp( sp, 0, 1 );
+					ep = MathUtils.clamp( ep, 0, 1 );
+
+					edge.at( sp, target.start );
+					edge.at( ep, target.end );
+
+					return true;
+
+				}
+
+			}
+
 			continue;
 
-			// let sp = edge.closestPointToPointParameter( line.start, false );
-			// let ep = edge.closestPointToPointParameter( line.end, false );
-			// if ( ! (
-			// 	sp < 0 && ep < 0 ||
-			// 	sp > 1 && ep > 1
-			// ) ) {
-
-			// 	sp = MathUtils.clamp( sp, 0, 1 );
-			// 	ep = MathUtils.clamp( ep, 0, 1 );
-
-			// 	edge.at( sp, target.start );
-			// 	edge.at( ep, target.end );
-
-			// 	return true;
-
-			// }
 
 		} else if ( lineIntersect( edge, line, vec ) ) {
 
@@ -226,7 +233,7 @@ export function getTriangleLineIntersection( line, tri, target ) {
 				target.copy( line );
 				setCount += 2;
 
-			} else {
+			} else if ( cs || ce ) {
 
 				// TODO
 				console.error( 'This shouldn\'t happen' );
