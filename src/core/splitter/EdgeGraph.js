@@ -168,6 +168,7 @@ export class EdgeGraph {
 			edge.startIndex = i;
 			edge.end.copy( p1 );
 			edge.endIndex = ni;
+			edge.required = true;
 
 			newTriangle.setEdge( i, edge, false );
 			edges.push( edge );
@@ -237,7 +238,11 @@ export class EdgeGraph {
 				index = points.length;
 				points.push( pointPool.getInstance().copy( point ) );
 
-				const containingTriangle = triangles.findIndex( t => t.containsPoint( point ) );
+				const containingTriangle = triangles.findIndex( t => {
+
+					return t.getArea() !== 0 && t.containsPoint( point );
+
+				} );
 				if ( containingTriangle === - 1 ) {
 
 					// TODO: this should never happen
