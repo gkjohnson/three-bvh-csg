@@ -359,7 +359,11 @@ export class Evaluator {
 			}
 
 			// dispose the cached data if it exists because its now out of date
-			brush.disposeCacheData();
+			if ( brush instanceof Brush ) {
+
+				brush.disposeCacheData();
+
+			}
 
 		} );
 
