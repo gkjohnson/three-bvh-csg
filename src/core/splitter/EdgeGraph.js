@@ -192,6 +192,13 @@ export class EdgeGraph {
 		const startIndex = this.insertPoint( start );
 		const endIndex = this.insertPoint( end );
 
+		// we've aligned on the same point
+		if ( startIndex === endIndex ) {
+
+			return;
+
+		}
+
 		// the edge we're trying to insert
 		const inserting = edgePool.getInstance();
 		inserting.start.copy( points[ startIndex ] );
@@ -437,6 +444,7 @@ export class EdgeGraph {
 
 				// }
 
+				// TODO: make sure we account for parallel scenarios
 				if ( lineIntersect( inserting, other, _vec ) ) {
 
 					_edgesToSwap.push( other );
@@ -464,7 +472,6 @@ export class EdgeGraph {
 			for ( let j = 0, l = _edgesToSwap.length; j < l; j ++ ) {
 
 				const other = _edgesToSwap[ j ];
-
 				this.swapEdge( other );
 
 				// check if the edge swapped into the form we needed

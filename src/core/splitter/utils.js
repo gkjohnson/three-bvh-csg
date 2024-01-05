@@ -198,7 +198,6 @@ export function getTriangleLineIntersection( line, tri, target ) {
 
 			continue;
 
-
 		} else if ( lineIntersect( edge, line, vec ) ) {
 
 			if ( setCount === 2 ) {
@@ -236,6 +235,7 @@ export function getTriangleLineIntersection( line, tri, target ) {
 
 		const cs = tri.containsPoint( line.start );
 		const ce = tri.containsPoint( line.end );
+
 		if ( setCount === 0 ) {
 
 			if ( cs && ce ) {
@@ -281,6 +281,13 @@ export function getTriangleLineIntersection( line, tri, target ) {
 			}
 
 		}
+
+	}
+
+	// if the final edge is degenerate then we haven't intersected
+	if ( target.distance() < EPS ) {
+
+		return false;
 
 	}
 
