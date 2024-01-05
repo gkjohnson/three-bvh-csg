@@ -3,6 +3,7 @@ export * from './core/Evaluator.js';
 export * from './core/operations/Operation.js';
 export * from './core/operations/OperationGroup.js';
 export * from './core/splitter/LegacyTriangleSplitter.js';
+export * from './core/splitter/TriangleGraphSplitter.js';
 export * from './core/HalfEdgeMap.js';
 export * from './materials/GridMaterial.js';
 
