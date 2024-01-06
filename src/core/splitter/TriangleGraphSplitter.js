@@ -91,7 +91,7 @@ export class TriangleGraphSplitter {
 			_edge.start.copy( p0 );
 			_edge.end.copy( p1 );
 
-			if ( ! plane.intersectLine( _edge, _hitPoint ) ) {
+			if ( ! plane.intersectLine( _edge, _hitPoint ) || _hitPoint.distanceTo( p1 ) < EPSILON ) {
 
 				// add buffer for the start point
 				if ( d0 < EPSILON ) {
@@ -103,11 +103,6 @@ export class TriangleGraphSplitter {
 					continue;
 
 				}
-
-			} else if ( _hitPoint.distanceTo( p1 ) < EPSILON ) {
-
-				// consider the end point to be not hittable
-				continue;
 
 			}
 
