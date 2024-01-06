@@ -1,5 +1,5 @@
 import { Triangle, Matrix4, Line3, Plane, Vector3 } from 'three';
-import { getTriangleLineIntersection, transformToFrame } from './utils.js';
+import { getTriangleLineIntersection } from './utils.js';
 import { EdgeGraph } from './EdgeGraph.js';
 
 const EPSILON = 1e-10;
@@ -39,19 +39,15 @@ export class TriangleGraphSplitter {
 
 		this.reset();
 
-		const { frame, invFrame, initialTri, graph, plane } = this;
+		const { initialTri, graph, plane } = this;
 
 		tri.getNormal( _norm );
 		_right.subVectors( tri.a, tri.b ).normalize();
 		_up.crossVectors( _norm, _right );
 
 		tri.getPlane( plane );
-		frame.makeBasis( _right, _up, _norm ).setPosition( tri.a );
-		invFrame.copy( frame ).invert();
 
 		initialTri.copy( tri );
-		transformToFrame( initialTri, invFrame );
-
 		graph.initialize( initialTri );
 
 	}
@@ -113,8 +109,7 @@ export class TriangleGraphSplitter {
 
 		planePoints.forEach( p => {
 
-			p.applyMatrix4( invFrame );
-			p.z = 0;
+			plane.projectPoint( p, p );
 
 		} );
 
@@ -156,28 +151,6 @@ export class TriangleGraphSplitter {
 	}
 
 	complete() {
-
-		const { graph, frame } = this;
-		graph.points.forEach( v => {
-
-			v.applyMatrix4( frame );
-
-		} );
-
-		graph.edges.forEach( e => {
-
-			e.start.applyMatrix4( frame );
-			e.end.applyMatrix4( frame );
-
-		} );
-
-		graph.triangles.forEach( t => {
-
-			t.a.applyMatrix4( frame );
-			t.b.applyMatrix4( frame );
-			t.c.applyMatrix4( frame );
-
-		} );
 
 		const issues = this.graph.validate();
 		if ( issues.length ) {

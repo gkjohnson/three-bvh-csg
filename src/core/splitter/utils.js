@@ -1,15 +1,6 @@
 import { Vector3, Line3, MathUtils } from 'three';
 import { closestPointsSegmentToSegment } from 'three-mesh-bvh/src/math/MathUtilities.js';
 
-export function transformToFrame( tri, frame ) {
-
-	tri.a.applyMatrix4( frame ).z = 0;
-	tri.b.applyMatrix4( frame ).z = 0;
-	tri.c.applyMatrix4( frame ).z = 0;
-	return tri;
-
-}
-
 function isPositive( start, end, intersection ) { // all parameters are THREE.Vector3()
 
 	let v1 = new Vector3().copy( end ).sub( start );
