@@ -1,4 +1,4 @@
-import { Triangle, Matrix4, Line3, Plane, Vector3 } from 'three';
+import { Triangle, Line3, Plane, Vector3 } from 'three';
 import { getTriangleLineIntersection } from './utils.js';
 import { EdgeGraph } from './EdgeGraph.js';
 
@@ -30,8 +30,6 @@ export class TriangleGraphSplitter {
 
 		this.initialTri = new Triangle();
 		this.plane = new Plane();
-		this.frame = new Matrix4();
-		this.invFrame = new Matrix4();
 
 	}
 
@@ -61,7 +59,7 @@ export class TriangleGraphSplitter {
 
 	splitByTriangle( tri ) {
 
-		const { plane, invFrame, initialTri, graph } = this;
+		const { plane, initialTri, graph } = this;
 
 		const planePoints = [];
 		let coplanarPoints = 0;
