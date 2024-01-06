@@ -186,6 +186,12 @@ export class EdgeGraph {
 
 	insertEdge( edge ) {
 
+		if ( edge.distance() < EPSILON ) {
+
+			return;
+
+		}
+
 		const { points, edgePool } = this;
 		const { start, end } = edge;
 
@@ -633,6 +639,49 @@ export class EdgeGraph {
 		}
 
 		return messages;
+
+	}
+
+	removeTriangle( t ) {
+
+		const { points, edges, triangles } = this;
+		triangles.splice( triangles.indexOf( t ), 1 );
+
+		triangles.edges.forEach( info => {
+
+			if ( info.reversed ) info.edge.reverseTriangle = null;
+			else info.edge.triangle = null;
+
+			if ( info.edge.triangle === null && info.edge.reverseTriangle ) {
+
+				edges.splice( edges.indexOf( info.edge ), 1 );
+
+			}
+
+		} );
+
+	}
+
+	sync() {
+
+		const { points, edges, triangles } = this;
+
+		edges.forEach( e => {
+
+			e.start.copy( points[ e.startIndex ] );
+			e.end.copy( points[ e.endIndex ] );
+
+		} );
+
+		triangles.forEach( t => {
+
+			t.edges.forEach( ( info, i ) => {
+
+				t.setEdge( i, info.edge, info.reversed );
+
+			} );
+
+		} );
 
 	}
 
