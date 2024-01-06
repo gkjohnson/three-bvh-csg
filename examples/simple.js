@@ -54,6 +54,7 @@ const params = {
 	brush2Color: '#E91E63',
 
 	operation: SUBTRACTION,
+	legacySplitter: false,
 	wireframe: false,
 	displayBrushes: true,
 	displayControls: true,
@@ -266,6 +267,12 @@ async function init() {
 			materialMap.forEach( m => m.side = FrontSide );
 
 		}
+
+	} );
+	gui.add( params, 'legacySplitter' ).onChange( v => {
+
+		csgEvaluator.useLegacyTriangleSplitter = v;
+		needsUpdate = true;
 
 	} );
 	gui.add( params, 'displayBrushes' );
