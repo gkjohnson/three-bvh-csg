@@ -1,5 +1,5 @@
-import { Vector3, Line3, Triangle, Line } from 'three';
-import { areEdgesParallel, lineIntersect } from './utils.js';
+import { Vector3, Line3, Triangle } from 'three';
+import { lineIntersect } from './utils.js';
 import { ObjectPool } from './ObjectPool.js';
 
 const _vec = new Vector3();
@@ -228,7 +228,14 @@ export class EdgeGraph {
 			const intersectingEdge = edges.findIndex( e => {
 
 				e.closestPointToPoint( point, true, _vec );
-				return _vec.distanceTo( point ) < EPSILON;
+				const found = _vec.distanceTo( point ) < EPSILON;
+				if ( found ) {
+
+					point.copy( _vec );
+
+				}
+
+				return found;
 
 			} );
 
@@ -555,11 +562,23 @@ export class EdgeGraph {
 
 				foundTriangleSet.add( edge.triangle );
 
+				if ( triangles.indexOf( edge.triangle ) === - 1 ) {
+
+					messages.push( 'Incorrect triangle assigned.' );
+
+				}
+
 			}
 
 			if ( edge.reverseTriangle ) {
 
 				foundTriangleSet.add( edge.reverseTriangle );
+
+				if ( triangles.indexOf( edge.reverseTriangle ) === - 1 ) {
+
+					messages.push( 'Incorrect triangle assigned.' );
+
+				}
 
 			}
 
