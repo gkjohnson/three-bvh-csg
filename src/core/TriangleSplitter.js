@@ -23,7 +23,7 @@ const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _splittingTriangle = new ExtendedTriangle();
 const _planeCenter = new Vector3();
-let _minEdgeSize = Infinity
+let _minEdgeSize = Infinity;
 
 // A pool of triangles to avoid unnecessary triangle creation
 class TrianglePool {
@@ -222,19 +222,19 @@ export class TriangleSplitter {
 				let coPlanarEpsilonEnd = COPLANAR_EPSILON *	Math.max(1, 0.5 * _edge.end.distanceTo(planeCenter) / planeEdgeSize);
 
 				if (coPlanarEpsilonStart > COPLANAR_EPSILON_MAX){
-					coPlanarEpsilonStart = COPLANAR_EPSILON_MAX
-					console.warn('High coplanar epsilon start because of degenerate faces')
+					coPlanarEpsilonStart = COPLANAR_EPSILON_MAX;
+					console.warn('High coplanar epsilon start because of degenerate faces');
 				}
 				if (coPlanarEpsilonEnd > COPLANAR_EPSILON_MAX){
-					coPlanarEpsilonEnd = COPLANAR_EPSILON_MAX
-					console.warn('High coplanar epsilon end because of degenerate faces')
+					coPlanarEpsilonEnd = COPLANAR_EPSILON_MAX;
+					console.warn('High coplanar epsilon end because of degenerate faces');
 				}
 
 				if ( Math.abs( startDist ) < coPlanarEpsilonStart && Math.abs( endDist ) < coPlanarEpsilonEnd ) {
 
 					// we project the edge in the plane
-					plane.projectPoint(_edge.start, arr[ t ])
-					plane.projectPoint(_edge.end, arr[ tNext ])
+					plane.projectPoint(_edge.start, arr[ t ]);
+					plane.projectPoint(_edge.end, arr[ tNext ]);
 
 					coplanarEdge = true;
 					break;
@@ -253,7 +253,7 @@ export class TriangleSplitter {
 
 				// we only don't consider this an intersection if the start points hits the plane
 				if ( Math.abs( startDist ) < coPlanarEpsilonStart ) {
-					plane.projectPoint(_edge.start, arr[ t ])
+					plane.projectPoint(_edge.start, arr[ t ]);
 					continue;
 
 				}
