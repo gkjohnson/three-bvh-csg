@@ -57,6 +57,7 @@
     "@typescript-eslint/eslint-plugin": "^5.36.2",
     "@typescript-eslint/parser": "^5.36.2",
     "babel-jest": "^27.2.4",
+    "eslint": "^8.16.0",
     "eslint-config-mdcs": "^5.0.0",
     "eslint-plugin-jest": "^23.20.0",
     "jest": "^27.2.4",
