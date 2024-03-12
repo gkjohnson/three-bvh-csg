@@ -119,19 +119,22 @@ export class TriangleSplitter {
 
 		const { normal, triangles } = this;
 		triangle.getNormal( _triangleNormal ).normalize();
-		
+
 		// compute triangleMinEdgeSize:
-		let triangleMinEdgeSizeSq = Infinity
+		let triangleMinEdgeSizeSq = Infinity;
 		const arr = [ triangle.a, triangle.b, triangle.c ];
 		for ( let i = 0; i < 3; i ++ ) {
+
 			const nexti = ( i + 1 ) % 3;
 			const v0 = arr[ i ];
 			const v1 = arr[ nexti ];
-			const edgeSizeSq = v0.distanceToSquared(v1)
-			triangleMinEdgeSizeSq = Math.min(triangleMinEdgeSizeSq, edgeSizeSq)
+			const edgeSizeSq = v0.distanceToSquared( v1 );
+			triangleMinEdgeSizeSq = Math.min( triangleMinEdgeSizeSq, edgeSizeSq );
+
 		}
-		const triangleMinEdgeSize = Math.sqrt(triangleMinEdgeSizeSq)
-		_minEdgeSize = triangleMinEdgeSize
+
+		const triangleMinEdgeSize = Math.sqrt( triangleMinEdgeSizeSq );
+		_minEdgeSize = triangleMinEdgeSize;
 
 
 		if ( Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
@@ -157,11 +160,11 @@ export class TriangleSplitter {
 				// plane positive direction is toward triangle center
 				_vec.subVectors( v1, v0 ).normalize();
 				_planeNormal.crossVectors( _triangleNormal, _vec );
-				_minEdgeSize = Math.min(triangleMinEdgeSize, v1.distanceTo(v0))
+				_minEdgeSize = Math.min( triangleMinEdgeSize, v1.distanceTo( v0 ) );
 				_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
-				_planeCenter.copy(v0);
+				_planeCenter.copy( v0 );
 
-				// we need to provide planeCenter and minEdgeSize to evaluate the plane uncertainty 
+				// we need to provide planeCenter and minEdgeSize to evaluate the plane uncertainty
 				// the smaller minEdgeSize is, the higher is the uncertainty
 				// the larger from planeCenter we are, the higher is the uncertainty
 				this.splitByPlane( _plane, _planeCenter, _minEdgeSize, triangle );
@@ -218,23 +221,28 @@ export class TriangleSplitter {
 				// so we can use that information to determine whether to split later.
 				const startDist = plane.distanceToPoint( _edge.start );
 				const endDist = plane.distanceToPoint( _edge.end );
-				let coPlanarEpsilonStart = COPLANAR_EPSILON *	Math.max(1, 0.5 * _edge.start.distanceTo(planeCenter) / planeEdgeSize);
-				let coPlanarEpsilonEnd = COPLANAR_EPSILON *	Math.max(1, 0.5 * _edge.end.distanceTo(planeCenter) / planeEdgeSize);
+				let coPlanarEpsilonStart = COPLANAR_EPSILON *	Math.max( 1, 0.5 * _edge.start.distanceTo( planeCenter ) / planeEdgeSize );
+				let coPlanarEpsilonEnd = COPLANAR_EPSILON *	Math.max( 1, 0.5 * _edge.end.distanceTo( planeCenter ) / planeEdgeSize );
 
-				if (coPlanarEpsilonStart > COPLANAR_EPSILON_MAX){
+				if ( coPlanarEpsilonStart > COPLANAR_EPSILON_MAX ) {
+
 					coPlanarEpsilonStart = COPLANAR_EPSILON_MAX;
-					console.warn('High coplanar epsilon start because of degenerate faces');
+					console.warn( 'High coplanar epsilon start because of degenerate faces' );
+
 				}
-				if (coPlanarEpsilonEnd > COPLANAR_EPSILON_MAX){
+
+				if ( coPlanarEpsilonEnd > COPLANAR_EPSILON_MAX ) {
+
 					coPlanarEpsilonEnd = COPLANAR_EPSILON_MAX;
-					console.warn('High coplanar epsilon end because of degenerate faces');
+					console.warn( 'High coplanar epsilon end because of degenerate faces' );
+
 				}
 
 				if ( Math.abs( startDist ) < coPlanarEpsilonStart && Math.abs( endDist ) < coPlanarEpsilonEnd ) {
 
 					// we project the edge in the plane
-					plane.projectPoint(_edge.start, arr[ t ]);
-					plane.projectPoint(_edge.end, arr[ tNext ]);
+					plane.projectPoint( _edge.start, arr[ t ] );
+					plane.projectPoint( _edge.end, arr[ tNext ] );
 
 					coplanarEdge = true;
 					break;
@@ -253,7 +261,8 @@ export class TriangleSplitter {
 
 				// we only don't consider this an intersection if the start points hits the plane
 				if ( Math.abs( startDist ) < coPlanarEpsilonStart ) {
-					plane.projectPoint(_edge.start, arr[ t ]);
+
+					plane.projectPoint( _edge.start, arr[ t ] );
 					continue;
 
 				}
