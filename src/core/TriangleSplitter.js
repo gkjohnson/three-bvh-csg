@@ -8,12 +8,6 @@ const EPSILON = 1e-10;
 const COPLANAR_EPSILON = 1e-10;
 const PARALLEL_EPSILON = 1e-10;
 const COPLANAR_EPSILON_MAX = 1e-4;
-//*/
-
-// XAVIER: increase epsilon values:
-/*const EPSILON = 1e-5;
-const COPLANAR_EPSILON = 1e-5;
-const PARALLEL_EPSILON = 1e-5; //*/
 
 const _edge = new Line3();
 const _foundEdge = new Line3();
@@ -23,7 +17,7 @@ const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _splittingTriangle = new ExtendedTriangle();
 const _planeCenter = new Vector3();
-let _minEdgeSize = Infinity;
+
 
 // A pool of triangles to avoid unnecessary triangle creation
 class TrianglePool {
@@ -134,7 +128,7 @@ export class TriangleSplitter {
 		}
 
 		const triangleMinEdgeSize = Math.sqrt( triangleMinEdgeSizeSq );
-		_minEdgeSize = triangleMinEdgeSize;
+		let minEdgeSize = triangleMinEdgeSize;
 
 
 		if ( Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
@@ -160,14 +154,14 @@ export class TriangleSplitter {
 				// plane positive direction is toward triangle center
 				_vec.subVectors( v1, v0 ).normalize();
 				_planeNormal.crossVectors( _triangleNormal, _vec );
-				_minEdgeSize = Math.min( triangleMinEdgeSize, v1.distanceTo( v0 ) );
+				minEdgeSize = Math.min( triangleMinEdgeSize, v1.distanceTo( v0 ) );
 				_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
 				_planeCenter.copy( v0 );
 
 				// we need to provide planeCenter and minEdgeSize to evaluate the plane uncertainty
 				// the smaller minEdgeSize is, the higher is the uncertainty
 				// the larger from planeCenter we are, the higher is the uncertainty
-				this.splitByPlane( _plane, _planeCenter, _minEdgeSize, triangle );
+				this.splitByPlane( _plane, _planeCenter, minEdgeSize, triangle );
 
 			}
 
@@ -175,7 +169,7 @@ export class TriangleSplitter {
 
 			// otherwise split by the triangle plane
 			triangle.getPlane( _plane );
-			this.splitByPlane( _plane, _planeCenter, _minEdgeSize, triangle );
+			this.splitByPlane( _plane, _planeCenter, minEdgeSize, triangle );
 
 		}
 
@@ -224,19 +218,8 @@ export class TriangleSplitter {
 				let coPlanarEpsilonStart = COPLANAR_EPSILON *	Math.max( 1, 0.5 * _edge.start.distanceTo( planeCenter ) / planeEdgeSize );
 				let coPlanarEpsilonEnd = COPLANAR_EPSILON *	Math.max( 1, 0.5 * _edge.end.distanceTo( planeCenter ) / planeEdgeSize );
 
-				if ( coPlanarEpsilonStart > COPLANAR_EPSILON_MAX ) {
-
-					coPlanarEpsilonStart = COPLANAR_EPSILON_MAX;
-					console.warn( 'High coplanar epsilon start because of degenerate faces' );
-
-				}
-
-				if ( coPlanarEpsilonEnd > COPLANAR_EPSILON_MAX ) {
-
-					coPlanarEpsilonEnd = COPLANAR_EPSILON_MAX;
-					console.warn( 'High coplanar epsilon end because of degenerate faces' );
-
-				}
+				coPlanarEpsilonStart = Math.min( coPlanarEpsilonStart, COPLANAR_EPSILON_MAX );
+				coPlanarEpsilonEnd = Math.min( coPlanarEpsilonEnd, COPLANAR_EPSILON_MAX );
 
 				if ( Math.abs( startDist ) < coPlanarEpsilonStart && Math.abs( endDist ) < coPlanarEpsilonEnd ) {
 
