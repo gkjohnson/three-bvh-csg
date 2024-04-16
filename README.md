@@ -16,6 +16,8 @@ An _experimental, in progress_, flexible, memory compact, fast and dynamic [Cons
 > **Warning**
 > Due to numerical precision and corner cases resulting geometry may not be correctly completely two-manifold.
 
+See projects like [Manifold CAD](https://github.com/elalish/manifold) for CAD operations with more robust numercial solutions.
+
 # Roadmap / Help Wanted
 
 - Fix triangle splitting / missing triangle issues [#73](https://github.com/gkjohnson/three-bvh-csg/issues/73) [#68](https://github.com/gkjohnson/three-bvh-csg/issues/68)
