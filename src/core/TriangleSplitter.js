@@ -5,8 +5,10 @@ import { isTriDegenerate } from './utils/triangleUtils.js';
 // NOTE: these epsilons likely should all be the same since they're used to measure the
 // distance from a point to a plane which needs to be done consistently
 const EPSILON = 1e-10;
-const COPLANAR_EPSILON = 1e-10;
+const COPLANAR_EPSILON = 1e-12;
 const PARALLEL_EPSILON = 1e-10;
+const COPLANAR_EPSILON_MAX = 1e-8;
+
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
@@ -14,6 +16,8 @@ const _triangleNormal = new Vector3();
 const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _splittingTriangle = new ExtendedTriangle();
+const _planeCenter = new Vector3();
+
 
 // A pool of triangles to avoid unnecessary triangle creation
 class TrianglePool {
@@ -110,6 +114,22 @@ export class TriangleSplitter {
 		const { normal, triangles } = this;
 		triangle.getNormal( _triangleNormal ).normalize();
 
+		// compute triangleMinEdgeSize:
+		let triangleMinEdgeSizeSq = Infinity;
+		const arr = [ triangle.a, triangle.b, triangle.c ];
+		for ( let i = 0; i < 3; i ++ ) {
+
+			const nexti = ( i + 1 ) % 3;
+			const v0 = arr[ i ];
+			const v1 = arr[ nexti ];
+			const edgeSizeSq = v0.distanceToSquared( v1 );
+			triangleMinEdgeSizeSq = Math.min( triangleMinEdgeSizeSq, edgeSizeSq );
+
+		}
+
+		const triangleMinEdgeSize = Math.sqrt( triangleMinEdgeSizeSq );
+
+
 		if ( Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
 
 			this.coplanarTriangleUsed = true;
@@ -122,7 +142,6 @@ export class TriangleSplitter {
 			}
 
 			// if the triangle is coplanar then split by the edge planes
-			const arr = [ triangle.a, triangle.b, triangle.c ];
 			for ( let i = 0; i < 3; i ++ ) {
 
 				const nexti = ( i + 1 ) % 3;
@@ -134,8 +153,12 @@ export class TriangleSplitter {
 				_vec.subVectors( v1, v0 ).normalize();
 				_planeNormal.crossVectors( _triangleNormal, _vec );
 				_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
+				_planeCenter.copy( v0 );
 
-				this.splitByPlane( _plane, triangle );
+				// we need to provide planeCenter and minEdgeSize to evaluate the plane uncertainty
+				// the smaller minEdgeSize is, the higher is the uncertainty
+				// the larger from planeCenter we are, the higher is the uncertainty
+				this.splitByPlane( _plane, _planeCenter, triangleMinEdgeSize, triangle );
 
 			}
 
@@ -143,7 +166,7 @@ export class TriangleSplitter {
 
 			// otherwise split by the triangle plane
 			triangle.getPlane( _plane );
-			this.splitByPlane( _plane, triangle );
+			this.splitByPlane( _plane, _planeCenter, triangleMinEdgeSize, triangle );
 
 		}
 
@@ -151,7 +174,7 @@ export class TriangleSplitter {
 
 	// Split the triangles by the given plan. If a triangle is provided then we ensure we
 	// intersect the triangle before splitting the plane
-	splitByPlane( plane, clippingTriangle ) {
+	splitByPlane( plane, planeCenter, planeEdgeSize, clippingTriangle ) {
 
 		const { triangles, trianglePool } = this;
 
@@ -189,7 +212,37 @@ export class TriangleSplitter {
 				// so we can use that information to determine whether to split later.
 				const startDist = plane.distanceToPoint( _edge.start );
 				const endDist = plane.distanceToPoint( _edge.end );
-				if ( Math.abs( startDist ) < COPLANAR_EPSILON && Math.abs( endDist ) < COPLANAR_EPSILON ) {
+
+				// we scale COPLANAR_EPSILON since a very small edge leads to more uncertainty in the true plane position:
+				// see https://github.com/gkjohnson/three-bvh-csg/issues/199#issuecomment-1986287165
+				let coPlanarEpsilonStart = COPLANAR_EPSILON *	Math.max( 1, 0.5 * _edge.start.distanceTo( planeCenter ) / planeEdgeSize );
+				let coPlanarEpsilonEnd = COPLANAR_EPSILON *	Math.max( 1, 0.5 * _edge.end.distanceTo( planeCenter ) / planeEdgeSize );
+
+				coPlanarEpsilonStart = Math.min( coPlanarEpsilonStart, COPLANAR_EPSILON_MAX );
+				coPlanarEpsilonEnd = Math.min( coPlanarEpsilonEnd, COPLANAR_EPSILON_MAX );
+
+
+				const isStartCoplanar = ( Math.abs( startDist ) < coPlanarEpsilonStart );
+				const isEndCoplanar = ( Math.abs( endDist ) < coPlanarEpsilonEnd );
+
+				// reprojection:
+				// if we estimate that a point belongs to the plane
+				// we force it to belongs to the plane
+				// I cannot explain exactly why it works but it looks that it works
+				if ( isStartCoplanar ) {
+
+					plane.projectPoint( _edge.start, arr[ t ] );
+
+				}
+
+				if ( isEndCoplanar ) {
+
+					plane.projectPoint( _edge.end, arr[ tNext ] );
+
+				}
+
+
+				if ( isStartCoplanar && isEndCoplanar ) {
 
 					coplanarEdge = true;
 					break;
@@ -207,7 +260,7 @@ export class TriangleSplitter {
 				}
 
 				// we only don't consider this an intersection if the start points hits the plane
-				if ( Math.abs( startDist ) < COPLANAR_EPSILON ) {
+				if ( isStartCoplanar ) {
 
 					continue;
 
@@ -218,7 +271,7 @@ export class TriangleSplitter {
 				// Because we ignore the start point intersection above we have to make sure we check the end
 				// point intersection here.
 				let didIntersect = ! ! plane.intersectLine( _edge, _vec );
-				if ( ! didIntersect && Math.abs( endDist ) < COPLANAR_EPSILON ) {
+				if ( ! didIntersect && isEndCoplanar ) {
 
 					_vec.copy( _edge.end );
 					didIntersect = true;
