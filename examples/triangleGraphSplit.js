@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { LegacyTriangleSplitter, TriangleSetHelper } from '..';
+import { EdgesHelper, PointsHelper, TriangleSetHelper } from '../src/index.js';
+import { TriangleGraphSplitter } from '../src/core/splitter/TriangleGraphSplitter.js';
 
 let renderer, camera, scene;
 let controls, transformControls;
 let planeObject, planeHelper;
-let splitter, clippedTris, initialTris;
+let splitter, clippedTris, initialTris, pointsHelper, edgesHelper;
 let plane = new THREE.Plane();
 let _vec = new THREE.Vector3();
 
@@ -19,20 +20,28 @@ const ogTris = [
 ];
 
 const tris = [
+
 	new THREE.Triangle(
-		new THREE.Vector3( - 0.5, 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.35, 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.35, - 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.35, 0.5, 0.5 ),
+	),
+	new THREE.Triangle(
+		new THREE.Vector3( - 0.35, 0.5, - 0.5 ),
+		new THREE.Vector3( - 0.35, 0.5, 0.5 ),
+		new THREE.Vector3( 0.35, 0.5, - 0.5 ),
+	),
+	new THREE.Triangle(
+		new THREE.Vector3( - 0.5, 0.7, - 0.5 ),
 		new THREE.Vector3( - 0.5, - 0.5, - 0.5 ),
-		new THREE.Vector3( - 0.5, 0.5, 0.5 ),
+		new THREE.Vector3( - 0.5, 0.7, 0.5 ),
 	),
-	new THREE.Triangle(
-		new THREE.Vector3( - 0.5, 0.5, - 0.5 ),
-		new THREE.Vector3( - 0.5, 0.5, 0.5 ),
-		new THREE.Vector3( 0.5, 0.5, - 0.5 ),
-	),
+
+
 	// new THREE.Triangle(
-	// 	new THREE.Vector3( -0.5, 0.5, 0.5 ),
-	// 	new THREE.Vector3( 0.5, 0.5, 0.5 ),
-	// 	new THREE.Vector3( 0.5, 0.5, -0.5 ),
+	// 	new THREE.Vector3( -0.5, 0.75, 0.5 ),
+	// 	new THREE.Vector3( 0.5, 0.75, 0.5 ),
+	// 	new THREE.Vector3( 0.5, 0.75, -0.5 ),
 	// ),
 ];
 
@@ -61,7 +70,7 @@ function init() {
 
 	// camera setup
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
-	camera.position.set( 1, 2, 4 );
+	camera.position.set( - 1.5, 2, - 2 );
 	camera.far = 100;
 	camera.updateProjectionMatrix();
 
@@ -86,10 +95,12 @@ function init() {
 
 	initialTris = new TriangleSetHelper();
 	clippedTris = new TriangleSetHelper();
+	pointsHelper = new PointsHelper();
+	edgesHelper = new EdgesHelper();
 
-	splitter = new LegacyTriangleSplitter();
+	splitter = new TriangleGraphSplitter();
 
-	scene.add( initialTris, clippedTris );
+	scene.add( initialTris, clippedTris, pointsHelper, edgesHelper );
 
 	window.addEventListener( 'resize', function () {
 
@@ -109,19 +120,45 @@ function render() {
 	_vec.set( 0, 0, 1 ).transformDirection( planeObject.matrixWorld );
 	plane.setFromNormalAndCoplanarPoint( _vec, planeObject.position );
 
-	splitter.initialize( ogTris );
-	tris.forEach( t => {
+	if ( ! window.UPDATED ) {
 
-		splitter.splitByTriangle( t );
+		splitter.initialize( ogTris[ 0 ] );
+		tris.forEach( ( t, i ) => {
 
-	} );
+			splitter.splitByTriangle( t, i === 1 );
+
+		} );
+
+		const errors = splitter.graph.validate();
+		if ( errors.length > 0 ) {
+
+			console.error( 'INVALID' );
+			errors.forEach( e => {
+
+				console.error( e );
+
+			} );
+
+		}
+
+		splitter.complete();
+
+		window.UPDATED = true;
+		window.SPLITTER = splitter;
+
+	}
+
 
 	planeHelper.visible = false;
 	transformControls.visible = false;
 	transformControls.enabled = false;
 
-	clippedTris.setTriangles( splitter.triangles );
-	initialTris.setTriangles( [ ...ogTris, ...tris ] );
+	// pointsHelper.setPoints( splitter.graph.points );
+	// edgesHelper.setEdges( splitter.graph.edges );
+
+	clippedTris.color.set( 0x00ff00 );
+	clippedTris.setTriangles( splitter.graph.triangles );
+	initialTris.setTriangles( [ ...tris ] );
 
 	renderer.render( scene, camera );
 

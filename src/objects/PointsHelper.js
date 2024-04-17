@@ -9,6 +9,13 @@ export class PointsHelper extends InstancedMesh {
 
 	}
 
+	set radius( v ) {
+
+		this.geometry.dispose();
+		this.geometry = new SphereGeometry( v );
+
+	}
+
 	constructor( count = 1000, points = [] ) {
 
 		super( new SphereGeometry( 0.025 ), new MeshBasicMaterial(), count );
