@@ -50,7 +50,7 @@ export class Evaluator {
 export class Operation extends Brush {
 
   isOperation: boolean;
-  // operation
+  operation: number;
   markUpdated(): void;
   isDirty(): boolean;
   insertBefore( brush: Brush ): void;
