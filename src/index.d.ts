@@ -32,6 +32,8 @@ export const SUBTRACTION: CSGOperation;
 export const REVERSE_SUBTRACTION: CSGOperation;
 export const INTERSECTION: CSGOperation;
 export const DIFFERENCE: CSGOperation;
+export const HOLLOW_SUBTRACTION: CSGOperation;
+export const HOLLOW_INTERSECTION: CSGOperation;
 
 export class Evaluator {
 
@@ -50,7 +52,7 @@ export class Evaluator {
 export class Operation extends Brush {
 
   isOperation: boolean;
-  operation: number;
+  operation: CSGOperation;
   markUpdated(): void;
   isDirty(): boolean;
   insertBefore( brush: Brush ): void;
