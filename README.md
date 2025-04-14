@@ -129,6 +129,14 @@ A class with the same interface as `THREE.Group` but used to group a list of Ope
 
 ## Evaluator
 
+### .useLegacyTriangleSplitter
+
+```js
+useLegacyTriangleSplitter = false : Boolean
+```
+
+Whether to use the legacy splitter. Set to true if triangulation behavior looks incorrect. Please report errors if this seems to be necessary.
+
 ### .useGroups
 
 ```js

@@ -1,6 +1,6 @@
 import { Triangle, Line3, Vector3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
-import { isTriDegenerate } from './utils/triangleUtils.js';
+import { isTriDegenerate } from '../utils/triangleUtils.js';
 
 // NOTE: these epsilons likely should all be the same since they're used to measure the
 // distance from a point to a plane which needs to be done consistently
@@ -53,7 +53,7 @@ class TrianglePool {
 }
 
 // Utility class for splitting triangles
-export class TriangleSplitter {
+export class LegacyTriangleSplitter {
 
 	constructor() {
 

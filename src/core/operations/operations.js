@@ -140,6 +140,13 @@ function performSplitTriangleOperations(
 
 		}
 
+		// TODO: remove the need to call "complete"
+		if ( splitter.complete ) {
+
+			splitter.complete();
+
+		}
+
 		// for all triangles in the split result
 		const triangles = splitter.triangles;
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {

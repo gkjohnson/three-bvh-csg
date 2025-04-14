@@ -75,23 +75,12 @@ export class CullableTriangle extends Triangle {
 
 }
 
-export class TrianglePool {
+export class TriangleGraphSplitter {
 
-  getTriangle(): Triangle;
-  clear(): void;
-  reset(): void;
-
-}
-
-export class TriangleSplitter {
-
-  trianglePool: TrianglePool;
   triangles: Triangle[];
-  normal: Vector3;
 
   initialize( tri: Triangle ): void;
   splitByTriangle( triangle: Triangle ): void;
-  splitByPlane( plane: Plane, triangle: Triangle, coplanarIndex: number ): void;
   reset(): void;
 
 }
