@@ -11,7 +11,7 @@
 An _experimental, in progress_, flexible, memory compact, fast and dynamic [Constructive Solid Geometry](https://en.wikipedia.org/wiki/Constructive_solid_geometry) implementation on top of [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh). More than 100 times faster than other BSP-based three.js CSG libraries in complex cases. Contributions welcome!
 
 > **Note**
-> All brush geometry must be [two-manifold](https://knowledge.autodesk.com/support/maya-lt/learn-explore/caas/CloudHelp/cloudhelp/2015/ENU/MayaLT/files/Polygons-overview-Twomanifold-vs--nonmanifold-polygonal-geometry-htm.html) - or water tight with no triangle interpenetration.
+> All brush geometry must be [two-manifold](https://help.autodesk.com/view/MAYAUL/2026/ENU/?guid=GUID-8E97CEF7-1CFE-4838-B4B7-59F526E21AB2) - or water tight with no triangle interpenetration.
 
 > **Warning**
 > Due to numerical precision and corner cases resulting geometry may not be correctly completely two-manifold.
