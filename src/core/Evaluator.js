@@ -1,5 +1,6 @@
 import { BufferAttribute } from 'three';
-import { TriangleSplitter } from './TriangleSplitter.js';
+import { LegacyTriangleSplitter } from './splitter/LegacyTriangleSplitter.js';
+import { TriangleGraphSplitter } from './splitter/TriangleGraphSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
@@ -151,11 +152,6 @@ function assignBufferData( geometry, attributeData, groupOrder ) {
 	// update the draw range
 	geometry.setDrawRange( 0, drawRange );
 
-	// remove the bounds tree if it exists because its now out of date
-	// TODO: can we have this dispose in the same way that a brush does?
-	// TODO: why are half edges and group indices not removed here?
-	geometry.boundsTree = null;
-
 	if ( needsDisposal ) {
 
 		geometry.dispose();
@@ -186,9 +182,26 @@ function getMaterialList( groups, materials ) {
 // Utility class for performing CSG operations
 export class Evaluator {
 
+	set useLegacyTriangleSplitter( v ) {
+
+		if ( this.useLegacyTriangleSplitter !== v ) {
+
+			this.triangleSplitter = v ? new LegacyTriangleSplitter() : new TriangleGraphSplitter();
+
+		}
+
+	}
+
+	get useLegacyTriangleSplitter() {
+
+		return this.triangleSplitter instanceof LegacyTriangleSplitter;
+
+	}
+
 	constructor() {
 
-		this.triangleSplitter = new TriangleSplitter();
+		this.useLegacyTriangleSplitter = false;
+		this.triangleSplitter = new TriangleGraphSplitter();
 		this.attributeData = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
@@ -342,6 +355,13 @@ export class Evaluator {
 			if ( consolidateGroups ) {
 
 				joinGroups( targetGeometry.groups );
+
+			}
+
+			// dispose the cached data if it exists because its now out of date
+			if ( brush instanceof Brush ) {
+
+				brush.disposeCacheData();
 
 			}
 

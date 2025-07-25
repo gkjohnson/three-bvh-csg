@@ -100,7 +100,7 @@ A map encoding a map of each triangle edge to another triangle edge in a typed a
 
 A map used for storing the set of intersections from one triangle index in the first geometry to the other.
 
-`src/core/TriangleSplitter.js`
+`src/core/splitter/TriangleGraphSplitter.js`
 
 A utility for taking a triangle splitting it by planes or other triangles into a smaller subset of triangles.
 
