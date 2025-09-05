@@ -51,6 +51,7 @@
   "devDependencies": {
     "@babel/core": "^7.21.8",
     "@babel/preset-env": "^7.21.5",
+    "@babel/preset-modules": "^0.1.6",
     "@types/eslint": "^7.28.1",
     "@types/jest": "^30.0.0",
     "@types/three": "^0.179.0",
