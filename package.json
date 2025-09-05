@@ -8,8 +8,8 @@
   "types": "src/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "start": "cd examples && parcel serve ./*.html --dist-dir ./dev-bundle/ --no-cache --no-hmr",
-    "build-examples": "cd examples && parcel build ./*.html --dist-dir ./bundle/ --public-url . --no-cache --no-content-hash",
+    "start": "vite --config ./vite.config.js",
+    "build-examples": "vite build --config ./vite.config.js",
     "build": "rollup -c",
     "lint": "eslint \"./src/**/*.{js,ts}\" \"./examples/*.js\" && tsc -p tsconfig.json --noEmit",
     "benchmark": "node ./benchmark/benchmark.js",
@@ -63,11 +63,11 @@
     "eslint-plugin-jest": "^28.6.0",
     "jest": "^30.0.5",
     "jest-cli": "^30.0.5",
-    "parcel": "^2.6.0",
     "rollup": "^2.70.0",
     "three": "^0.179.0",
     "three-csg-ts": "^3.1.10",
     "three-mesh-bvh": "^0.9.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vite": "^6.2.2"
   }
 }
