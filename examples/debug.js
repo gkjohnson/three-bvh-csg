@@ -3,7 +3,7 @@ import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { MeshBVHVisualizer } from 'three-mesh-bvh';
+import { MeshBVHHelper } from 'three-mesh-bvh';
 import {
 	Brush,
 	Evaluator,
@@ -64,14 +64,14 @@ async function init() {
 	scene = new THREE.Scene();
 
 	// lights
-	light = new THREE.DirectionalLight( 0xffffff, 1 );
+	light = new THREE.DirectionalLight( 0xffffff, 3 );
 	light.position.set( - 1, 2, 3 );
 
-	light2 = new THREE.DirectionalLight( 0xffffff, 0.25 );
+	light2 = new THREE.DirectionalLight( 0xffffff, 1 );
 	light2.position.set( - 1, 2, 3 ).multiplyScalar( - 1 );
 
 	scene.add( light, light2 );
-	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.1 ) );
+	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.3 ) );
 
 	// camera setup
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
@@ -170,8 +170,8 @@ async function init() {
 	trisHelper.color.set( 0x00BCD4 );
 	scene.add( trisHelper );
 
-	bvhHelper1 = new MeshBVHVisualizer( brush1, 20 );
-	bvhHelper2 = new MeshBVHVisualizer( brush2, 20 );
+	bvhHelper1 = new MeshBVHHelper( brush1, 20 );
+	bvhHelper2 = new MeshBVHHelper( brush2, 20 );
 	scene.add( bvhHelper1, bvhHelper2 );
 
 	// load bunny geometry

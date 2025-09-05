@@ -24,7 +24,7 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { MeshBVHVisualizer } from 'three-mesh-bvh';
+import { MeshBVHHelper } from 'three-mesh-bvh';
 import {
 	Brush,
 	Evaluator,
@@ -141,7 +141,7 @@ async function init() {
 		needsUpdate = true;
 
 	} );
-	scene.add( transformControls );
+	scene.add( transformControls.getHelper() );
 
 	// bunny mesh has no UVs so skip that attribute
 	csgEvaluator = new Evaluator();
@@ -236,8 +236,8 @@ async function init() {
 	trisHelper.color.set( 0x00BCD4 );
 	scene.add( trisHelper );
 
-	bvhHelper1 = new MeshBVHVisualizer( brush1, 20 );
-	bvhHelper2 = new MeshBVHVisualizer( brush2, 20 );
+	bvhHelper1 = new MeshBVHHelper( brush1, 20 );
+	bvhHelper2 = new MeshBVHHelper( brush2, 20 );
 	scene.add( bvhHelper1, bvhHelper2 );
 
 	bvhHelper1.update();

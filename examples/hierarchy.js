@@ -22,7 +22,7 @@ const params = {
 };
 
 let renderer, camera, scene, gui, outputContainer;
-let controls, transformControls;
+let controls, transformControls, transformHelper;
 let light;
 let csgEvaluator;
 
@@ -80,7 +80,9 @@ async function init() {
 		}
 
 	} );
-	scene.add( transformControls );
+
+	transformHelper = transformControls.getHelper();
+	scene.add( transformHelper );
 
 	// bunny mesh has no UVs so skip that attribute
 	csgEvaluator = new Evaluator();
@@ -105,7 +107,7 @@ async function init() {
 	resultGridMat.polygonOffsetUnits = 1;
 	resultGridMat.color.set( 0xffffff );
 
-	wireframeObject = new THREE.Mesh( undefined, new THREE.MeshBasicMaterial( { color: 0, wireframe: true } ) );
+	wireframeObject = new THREE.Mesh( undefined, new THREE.MeshBasicMaterial( { color: 0, wireframe: true, opacity: 0.25, transparent: true } ) );
 	wireframeObject.material.color.set( 0xffc400 ).multiplyScalar( 0.1 );
 	scene.add( wireframeObject );
 
@@ -266,7 +268,7 @@ function render() {
 	outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
 
 	transformControls.enabled = params.displayControls;
-	transformControls.visible = params.displayControls;
+	transformHelper.visible = params.displayControls;
 
 	result.visible = params.display !== 'BRUSHES';
 	root.visible = params.display !== 'RESULT';
