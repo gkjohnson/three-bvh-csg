@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>three-bvh-csg - Hollow Operations</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <style type="text/css">
+        html, body {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+			font-family: monospace;
+			background-color: #111111;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+		#info {
+			position: absolute;
+			top: 0;
+			width: 100%;
+			color: white;
+			font-family: monospace;
+			text-align: center;
+			padding: 5px 0;
+		}
+    </style>
+  <script type="module" crossorigin src="./assets/hollow-B48Pbxec.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/TriangleSplitter-ByAGyBL2.js">
+  <link rel="modulepreload" crossorigin href="./assets/lil-gui.module.min-BH_YJbPT.js">
+  <link rel="modulepreload" crossorigin href="./assets/Evaluator-Coej1Gnr.js">
+</head>
+<body>
+	<div id="info">
+		Using HOLLOW_SUBTRACTION and HOLLOW_INTERSECTION operations to
+		<br/>
+		clip a non-watertight mesh using a watertight volume.
+	</div>
+	<div id="output"></div>
+</body>
+</html>
