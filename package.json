@@ -49,23 +49,25 @@
     "three-mesh-bvh": ">=0.6.6"
   },
   "devDependencies": {
-    "@babel/core": "^7.15.5",
-    "@babel/preset-env": "^7.15.4",
+    "@babel/core": "^7.21.8",
+    "@babel/preset-env": "^7.21.5",
+    "@babel/preset-modules": "^0.1.6",
     "@types/eslint": "^7.28.1",
-    "@types/jest": "^27.0.2",
-    "@types/three": "^0.152.0",
-    "@typescript-eslint/eslint-plugin": "^5.36.2",
-    "@typescript-eslint/parser": "^5.36.2",
-    "babel-jest": "^27.2.4",
-    "eslint": "^8.16.0",
+    "@types/jest": "^30.0.0",
+    "@types/three": "^0.179.0",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
+    "babel-jest": "^30.0.5",
+    "eslint": "^8.57.1",
     "eslint-config-mdcs": "^5.0.0",
-    "eslint-plugin-jest": "^23.20.0",
-    "jest": "^27.2.4",
+    "eslint-plugin-jest": "^28.6.0",
+    "jest": "^30.0.5",
+    "jest-cli": "^30.0.5",
     "parcel": "^2.6.0",
     "rollup": "^2.70.0",
-    "three": "^0.155.0",
+    "three": "^0.179.0",
     "three-csg-ts": "^3.1.10",
-    "three-mesh-bvh": "^0.6.6",
-    "typescript": "^4.8.2"
+    "three-mesh-bvh": "^0.9.0",
+    "typescript": "^5.6.0"
   }
 }
