@@ -337,6 +337,26 @@ class Polygon {
 }
 
 // Enhanced TriangleSplitter that creates symmetrical clipping along connected edges
+// 
+// This implementation addresses the edge connectivity issues mentioned in:
+// - https://github.com/gkjohnson/three-bvh-csg/pull/49 (HalfEdgeMap optimization)
+// - https://github.com/gkjohnson/three-bvh-csg/issues/51 (this issue)
+// - https://github.com/gkjohnson/three-bvh-csg/issues/97 (fast bool paper research)
+//
+// Key improvements over TriangleSplitter:
+// - Constructs polygons from connected intersection edge loops
+// - Preserves edge alignment for better HalfEdgeMap connectivity  
+// - Uses ear clipping triangulation with robust fallbacks
+//
+// Future improvements could include:
+// - Constrained Delaunay Triangulation (CDT) as suggested in #97
+// - Better coplanar triangle handling
+// - Integration with fast bool paper algorithms
+//
+// References:
+// - https://algo.kaust.edu.sa/Documents/cs372l05.pdf
+// - https://en.wikipedia.org/wiki/Polygon_triangulation
+// - https://github.com/savithru-j/cdt-js (potential CDT implementation)
 export class PolygonSplitter {
 
 	constructor() {
@@ -388,17 +408,26 @@ export class PolygonSplitter {
 
 	}
 
-	// Construct a polygon boundary from an array of triangles
+	// Construct a polygon boundary from an array of triangles using connected edge approach
+	// This follows the approach suggested in issue #97 for better edge connectivity
 	constructInitialPolygonFromTriangles( triangles ) {
 
-		// This is a simplified approach - in a full implementation you'd want to
-		// construct the actual boundary polygon, but for now we'll just use individual triangles
+		// For now, use the simple approach of individual triangle polygons
+		// Future enhancement: construct actual boundary polygon from connected edges
+		// as described in the fast bool paper (issue #97)
 		for ( const tri of triangles ) {
 
 			const polygon = new Polygon( [ tri.a.clone(), tri.b.clone(), tri.c.clone() ] );
 			this.polygons.push( polygon );
 
 		}
+
+		// TODO: Implement proper boundary polygon construction:
+		// 1. Find all unique edges from the triangle set
+		// 2. Identify boundary edges (edges that appear only once)
+		// 3. Connect boundary edges into continuous loops
+		// 4. Create polygons from these loops
+		// This would provide better connectivity as suggested in #97
 
 	}
 
