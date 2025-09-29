@@ -159,10 +159,10 @@ function performCSG() {
 	const positionCount = csgResult.geometry.attributes.position.count;
 	const triangleCount = positionCount / 3;
 	const mode = params.useSymmetricalClipping ? 'PolygonSplitter' : 'TriangleSplitter';
-	
+
 	outputContainer.innerHTML = `
 		<div><strong>${mode}</strong></div>
-		<div>Time: ${deltaTime.toFixed(2)}ms</div>
+		<div>Time: ${deltaTime.toFixed( 2 )}ms</div>
 		<div>Triangles: ${triangleCount}</div>
 		<div>Vertices: ${positionCount}</div>
 	`;

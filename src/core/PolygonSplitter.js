@@ -9,7 +9,6 @@ const COPLANAR_EPSILON = 1e-10;
 const PARALLEL_EPSILON = 1e-10;
 
 const _edge = new Line3();
-const _foundEdge = new Line3();
 const _vec = new Vector3();
 const _triangleNormal = new Vector3();
 const _planeNormal = new Vector3();
@@ -48,19 +47,6 @@ class TrianglePool {
 
 		this._pool.length = 0;
 		this._index = 0;
-
-	}
-
-}
-
-// Structure to represent a polygon edge
-class PolygonEdge {
-
-	constructor( start, end ) {
-
-		this.start = start.clone();
-		this.end = end.clone();
-		this.used = false;
 
 	}
 
@@ -470,7 +456,7 @@ export class PolygonSplitter {
 		// Process each polygon
 		for ( const polygon of this.polygons ) {
 
-			const result = this.splitPolygonByPlane( polygon, plane, _splittingTriangle );
+			const result = this.splitPolygonByPlane( polygon, plane );
 			newPolygons.push( ...result.polygons );
 			splitEdges.push( ...result.edges );
 
@@ -482,7 +468,7 @@ export class PolygonSplitter {
 	}
 
 	// Split a single polygon by a plane - improved version
-	splitPolygonByPlane( polygon, plane, splittingTriangle ) {
+	splitPolygonByPlane( polygon, plane ) {
 
 		const { points } = polygon;
 		const resultPolygons = [];
