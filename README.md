@@ -145,6 +145,23 @@ consolidateGroups = true : Boolean
 
 If true then any group in the final geometry that shares a common material with another group will be merged into one to reduce the number of draw calls required by the resulting mesh.
 
+### .useSymmetricalClipping
+
+```js
+useSymmetricalClipping = false : Boolean
+```
+
+Whether to use the new PolygonSplitter for symmetrical clipping along connected edges instead of the default TriangleSplitter. When enabled, the clipping process constructs polygons from connected loops of edges derived from triangle intersections, then triangulates them using ear clipping algorithm with fallback. This approach provides better edge connectivity for use with HalfEdgeMap and can result in improved topology preservation.
+
+**Implementation Details:**
+- Constructs polygons from connected intersection edge loops (as suggested in [#97](https://github.com/gkjohnson/three-bvh-csg/issues/97))
+- Uses ear clipping triangulation with robust fallback mechanisms
+- Addresses the edge alignment issues mentioned in [#49](https://github.com/gkjohnson/three-bvh-csg/pull/49)
+- Maintains edge connectivity for better HalfEdgeMap performance
+- Can be significantly faster than TriangleSplitter while preserving more geometric detail
+
+**Note:** Future versions may incorporate Constrained Delaunay Triangulation for even more robust polygon triangulation.
+
 ### .evaluate
 
 ```js

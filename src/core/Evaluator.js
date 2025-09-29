@@ -1,5 +1,6 @@
 import { BufferAttribute } from 'three';
 import { TriangleSplitter } from './TriangleSplitter.js';
+import { PolygonSplitter } from './PolygonSplitter.js';
 import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
@@ -189,10 +190,12 @@ export class Evaluator {
 	constructor() {
 
 		this.triangleSplitter = new TriangleSplitter();
+		this.polygonSplitter = new PolygonSplitter();
 		this.attributeData = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
 		this.consolidateGroups = true;
+		this.useSymmetricalClipping = false; // New option for symmetrical clipping
 		this.debug = new OperationDebugData();
 
 	}
@@ -232,10 +235,12 @@ export class Evaluator {
 
 		const {
 			triangleSplitter,
+			polygonSplitter,
 			attributeData,
 			attributes,
 			useGroups,
 			consolidateGroups,
+			useSymmetricalClipping,
 			debug,
 		} = this;
 
@@ -255,7 +260,8 @@ export class Evaluator {
 
 		// run the operation to fill the list of attribute data
 		debug.init();
-		performOperation( a, b, operations, triangleSplitter, attributeData, { useGroups } );
+		const splitter = useSymmetricalClipping ? polygonSplitter : triangleSplitter;
+		performOperation( a, b, operations, splitter, attributeData, { useGroups } );
 		debug.complete();
 
 		// get the materials and group ranges
