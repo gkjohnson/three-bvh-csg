@@ -145,6 +145,14 @@ consolidateGroups = true : Boolean
 
 If true then any group in the final geometry that shares a common material with another group will be merged into one to reduce the number of draw calls required by the resulting mesh.
 
+### .useSymmetricalClipping
+
+```js
+useSymmetricalClipping = false : Boolean
+```
+
+Whether to use the new PolygonSplitter for symmetrical clipping along connected edges instead of the default TriangleSplitter. When enabled, the clipping process constructs polygons from connected loops of edges derived from triangle intersections, then triangulates them using ear clipping. This approach can provide better edge connectivity for use with HalfEdgeMap and may result in improved topology preservation, though it may generate more triangles than the standard approach.
+
 ### .evaluate
 
 ```js

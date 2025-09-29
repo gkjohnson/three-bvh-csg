@@ -76,6 +76,201 @@ class Polygon {
 
 	}
 
+	// Proper ear clipping triangulation algorithm
+	triangulateEarClipping() {
+
+		if ( this.points.length < 3 ) {
+
+			return;
+
+		}
+
+		// For 3 points, just create one triangle
+		if ( this.points.length === 3 ) {
+
+			const tri = new Triangle( this.points[ 0 ], this.points[ 1 ], this.points[ 2 ] );
+			if ( ! isTriDegenerate( tri ) ) {
+
+				this.triangles.push( tri );
+
+			}
+
+			return;
+
+		}
+
+		// Calculate polygon normal for projection
+		const normal = new Vector3();
+		this.computeNormal( normal );
+
+		// Project to 2D by choosing the best axis
+		const absNormal = new Vector3( Math.abs( normal.x ), Math.abs( normal.y ), Math.abs( normal.z ) );
+		let getU, getV;
+
+		if ( absNormal.x >= absNormal.y && absNormal.x >= absNormal.z ) {
+
+			// Project to YZ plane
+			getU = ( p ) => p.y;
+			getV = ( p ) => p.z;
+
+		} else if ( absNormal.y >= absNormal.z ) {
+
+			// Project to XZ plane
+			getU = ( p ) => p.x;
+			getV = ( p ) => p.z;
+
+		} else {
+
+			// Project to XY plane
+			getU = ( p ) => p.x;
+			getV = ( p ) => p.y;
+
+		}
+
+		// Create vertex indices list
+		const indices = [];
+		for ( let i = 0; i < this.points.length; i ++ ) {
+
+			indices.push( i );
+
+		}
+
+		// Check if polygon is clockwise or counter-clockwise
+		let area = 0;
+		for ( let i = 0; i < indices.length; i ++ ) {
+
+			const j = ( i + 1 ) % indices.length;
+			const pi = this.points[ indices[ i ] ];
+			const pj = this.points[ indices[ j ] ];
+			area += getU( pi ) * getV( pj ) - getU( pj ) * getV( pi );
+
+		}
+
+		const isClockwise = area < 0;
+
+		// Ear clipping main loop
+		while ( indices.length > 3 ) {
+
+			let earFound = false;
+
+			for ( let i = 0; i < indices.length; i ++ ) {
+
+				const prev = indices[ ( i - 1 + indices.length ) % indices.length ];
+				const curr = indices[ i ];
+				const next = indices[ ( i + 1 ) % indices.length ];
+
+				const p1 = this.points[ prev ];
+				const p2 = this.points[ curr ];
+				const p3 = this.points[ next ];
+
+				// Check if this is a valid ear
+				if ( this.isEar( prev, curr, next, indices, getU, getV, isClockwise ) ) {
+
+					// Create triangle
+					const tri = new Triangle( p1, p2, p3 );
+					if ( ! isTriDegenerate( tri ) ) {
+
+						this.triangles.push( tri );
+
+					}
+
+					// Remove the ear vertex
+					indices.splice( i, 1 );
+					earFound = true;
+					break;
+
+				}
+
+			}
+
+			// Safety check to prevent infinite loop
+			if ( ! earFound ) {
+
+				// Fallback to simple triangulation (silently for now)
+				this.triangulateSimple();
+				return;
+
+			}
+
+		}
+
+		// Add the final triangle
+		if ( indices.length === 3 ) {
+
+			const tri = new Triangle(
+				this.points[ indices[ 0 ] ],
+				this.points[ indices[ 1 ] ],
+				this.points[ indices[ 2 ] ]
+			);
+			if ( ! isTriDegenerate( tri ) ) {
+
+				this.triangles.push( tri );
+
+			}
+
+		}
+
+	}
+
+	// Check if a vertex forms a valid ear
+	isEar( prevIdx, currIdx, nextIdx, indices, getU, getV, isClockwise ) {
+
+		const p1 = this.points[ prevIdx ];
+		const p2 = this.points[ currIdx ];
+		const p3 = this.points[ nextIdx ];
+
+		// Check if the angle is convex
+		const u1 = getU( p1 ), v1 = getV( p1 );
+		const u2 = getU( p2 ), v2 = getV( p2 );
+		const u3 = getU( p3 ), v3 = getV( p3 );
+
+		const cross = ( u2 - u1 ) * ( v3 - v1 ) - ( v2 - v1 ) * ( u3 - u1 );
+		const isConvex = isClockwise ? cross < 0 : cross > 0;
+
+		if ( ! isConvex ) {
+
+			return false;
+
+		}
+
+		// Check if any other vertex is inside this triangle
+		for ( const idx of indices ) {
+
+			if ( idx === prevIdx || idx === currIdx || idx === nextIdx ) {
+
+				continue;
+
+			}
+
+			const p = this.points[ idx ];
+			const u = getU( p ), v = getV( p );
+
+			if ( this.isPointInTriangle2D( u, v, u1, v1, u2, v2, u3, v3 ) ) {
+
+				return false;
+
+			}
+
+		}
+
+		return true;
+
+	}
+
+	// Check if a 2D point is inside a 2D triangle
+	isPointInTriangle2D( px, py, x1, y1, x2, y2, x3, y3 ) {
+
+		const denom = ( y2 - y3 ) * ( x1 - x3 ) + ( x3 - x2 ) * ( y1 - y3 );
+		if ( Math.abs( denom ) < 1e-10 ) return false;
+
+		const a = ( ( y2 - y3 ) * ( px - x3 ) + ( x3 - x2 ) * ( py - y3 ) ) / denom;
+		const b = ( ( y3 - y1 ) * ( px - x3 ) + ( x1 - x3 ) * ( py - y3 ) ) / denom;
+		const c = 1 - a - b;
+
+		return a >= 0 && b >= 0 && c >= 0;
+
+	}
+
 	// Simple triangulation using ear clipping algorithm
 	triangulateSimple() {
 
@@ -115,14 +310,14 @@ class Polygon {
 
 	}
 
-	// Triangulate the polygon using a basic approach
+	// Triangulate the polygon using ear clipping
 	triangulate() {
 
 		// Clear existing triangles
 		this.triangles.length = 0;
 
-		// Use simple triangulation for now
-		this.triangulateSimple();
+		// Use ear clipping triangulation
+		this.triangulateEarClipping();
 
 	}
 
@@ -286,73 +481,94 @@ export class PolygonSplitter {
 
 	}
 
-	// Split a single polygon by a plane
+	// Split a single polygon by a plane - improved version
 	splitPolygonByPlane( polygon, plane, splittingTriangle ) {
 
 		const { points } = polygon;
 		const resultPolygons = [];
 		const splitEdges = [];
 
-		// Check if any point of the polygon intersects with the splitting triangle
-		let hasIntersection = false;
-		for ( let i = 0; i < points.length && ! hasIntersection; i ++ ) {
+		if ( points.length < 3 ) {
 
-			const currentPoint = points[ i ];
-			const nextPoint = points[ ( i + 1 ) % points.length ];
-
-			_edge.start.copy( currentPoint );
-			_edge.end.copy( nextPoint );
-
-			// Simple triangle intersection test
-			hasIntersection = splittingTriangle.intersectsTriangle( new Triangle( currentPoint, nextPoint, currentPoint ), _foundEdge, true );
+			return { polygons: resultPolygons, edges: splitEdges };
 
 		}
 
-		if ( ! hasIntersection ) {
+		// Classify each vertex relative to the plane
+		const classifications = [];
+		const distances = [];
 
-			// No intersection, keep the polygon as is
+		for ( const point of points ) {
+
+			const dist = plane.distanceToPoint( point );
+			distances.push( dist );
+
+			if ( Math.abs( dist ) < COPLANAR_EPSILON ) {
+
+				classifications.push( 0 ); // on plane
+
+			} else if ( dist > 0 ) {
+
+				classifications.push( 1 ); // positive side
+
+			} else {
+
+				classifications.push( - 1 ); // negative side
+
+			}
+
+		}
+
+		// Check if we need to split
+		const hasPositive = classifications.some( c => c > 0 );
+		const hasNegative = classifications.some( c => c < 0 );
+
+		if ( ! hasPositive || ! hasNegative ) {
+
+			// No split needed, polygon is entirely on one side
 			resultPolygons.push( polygon );
 			return { polygons: resultPolygons, edges: splitEdges };
 
 		}
 
-		// Classify points and find intersection points
-		const classifications = []; // -1: negative side, 0: on plane, 1: positive side
+		// Find intersection points and build new polygons
 		const intersectionPoints = [];
+		const positivePoints = [];
+		const negativePoints = [];
 
 		for ( let i = 0; i < points.length; i ++ ) {
 
-			const currentPoint = points[ i ];
-			const nextPoint = points[ ( i + 1 ) % points.length ];
-			const dist = plane.distanceToPoint( currentPoint );
+			const current = points[ i ];
+			const next = points[ ( i + 1 ) % points.length ];
+			const currentClass = classifications[ i ];
+			const nextClass = classifications[ ( i + 1 ) % points.length ];
 
-			if ( Math.abs( dist ) < COPLANAR_EPSILON ) {
+			// Add current point to appropriate polygons
+			if ( currentClass >= 0 ) {
 
-				classifications.push( 0 );
-
-			} else if ( dist > 0 ) {
-
-				classifications.push( 1 );
-
-			} else {
-
-				classifications.push( - 1 );
+				positivePoints.push( current.clone() );
 
 			}
 
-			// Check for intersection with the edge to the next point
-			_edge.start.copy( currentPoint );
-			_edge.end.copy( nextPoint );
+			if ( currentClass <= 0 ) {
 
-			if ( plane.intersectLine( _edge, _vec ) ) {
+				negativePoints.push( current.clone() );
 
-				const distToStart = _vec.distanceTo( _edge.start );
-				const distToEnd = _vec.distanceTo( _edge.end );
+			}
 
-				// Only add if it's a real intersection (not at endpoints)
-				if ( distToStart > EPSILON && distToEnd > EPSILON ) {
+			// Check for edge-plane intersection
+			if ( currentClass !== nextClass && currentClass !== 0 && nextClass !== 0 ) {
 
-					intersectionPoints.push( { point: _vec.clone(), edgeIndex: i } );
+				// Edge crosses the plane
+				_edge.start.copy( current );
+				_edge.end.copy( next );
+
+				const intersection = new Vector3();
+				if ( plane.intersectLine( _edge, intersection ) ) {
+
+					intersectionPoints.push( intersection.clone() );
+					positivePoints.push( intersection.clone() );
+					negativePoints.push( intersection.clone() );
 
 				}
 
@@ -360,58 +576,22 @@ export class PolygonSplitter {
 
 		}
 
-		// If we have intersections, split the polygon
-		if ( intersectionPoints.length >= 2 ) {
+		// Create new polygons if they have sufficient points
+		if ( positivePoints.length >= 3 ) {
 
-			// Create polygons from the split
-			const posPolygonPoints = [];
-			const negPolygonPoints = [];
+			resultPolygons.push( new Polygon( positivePoints ) );
 
-			for ( let i = 0; i < points.length; i ++ ) {
+		}
 
-				const classification = classifications[ i ];
-				const point = points[ i ];
+		if ( negativePoints.length >= 3 ) {
 
-				if ( classification >= 0 ) {
+			resultPolygons.push( new Polygon( negativePoints ) );
 
-					posPolygonPoints.push( point.clone() );
+		}
 
-				}
+		// If no valid split was created, keep the original
+		if ( resultPolygons.length === 0 ) {
 
-				if ( classification <= 0 ) {
-
-					negPolygonPoints.push( point.clone() );
-
-				}
-
-				// Add intersection points
-				const intersection = intersectionPoints.find( ip => ip.edgeIndex === i );
-				if ( intersection ) {
-
-					posPolygonPoints.push( intersection.point.clone() );
-					negPolygonPoints.push( intersection.point.clone() );
-					splitEdges.push( new PolygonEdge( intersection.point, intersection.point ) );
-
-				}
-
-			}
-
-			// Create new polygons if they have enough points
-			if ( posPolygonPoints.length >= 3 ) {
-
-				resultPolygons.push( new Polygon( posPolygonPoints ) );
-
-			}
-
-			if ( negPolygonPoints.length >= 3 ) {
-
-				resultPolygons.push( new Polygon( negPolygonPoints ) );
-
-			}
-
-		} else {
-
-			// No valid split, keep original polygon
 			resultPolygons.push( polygon );
 
 		}
