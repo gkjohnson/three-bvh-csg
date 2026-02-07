@@ -412,10 +412,11 @@ function updateBrush( brush, type, complexity ) {
 				Math.round( MathUtils.lerp( 5, 16, complexity ) )
 			);
 			break;
-		case 'box':
+		case 'box': {
 			const dim = Math.round( MathUtils.lerp( 1, 10, complexity ) );
 			brush.geometry = new BoxGeometry( 1, 1, 1, dim, dim, dim );
 			break;
+		}
 		case 'cylinder':
 			brush.geometry = new CylinderGeometry(
 				0.5, 0.5, 1,
