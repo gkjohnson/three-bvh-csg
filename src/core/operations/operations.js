@@ -3,8 +3,6 @@ import {
 	getHitSideWithCoplanarCheck,
 	getHitSide,
 	collectIntersectingTriangles,
-	appendAttributeFromTriangle,
-	appendAttributesFromIndices,
 	getOperationAction,
 	SKIP_TRI, INVERT_TRI,
 } from './operationsUtils.js';
