@@ -258,7 +258,7 @@ function performWholeTriangleOperations(
 		// get the side and decide if we need to cull the triangle based on the operation
 		const hitSide = getHitSide( _tri, bBVH );
 
-		// determine what to do
+		// find all attribute sets to append the triangle to
 		_actions.length = 0;
 		_attr.length = 0;
 		for ( let o = 0, lo = operations.length; o < lo; o ++ ) {

@@ -179,14 +179,6 @@ export class TypedAttributeData {
 
 	}
 
-	// Reset the datasets completely
-	reset() {
-
-		this.groupAttributes = [];
-		this.groupCount = 0;
-
-	}
-
 	// Initialize the typed attribute data instance from a geometry
 	initFromGeometry( referenceGeometry, relevantAttributes = Object.keys( referenceGeometry.attributes ) ) {
 

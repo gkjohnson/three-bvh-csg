@@ -24,6 +24,12 @@ export class TypeBackedArray {
 
 	setType( type ) {
 
+		if ( type === this.type ) {
+
+			return;
+
+		}
+
 		if ( this.length !== 0 ) {
 
 			throw new Error( 'TypeBackedArray: Cannot change the type while there is used data in the buffer.' );
