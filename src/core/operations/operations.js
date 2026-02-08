@@ -48,12 +48,17 @@ export function performOperation(
 
 	if ( nonHollow ) {
 
+		// clear the index map so for the new geometry being used
+		builders.forEach( builder => builder.clearIndexMap() );
+
 		groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
 		performSplitTriangleOperations( b, a, bIntersections, operations, true, splitter, builders, groupOffset );
 		performWholeTriangleOperations( b, a, bIntersections, operations, true, builders, groupOffset );
 
 	}
 
+	// clear the shared info
+	builders.forEach( builder => builder.clearIndexMap() );
 	_actions.length = 0;
 
 	return {

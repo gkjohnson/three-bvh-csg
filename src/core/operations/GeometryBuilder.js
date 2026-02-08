@@ -231,6 +231,7 @@ export class GeometryBuilder {
 
 		} else {
 
+			indexMap.set( index, attributeData.position.count );
 			indexData.push( attributeData.position.count );
 
 			const { attributes } = geometry;
