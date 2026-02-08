@@ -18,8 +18,8 @@ const _triA = new Triangle();
 const _triB = new Triangle();
 const _tri = new Triangle();
 const _barycoordTri = new Triangle();
-const _attr = [];
 const _actions = [];
+const _builders = [];
 
 // runs the given operation against a and b using the splitter and appending data to the
 // attributeData object.
@@ -28,7 +28,7 @@ export function performOperation(
 	b,
 	operations,
 	splitter,
-	attributeData,
+	builders,
 	options = {},
 ) {
 
@@ -40,8 +40,8 @@ export function performOperation(
 
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
-	performSplitTriangleOperations( a, b, aIntersections, operations, false, splitter, attributeData, groupOffset );
-	performWholeTriangleOperations( a, b, aIntersections, operations, false, attributeData, groupOffset );
+	performSplitTriangleOperations( a, b, aIntersections, operations, false, splitter, builders, groupOffset );
+	performWholeTriangleOperations( a, b, aIntersections, operations, false, builders, groupOffset );
 
 	// find whether the set of operations contains a non-hollow operations. If it does then we need
 	// to perform the second set of triangle additions
@@ -51,12 +51,11 @@ export function performOperation(
 	if ( nonHollow ) {
 
 		groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
-		performSplitTriangleOperations( b, a, bIntersections, operations, true, splitter, attributeData, groupOffset );
-		performWholeTriangleOperations( b, a, bIntersections, operations, true, attributeData, groupOffset );
+		performSplitTriangleOperations( b, a, bIntersections, operations, true, splitter, builders, groupOffset );
+		performWholeTriangleOperations( b, a, bIntersections, operations, true, builders, groupOffset );
 
 	}
 
-	_attr.length = 0;
 	_actions.length = 0;
 
 	return {
@@ -74,7 +73,7 @@ function performSplitTriangleOperations(
 	operations,
 	invert,
 	splitter,
-	attributeData,
+	builders,
 	groupOffset = 0,
 ) {
 
@@ -147,32 +146,34 @@ function performSplitTriangleOperations(
 				getHitSideWithCoplanarCheck( clippedTri, bBVH ) :
 				getHitSide( clippedTri, bBVH );
 
-			_attr.length = 0;
 			_actions.length = 0;
+			_builders.length = 0;
+
 			for ( let o = 0, lo = operations.length; o < lo; o ++ ) {
 
 				const op = getOperationAction( operations[ o ], hitSide, invert );
 				if ( op !== SKIP_TRI ) {
 
 					_actions.push( op );
-					_attr.push( attributeData[ o ].getGroupAttrSet( groupIndex ) );
+					_builders.push( builders[ o ] );
 
 				}
 
 			}
 
-			if ( _attr.length !== 0 ) {
+			if ( _builders.length !== 0 ) {
 
 				_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
 				_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
 				_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
 
-				for ( let k = 0, lk = _attr.length; k < lk; k ++ ) {
+				for ( let k = 0, lk = _builders.length; k < lk; k ++ ) {
 
-					const attrSet = _attr[ k ];
+					const builder = _builders[ k ];
 					const action = _actions[ k ];
 					const invertTri = action === INVERT_TRI;
-					appendAttributeFromTriangle( ia, _barycoordTri, a.geometry, a.matrixWorld, _normalMatrix, attrSet, invertedGeometry !== invertTri );
+					const invert = invertedGeometry !== invertTri;
+					builder.appendInterpolatedAttributes( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, ia0, ia1, ia2, _barycoordTri.a, _barycoordTri.b, _barycoordTri.c, invert );
 
 				}
 
@@ -195,7 +196,7 @@ function performWholeTriangleOperations(
 	splitTriSet,
 	operations,
 	invert,
-	attributeData,
+	builders,
 	groupOffset = 0,
 ) {
 
@@ -260,14 +261,14 @@ function performWholeTriangleOperations(
 
 		// find all attribute sets to append the triangle to
 		_actions.length = 0;
-		_attr.length = 0;
+		_builders.length = 0;
 		for ( let o = 0, lo = operations.length; o < lo; o ++ ) {
 
 			const op = getOperationAction( operations[ o ], hitSide, invert );
 			if ( op !== SKIP_TRI ) {
 
 				_actions.push( op );
-				_attr.push( attributeData[ o ] );
+				_builders.push( builders[ o ] );
 
 			}
 
@@ -289,7 +290,7 @@ function performWholeTriangleOperations(
 
 			}
 
-			if ( _attr.length !== 0 ) {
+			if ( _builders.length !== 0 ) {
 
 				const i3 = 3 * currId;
 				const i0 = aIndex.getX( i3 + 0 );
@@ -302,12 +303,25 @@ function performWholeTriangleOperations(
 				_tri.c.fromBufferAttribute( aPosition, i2 );
 				if ( ! isTriDegenerate( _tri ) ) {
 
-					for ( let k = 0, lk = _attr.length; k < lk; k ++ ) {
+					for ( let k = 0, lk = _builders.length; k < lk; k ++ ) {
 
+						const builder = _builders[ k ];
 						const action = _actions[ k ];
-						const attrSet = _attr[ k ].getGroupAttrSet( groupIndex );
 						const invertTri = action === INVERT_TRI;
-						appendAttributesFromIndices( i0, i1, i2, aAttributes, a.matrixWorld, _normalMatrix, attrSet, invertTri !== invertedGeometry );
+						const invert = invertTri !== invertedGeometry;
+						builder.appendIndexFromGeometry( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, i0, invert );
+
+						if ( invert ) {
+
+							builder.appendIndexFromGeometry( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, i2, invert );
+							builder.appendIndexFromGeometry( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, i1, invert );
+
+						} else {
+
+							builder.appendIndexFromGeometry( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, i1, invert );
+							builder.appendIndexFromGeometry( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, i2, invert );
+
+						}
 
 					}
 

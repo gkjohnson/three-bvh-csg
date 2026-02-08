@@ -5,6 +5,7 @@ import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
 import { trimAttributes, joinGroups, getMaterialList } from './operations/GeometryUtils.js';
+import { GeometryBuilder } from './operations/GeometryBuilder.js';
 
 // Assigns the given tracked attribute data to the geometry and returns whether the
 // geometry needs to be disposed of.
@@ -110,7 +111,7 @@ export class Evaluator {
 	constructor() {
 
 		this.triangleSplitter = new TriangleSplitter();
-		this.attributeData = [];
+		this.geometryBuilders = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
 		this.consolidateGroups = true;
@@ -161,7 +162,7 @@ export class Evaluator {
 
 		const {
 			triangleSplitter,
-			attributeData,
+			geometryBuilders,
 			attributes,
 			useGroups,
 			consolidateGroups,
@@ -169,23 +170,23 @@ export class Evaluator {
 		} = this;
 
 		// expand the attribute data array to the necessary size
-		while ( attributeData.length < targetBrushes.length ) {
+		while ( geometryBuilders.length < targetBrushes.length ) {
 
-			attributeData.push( new TypedAttributeData() );
+			geometryBuilders.push( new GeometryBuilder() );
 
 		}
 
 		// prepare the attribute data buffer information
 		targetBrushes.forEach( ( brush, i ) => {
 
-			attributeData[ i ].initFromGeometry( a.geometry, attributes );
+			geometryBuilders[ i ].initFromGeometry( a.geometry, attributes );
 			trimAttributes( brush.geometry, attributes );
 
 		} );
 
 		// run the operation to fill the list of attribute data
 		debug.init();
-		performOperation( a, b, operations, triangleSplitter, attributeData, { useGroups } );
+		performOperation( a, b, operations, triangleSplitter, geometryBuilders, { useGroups } );
 		debug.complete();
 
 		// get the materials and group ranges
@@ -272,7 +273,8 @@ export class Evaluator {
 		targetBrushes.forEach( ( brush, i ) => {
 
 			const targetGeometry = brush.geometry;
-			assignBufferData( targetGeometry, attributeData[ i ], groups );
+			geometryBuilders[ i ].buildGeometry( targetGeometry, groups );
+
 			if ( consolidateGroups ) {
 
 				joinGroups( targetGeometry.groups );

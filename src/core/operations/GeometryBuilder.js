@@ -14,9 +14,9 @@ const _vec4_2 = new Vector4();
 function getBarycoordValue( a, b, c, barycoord, target, normalize = false ) {
 
 	target.set( 0, 0, 0, 0 )
-		.addScaledVector( a, barycoord.a )
-		.addScaledVector( b, barycoord.b )
-		.addScaledVector( c, barycoord.c );
+		.addScaledVector( a, barycoord.x )
+		.addScaledVector( b, barycoord.y )
+		.addScaledVector( c, barycoord.z );
 
 	if ( normalize ) {
 
@@ -121,6 +121,11 @@ export class GeometryBuilder {
 
 		const { groupIndices, attributeData } = this;
 		const { attributes } = geometry;
+		while ( groupIndices.length <= group ) {
+
+			groupIndices.push( new AttributeData( Uint32Array ) );
+
+		}
 
 		const indexData = groupIndices[ group ];
 		indexData.push( attributeData.position.count );
@@ -137,25 +142,22 @@ export class GeometryBuilder {
 
 			}
 
-
 			// handle normals and positions specially because they require transforming
 			let normalize = false;
 			const itemSize = arr.itemSize;
+			let v0, v1, v2;
 			if ( key === 'position' ) {
 
-				_vec3_0.fromBufferAttribute( attr, i0 ).applyMatrix4( matrix );
-				_vec3_1.fromBufferAttribute( attr, i1 ).applyMatrix4( matrix );
-				_vec3_2.fromBufferAttribute( attr, i2 ).applyMatrix4( matrix );
-
-				_vec4_0.copy( _vec3_0 );
-				_vec4_1.copy( _vec3_1 );
-				_vec4_2.copy( _vec3_2 );
+				v0 = _vec3_0.fromBufferAttribute( attr, i0 ).applyMatrix4( matrix );
+				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).applyMatrix4( matrix );
+				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).applyMatrix4( matrix );
 
 			} else if ( key === 'normal' ) {
 
-				_vec3_0.fromBufferAttribute( attr, i0 ).applyNormalMatrix( normalMatrix );
-				_vec3_1.fromBufferAttribute( attr, i1 ).applyNormalMatrix( normalMatrix );
-				_vec3_2.fromBufferAttribute( attr, i2 ).applyNormalMatrix( normalMatrix );
+				normalize = true;
+				v0 = _vec3_0.fromBufferAttribute( attr, i0 ).applyNormalMatrix( normalMatrix );
+				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).applyNormalMatrix( normalMatrix );
+				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).applyNormalMatrix( normalMatrix );
 
 				if ( invert ) {
 
@@ -164,17 +166,13 @@ export class GeometryBuilder {
 					_vec3_2.multiplyScalar( - 1 );
 
 				}
-
-				_vec4_0.copy( _vec3_0 );
-				_vec4_1.copy( _vec3_1 );
-				_vec4_2.copy( _vec3_2 );
-				normalize = true;
 
 			} else if ( key === 'tangent' ) {
 
-				_vec3_0.fromBufferAttribute( attr, i0 ).transformDirection( matrix );
-				_vec3_1.fromBufferAttribute( attr, i1 ).transformDirection( matrix );
-				_vec3_2.fromBufferAttribute( attr, i2 ).transformDirection( matrix );
+				normalize = true;
+				v0 = _vec3_0.fromBufferAttribute( attr, i0 ).transformDirection( matrix );
+				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).transformDirection( matrix );
+				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).transformDirection( matrix );
 
 				if ( invert ) {
 
@@ -183,11 +181,6 @@ export class GeometryBuilder {
 					_vec3_2.multiplyScalar( - 1 );
 
 				}
-
-				_vec4_0.copy( _vec3_0 );
-				_vec4_1.copy( _vec3_1 );
-				_vec4_2.copy( _vec3_2 );
-				normalize = true;
 
 			} else {
 
@@ -197,23 +190,23 @@ export class GeometryBuilder {
 
 			}
 
-			getBarycoordValue( _vec4_0, _vec4_1, _vec4_2, b0, _vec4, normalize );
+			getBarycoordValue( v0, v1, v2, b0, _vec4, normalize );
 			pushItemSize( _vec4, itemSize, arr );
 
 			if ( invert ) {
 
-				getBarycoordValue( _vec4_0, _vec4_1, _vec4_2, b2, _vec4, normalize );
+				getBarycoordValue( v0, v1, v2, b2, _vec4, normalize );
 				pushItemSize( _vec4, itemSize, arr );
 
-				getBarycoordValue( _vec4_0, _vec4_1, _vec4_2, b1, _vec4, normalize );
+				getBarycoordValue( v0, v1, v2, b1, _vec4, normalize );
 				pushItemSize( _vec4, itemSize, arr );
 
 			} else {
 
-				getBarycoordValue( _vec4_0, _vec4_1, _vec4_2, b1, _vec4, normalize );
+				getBarycoordValue( v0, v1, v2, b1, _vec4, normalize );
 				pushItemSize( _vec4, itemSize, arr );
 
-				getBarycoordValue( _vec4_0, _vec4_1, _vec4_2, b2, _vec4, normalize );
+				getBarycoordValue( v0, v1, v2, b2, _vec4, normalize );
 				pushItemSize( _vec4, itemSize, arr );
 
 			}
@@ -225,7 +218,7 @@ export class GeometryBuilder {
 	appendIndexFromGeometry( geometry, matrix, normalMatrix, group, index, invert = false ) {
 
 		const { groupIndices, attributeData, indexMap } = this;
-		while ( groupIndices.length < group ) {
+		while ( groupIndices.length <= group ) {
 
 			groupIndices.push( new AttributeData( Uint32Array ) );
 
@@ -303,7 +296,8 @@ export class GeometryBuilder {
 		for ( const key in attributeData ) {
 
 			const arr = attributeData[ key ];
-			const { type, itemSize, normalized, length, count, buffer } = arr;
+			const { type, itemSize, normalized, length, count } = arr;
+			const buffer = arr.array.buffer;
 
 			let attr = attributes[ key ];
 			if ( ! attr || attr.count < count || attr.array.type !== type ) {
@@ -334,13 +328,14 @@ export class GeometryBuilder {
 		target.clearGroups();
 
 		let offset = 0;
-		for ( let i = 0, l = Math.min( groupOrder.length, attributeData.groupCount ); i < l; i ++ ) {
+		for ( let i = 0, l = Math.min( groupOrder.length, groupIndices.length ); i < l; i ++ ) {
 
 			const { index, materialIndex } = groupOrder[ i ];
-			const { count, buffer } = groupIndices[ index ];
+			const { count } = groupIndices[ index ];
+			const buffer = groupIndices[ index ].array.buffer;
 			if ( count !== 0 ) {
 
-				target.index.array.set( new Uint32Array( buffer, offset * Uint32Array.BYTES_PER_ELEMENT, count ), 0 );
+				target.index.array.set( new Uint32Array( buffer, 0, count ), offset );
 				target.addGroup( offset, count, materialIndex );
 				offset += count;
 
@@ -372,8 +367,14 @@ export class GeometryBuilder {
 
 	clear() {
 
-		this.attributeData.clear();
-		this.groupIndices.forEach( arr => {
+		const { groupIndices, attributeData } = this;
+		for ( const key in attributeData ) {
+
+			attributeData[ key ].clear();
+
+		}
+
+		groupIndices.forEach( arr => {
 
 			arr.clear();
 
