@@ -105,9 +105,17 @@ function performSplitTriangleOperations(
 
 		// get the triangle in the geometry B local frame
 		const ia3 = 3 * ia;
-		const ia0 = aIndex.getX( ia3 + 0 );
-		const ia1 = aIndex.getX( ia3 + 1 );
-		const ia2 = aIndex.getX( ia3 + 2 );
+		let ia0 = ia3 + 0;
+		let ia1 = ia3 + 0;
+		let ia2 = ia3 + 0;
+		if ( aIndex ) {
+
+			ia0 = aIndex.getX( ia3 + 0 );
+			ia1 = aIndex.getX( ia3 + 1 );
+			ia2 = aIndex.getX( ia3 + 2 );
+
+		}
+
 		_triA.a.fromBufferAttribute( aPosition, ia0 ).applyMatrix4( _matrix );
 		_triA.b.fromBufferAttribute( aPosition, ia1 ).applyMatrix4( _matrix );
 		_triA.c.fromBufferAttribute( aPosition, ia2 ).applyMatrix4( _matrix );
