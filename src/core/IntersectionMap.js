@@ -28,7 +28,7 @@ export class IntersectionMap {
 
 			}
 
-			coplanarSet.get( id ).add( id );
+			coplanarSet.get( id ).add( intersectionId );
 
 		}
 
