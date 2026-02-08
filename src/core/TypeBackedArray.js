@@ -12,7 +12,6 @@ export class TypeBackedArray {
 
 	constructor( type, initialSize = 500 ) {
 
-
 		this.expansionFactor = 1.5;
 		this.type = type;
 		this.length = 0;
@@ -23,6 +22,12 @@ export class TypeBackedArray {
 	}
 
 	setType( type ) {
+
+		if ( type === this.type ) {
+
+			return;
+
+		}
 
 		if ( this.length !== 0 ) {
 

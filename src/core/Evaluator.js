@@ -1,108 +1,9 @@
-import { BufferAttribute } from 'three';
 import { TriangleSplitter } from './TriangleSplitter.js';
-import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
 import { trimAttributes, joinGroups, getMaterialList } from './operations/GeometryUtils.js';
-
-// Assigns the given tracked attribute data to the geometry and returns whether the
-// geometry needs to be disposed of.
-function assignBufferData( geometry, attributeData, groupOrder ) {
-
-	// TODO: move this to a TypedAttributeData
-	let needsDisposal = false;
-	let drawRange = - 1;
-
-	// set the data
-	const attributes = geometry.attributes;
-	const referenceAttrSet = attributeData.groupAttributes[ 0 ];
-	for ( const key in referenceAttrSet ) {
-
-		const requiredLength = attributeData.getTotalLength( key );
-		const type = attributeData.getType( key );
-		const itemSize = attributeData.getItemSize( key );
-		const normalized = attributeData.getNormalized( key );
-		let geoAttr = attributes[ key ];
-		if ( ! geoAttr || geoAttr.array.length < requiredLength ) {
-
-			// create the attribute if it doesn't exist yet
-			geoAttr = new BufferAttribute( new type( requiredLength ), itemSize, normalized );
-			geometry.setAttribute( key, geoAttr );
-			needsDisposal = true;
-
-		}
-
-		// assign the data to the geometry attribute buffers in the provided order
-		// of the groups list
-		let offset = 0;
-		for ( let i = 0, l = Math.min( groupOrder.length, attributeData.groupCount ); i < l; i ++ ) {
-
-			const index = groupOrder[ i ].index;
-			const { array, type, length } = attributeData.groupAttributes[ index ][ key ];
-			const trimmedArray = new type( array.buffer, 0, length );
-			geoAttr.array.set( trimmedArray, offset );
-			offset += trimmedArray.length;
-
-		}
-
-		geoAttr.needsUpdate = true;
-		drawRange = requiredLength / geoAttr.itemSize;
-
-	}
-
-	// remove or update the index appropriately
-	if ( geometry.index ) {
-
-		const indexArray = geometry.index.array;
-		if ( indexArray.length < drawRange ) {
-
-			geometry.index = null;
-			needsDisposal = true;
-
-		} else {
-
-			for ( let i = 0, l = indexArray.length; i < l; i ++ ) {
-
-				indexArray[ i ] = i;
-
-			}
-
-		}
-
-	}
-
-	// initialize the groups
-	let groupOffset = 0;
-	geometry.clearGroups();
-	for ( let i = 0, l = Math.min( groupOrder.length, attributeData.groupCount ); i < l; i ++ ) {
-
-		const { index, materialIndex } = groupOrder[ i ];
-		const vertCount = attributeData.getCount( index );
-		if ( vertCount !== 0 ) {
-
-			geometry.addGroup( groupOffset, vertCount, materialIndex );
-			groupOffset += vertCount;
-
-		}
-
-	}
-
-	// update the draw range
-	geometry.setDrawRange( 0, drawRange );
-
-	// remove the bounds tree if it exists because its now out of date
-	// TODO: can we have this dispose in the same way that a brush does?
-	// TODO: why are half edges and group indices not removed here?
-	geometry.boundsTree = null;
-
-	if ( needsDisposal ) {
-
-		geometry.dispose();
-
-	}
-
-}
+import { GeometryBuilder } from './operations/GeometryBuilder.js';
 
 // Utility class for performing CSG operations
 export class Evaluator {
@@ -110,7 +11,7 @@ export class Evaluator {
 	constructor() {
 
 		this.triangleSplitter = new TriangleSplitter();
-		this.attributeData = [];
+		this.geometryBuilders = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
 		this.consolidateGroups = true;
@@ -161,7 +62,7 @@ export class Evaluator {
 
 		const {
 			triangleSplitter,
-			attributeData,
+			geometryBuilders,
 			attributes,
 			useGroups,
 			consolidateGroups,
@@ -169,23 +70,23 @@ export class Evaluator {
 		} = this;
 
 		// expand the attribute data array to the necessary size
-		while ( attributeData.length < targetBrushes.length ) {
+		while ( geometryBuilders.length < targetBrushes.length ) {
 
-			attributeData.push( new TypedAttributeData() );
+			geometryBuilders.push( new GeometryBuilder() );
 
 		}
 
 		// prepare the attribute data buffer information
 		targetBrushes.forEach( ( brush, i ) => {
 
-			attributeData[ i ].initFromGeometry( a.geometry, attributes );
+			geometryBuilders[ i ].initFromGeometry( a.geometry, attributes );
 			trimAttributes( brush.geometry, attributes );
 
 		} );
 
 		// run the operation to fill the list of attribute data
 		debug.init();
-		performOperation( a, b, operations, triangleSplitter, attributeData, { useGroups } );
+		performOperation( a, b, operations, triangleSplitter, geometryBuilders, { useGroups } );
 		debug.complete();
 
 		// get the materials and group ranges
@@ -272,7 +173,8 @@ export class Evaluator {
 		targetBrushes.forEach( ( brush, i ) => {
 
 			const targetGeometry = brush.geometry;
-			assignBufferData( targetGeometry, attributeData[ i ], groups );
+			geometryBuilders[ i ].buildGeometry( targetGeometry, groups );
+
 			if ( consolidateGroups ) {
 
 				joinGroups( targetGeometry.groups );

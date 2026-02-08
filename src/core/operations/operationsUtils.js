@@ -1,4 +1,4 @@
-import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle, Line3 } from 'three';
+import { Ray, Matrix4, DoubleSide, Vector3, Line3 } from 'three';
 import { IntersectionMap } from '../IntersectionMap.js';
 import {
 	ADDITION,
@@ -13,14 +13,6 @@ import { isTriDegenerate } from '../utils/triangleUtils.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
-const _tri = new Triangle();
-const _vec3 = new Vector3();
-const _vec4a = new Vector4();
-const _vec4b = new Vector4();
-const _vec4c = new Vector4();
-const _vec4_0 = new Vector4();
-const _vec4_1 = new Vector4();
-const _vec4_2 = new Vector4();
 const _edge = new Line3();
 const _normal = new Vector3();
 const JITTER_EPSILON = 1e-8;
@@ -183,94 +175,6 @@ export function collectIntersectingTriangles( a, b ) {
 
 }
 
-// Add the barycentric interpolated values fro the triangle into the new attribute data
-export function appendAttributeFromTriangle(
-	triIndex,
-	baryCoordTri,
-	geometry,
-	matrixWorld,
-	normalMatrix,
-	attributeData,
-	invert = false,
-) {
-
-	const attributes = geometry.attributes;
-	const indexAttr = geometry.index;
-	const i3 = triIndex * 3;
-	const i0 = indexAttr.getX( i3 + 0 );
-	const i1 = indexAttr.getX( i3 + 1 );
-	const i2 = indexAttr.getX( i3 + 2 );
-
-	for ( const key in attributeData ) {
-
-		// check if the key we're asking for is in the geometry at all
-		const attr = attributes[ key ];
-		const arr = attributeData[ key ];
-		if ( ! ( key in attributes ) ) {
-
-			throw new Error( `CSG Operations: Attribute ${ key } not available on geometry.` );
-
-		}
-
-		// handle normals and positions specially because they require transforming
-		// TODO: handle tangents
-		const itemSize = attr.itemSize;
-		if ( key === 'position' ) {
-
-			_tri.a.fromBufferAttribute( attr, i0 ).applyMatrix4( matrixWorld );
-			_tri.b.fromBufferAttribute( attr, i1 ).applyMatrix4( matrixWorld );
-			_tri.c.fromBufferAttribute( attr, i2 ).applyMatrix4( matrixWorld );
-
-			pushBarycoordInterpolatedValues( _tri.a, _tri.b, _tri.c, baryCoordTri, 3, arr, invert );
-
-		} else if ( key === 'normal' ) {
-
-			_tri.a.fromBufferAttribute( attr, i0 ).applyNormalMatrix( normalMatrix );
-			_tri.b.fromBufferAttribute( attr, i1 ).applyNormalMatrix( normalMatrix );
-			_tri.c.fromBufferAttribute( attr, i2 ).applyNormalMatrix( normalMatrix );
-
-			if ( invert ) {
-
-				_tri.a.multiplyScalar( - 1 );
-				_tri.b.multiplyScalar( - 1 );
-				_tri.c.multiplyScalar( - 1 );
-
-			}
-
-			pushBarycoordInterpolatedValues( _tri.a, _tri.b, _tri.c, baryCoordTri, 3, arr, invert, true );
-
-		} else {
-
-			_vec4a.fromBufferAttribute( attr, i0 );
-			_vec4b.fromBufferAttribute( attr, i1 );
-			_vec4c.fromBufferAttribute( attr, i2 );
-
-			pushBarycoordInterpolatedValues( _vec4a, _vec4b, _vec4c, baryCoordTri, itemSize, arr, invert );
-
-		}
-
-	}
-
-}
-
-// Append all the values of the attributes for the triangle onto the new attribute arrays
-export function appendAttributesFromIndices(
-	i0,
-	i1,
-	i2,
-	attributes,
-	matrixWorld,
-	normalMatrix,
-	attributeData,
-	invert = false,
-) {
-
-	appendAttributeFromIndex( i0, attributes, matrixWorld, normalMatrix, attributeData, invert );
-	appendAttributeFromIndex( invert ? i2 : i1, attributes, matrixWorld, normalMatrix, attributeData, invert );
-	appendAttributeFromIndex( invert ? i1 : i2, attributes, matrixWorld, normalMatrix, attributeData, invert );
-
-}
-
 // Returns the triangle to add when performing an operation
 export function getOperationAction( operation, hitSide, invert = false ) {
 
@@ -371,113 +275,5 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 	}
 
 	return SKIP_TRI;
-
-}
-
-// takes a set of barycentric values in the form of a triangle, a set of vectors, number of components,
-// and whether to invert the result and pushes the new values onto the provided attribute array
-function pushBarycoordInterpolatedValues( v0, v1, v2, baryCoordTri, itemSize, attrArr, invert = false, normalize = false ) {
-
-	// adds the appropriate number of values for the vector onto the array
-	const addValues = v => {
-
-		attrArr.push( v.x );
-		if ( itemSize > 1 ) attrArr.push( v.y );
-		if ( itemSize > 2 ) attrArr.push( v.z );
-		if ( itemSize > 3 ) attrArr.push( v.w );
-
-	};
-
-	// barycentric interpolate the first component
-	_vec4_0.set( 0, 0, 0, 0 )
-		.addScaledVector( v0, baryCoordTri.a.x )
-		.addScaledVector( v1, baryCoordTri.a.y )
-		.addScaledVector( v2, baryCoordTri.a.z );
-
-	_vec4_1.set( 0, 0, 0, 0 )
-		.addScaledVector( v0, baryCoordTri.b.x )
-		.addScaledVector( v1, baryCoordTri.b.y )
-		.addScaledVector( v2, baryCoordTri.b.z );
-
-	_vec4_2.set( 0, 0, 0, 0 )
-		.addScaledVector( v0, baryCoordTri.c.x )
-		.addScaledVector( v1, baryCoordTri.c.y )
-		.addScaledVector( v2, baryCoordTri.c.z );
-
-	if ( normalize ) {
-
-		_vec4_0.normalize();
-		_vec4_1.normalize();
-		_vec4_2.normalize();
-
-	}
-
-	// if the face is inverted then add the values in an inverted order
-	addValues( _vec4_0 );
-
-	if ( invert ) {
-
-		addValues( _vec4_2 );
-		addValues( _vec4_1 );
-
-	} else {
-
-		addValues( _vec4_1 );
-		addValues( _vec4_2 );
-
-	}
-
-}
-
-// Adds the values for the given vertex index onto the new attribute arrays
-function appendAttributeFromIndex(
-	index,
-	attributes,
-	matrixWorld,
-	normalMatrix,
-	attributeData,
-	invert = false,
-) {
-
-	for ( const key in attributeData ) {
-
-		// check if the key we're asking for is in the geometry at all
-		const attr = attributes[ key ];
-		const arr = attributeData[ key ];
-		if ( ! ( key in attributes ) ) {
-
-			throw new Error( `CSG Operations: Attribute ${ key } no available on geometry.` );
-
-		}
-
-		// specially handle the position and normal attributes because they require transforms
-		// TODO: handle tangents
-		const itemSize = attr.itemSize;
-		if ( key === 'position' ) {
-
-			_vec3.fromBufferAttribute( attr, index ).applyMatrix4( matrixWorld );
-			arr.push( _vec3.x, _vec3.y, _vec3.z );
-
-		} else if ( key === 'normal' ) {
-
-			_vec3.fromBufferAttribute( attr, index ).applyNormalMatrix( normalMatrix );
-			if ( invert ) {
-
-				_vec3.multiplyScalar( - 1 );
-
-			}
-
-			arr.push( _vec3.x, _vec3.y, _vec3.z );
-
-		} else {
-
-			arr.push( attr.getX( index ) );
-			if ( itemSize > 1 ) arr.push( attr.getY( index ) );
-			if ( itemSize > 2 ) arr.push( attr.getZ( index ) );
-			if ( itemSize > 3 ) arr.push( attr.getW( index ) );
-
-		}
-
-	}
 
 }
