@@ -4,73 +4,13 @@ import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
-
-// merges groups with common material indices in place
-function joinGroups( groups ) {
-
-	for ( let i = 0; i < groups.length - 1; i ++ ) {
-
-		const group = groups[ i ];
-		const nextGroup = groups[ i + 1 ];
-		if ( group.materialIndex === nextGroup.materialIndex ) {
-
-			const start = group.start;
-			const end = nextGroup.start + nextGroup.count;
-			nextGroup.start = start;
-			nextGroup.count = end - start;
-
-			groups.splice( i, 1 );
-			i --;
-
-		}
-
-	}
-
-}
-
-// initialize the target geometry and attribute data to be based on
-// the given reference geometry
-function prepareAttributesData( referenceGeometry, targetGeometry, attributeData, relevantAttributes ) {
-
-	attributeData.clear();
-
-	// initialize and clear unused data from the attribute buffers and vice versa
-	const aAttributes = referenceGeometry.attributes;
-	for ( let i = 0, l = relevantAttributes.length; i < l; i ++ ) {
-
-		const key = relevantAttributes[ i ];
-		const aAttr = aAttributes[ key ];
-		attributeData.initializeArray( key, aAttr.array.constructor, aAttr.itemSize, aAttr.normalized );
-
-	}
-
-	for ( const key in attributeData.attributes ) {
-
-		if ( ! relevantAttributes.includes( key ) ) {
-
-			attributeData.delete( key );
-
-		}
-
-	}
-
-	for ( const key in targetGeometry.attributes ) {
-
-		if ( ! relevantAttributes.includes( key ) ) {
-
-			targetGeometry.deleteAttribute( key );
-			targetGeometry.dispose();
-
-		}
-
-	}
-
-}
+import { trimAttributes, joinGroups, getMaterialList } from './operations/GeometryUtils.js';
 
 // Assigns the given tracked attribute data to the geometry and returns whether the
 // geometry needs to be disposed of.
 function assignBufferData( geometry, attributeData, groupOrder ) {
 
+	// TODO: move this to a TypedAttributeData
 	let needsDisposal = false;
 	let drawRange = - 1;
 
@@ -164,25 +104,6 @@ function assignBufferData( geometry, attributeData, groupOrder ) {
 
 }
 
-// Returns the list of materials used for the given set of groups
-function getMaterialList( groups, materials ) {
-
-	let result = materials;
-	if ( ! Array.isArray( materials ) ) {
-
-		result = [];
-		groups.forEach( g => {
-
-			result[ g.materialIndex ] = materials;
-
-		} );
-
-	}
-
-	return result;
-
-}
-
 // Utility class for performing CSG operations
 export class Evaluator {
 
@@ -199,9 +120,16 @@ export class Evaluator {
 
 	getGroupRanges( geometry ) {
 
-		return ! this.useGroups || geometry.groups.length === 0 ?
-			[ { start: 0, count: Infinity, materialIndex: 0 } ] :
-			geometry.groups.map( group => ( { ...group } ) );
+		const singleGroup = ! this.useGroups || geometry.groups.length === 0;
+		if ( singleGroup ) {
+
+			return [ { start: 0, count: Infinity, materialIndex: 0 } ];
+
+		} else {
+
+			return geometry.groups.map( group => ( { ...group } ) );
+
+		}
 
 	}
 
@@ -227,6 +155,7 @@ export class Evaluator {
 
 		}
 
+		// initialize the geometry fields
 		a.prepareGeometry();
 		b.prepareGeometry();
 
@@ -249,7 +178,8 @@ export class Evaluator {
 		// prepare the attribute data buffer information
 		targetBrushes.forEach( ( brush, i ) => {
 
-			prepareAttributesData( a.geometry, brush.geometry, attributeData[ i ], attributes );
+			attributeData[ i ].initFromGeometry( a.geometry, attributes );
+			trimAttributes( brush.geometry, attributes );
 
 		} );
 
@@ -266,8 +196,12 @@ export class Evaluator {
 		const bMaterials = getMaterialList( bGroups, b.material );
 		bGroups.forEach( g => g.materialIndex += aMaterials.length );
 
-		let groups = [ ...aGroups, ...bGroups ]
-			.map( ( group, index ) => ( { ...group, index } ) );
+		// get the full set of groups
+		let groups = [ ...aGroups, ...bGroups ].map( ( group, index ) => {
+
+			return { ...group, index };
+
+		} );
 
 		// generate the minimum set of materials needed for the list of groups and adjust the groups
 		// if they're needed

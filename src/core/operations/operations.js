@@ -21,12 +21,6 @@ const _barycoordTri = new Triangle();
 const _attr = [];
 const _actions = [];
 
-function getFirstIdFromSet( set ) {
-
-	for ( const id of set ) return id;
-
-}
-
 // runs the given operation against a and b using the splitter and appending data to the
 // attributeData object.
 export function performOperation(
@@ -126,7 +120,7 @@ function performSplitTriangleOperations(
 		splitter.initialize( _triA );
 
 		// split the triangle with the intersecting triangles from B
-		const intersectingIndices = intersectionSet[ ia ];
+		const intersectingIndices = intersectionSet.get( ia );
 		for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
 
 			const ib3 = 3 * intersectingIndices[ ib ];
@@ -195,7 +189,6 @@ function performSplitTriangleOperations(
 // perform CSG operations on the set of whole triangles using a half edge structure
 // at the moment this isn't always faster due to overhead of building the half edge structure
 // and degraded connectivity due to split triangles.
-
 function performWholeTriangleOperations(
 	a,
 	b,
@@ -226,23 +219,28 @@ function performWholeTriangleOperations(
 
 	const stack = [];
 	const halfEdges = a.geometry.halfEdges;
-	const traverseSet = new Set();
+
+	// iterate over every whole triangle, skipping those that are clipped
+	const traversedSet = new Set( splitTriSet.ids );
 	const triCount = getTriCount( a.geometry );
-	for ( let i = 0, l = triCount; i < l; i ++ ) {
+	for ( let id = 0; id < triCount; id ++ ) {
 
-		if ( ! ( i in splitTriSet.intersectionSet ) ) {
+		// if we've iterated over every triangle then stop
+		if ( traversedSet.size === triCount ) {
 
-			traverseSet.add( i );
+			break;
 
 		}
 
-	}
+		// skip this triangle if we've already traversed it
+		if ( traversedSet.has( id ) ) {
 
-	while ( traverseSet.size > 0 ) {
+			continue;
 
-		const id = getFirstIdFromSet( traverseSet );
-		traverseSet.delete( id );
+		}
 
+		// track the traversal
+		traversedSet.add( id );
 		stack.push( id );
 
 		// get the vertex indices
@@ -260,6 +258,7 @@ function performWholeTriangleOperations(
 		// get the side and decide if we need to cull the triangle based on the operation
 		const hitSide = getHitSide( _tri, bBVH );
 
+		// determine what to do
 		_actions.length = 0;
 		_attr.length = 0;
 		for ( let o = 0, lo = operations.length; o < lo; o ++ ) {
@@ -274,16 +273,17 @@ function performWholeTriangleOperations(
 
 		}
 
+		// continue to iterate on the stack until every triangle has been handled
 		while ( stack.length > 0 ) {
 
 			const currId = stack.pop();
 			for ( let i = 0; i < 3; i ++ ) {
 
 				const sid = halfEdges.getSiblingTriangleIndex( currId, i );
-				if ( sid !== - 1 && traverseSet.has( sid ) ) {
+				if ( sid !== - 1 && ! traversedSet.has( sid ) ) {
 
 					stack.push( sid );
-					traverseSet.delete( sid );
+					traversedSet.add( sid );
 
 				}
 

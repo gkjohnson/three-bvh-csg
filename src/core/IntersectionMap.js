@@ -2,22 +2,35 @@ export class IntersectionMap {
 
 	constructor() {
 
-		this.intersectionSet = {};
+		this.coplanarSet = new Map();
+		this.intersectionSet = new Map();
 		this.ids = [];
 
 	}
 
-	add( id, intersectionId ) {
+	add( id, intersectionId, coplanar = false ) {
 
-		const { intersectionSet, ids } = this;
-		if ( ! intersectionSet[ id ] ) {
+		const { intersectionSet, coplanarSet, ids } = this;
+		if ( ! intersectionSet.has( id ) ) {
 
-			intersectionSet[ id ] = [];
+			intersectionSet.set( id, [] );
 			ids.push( id );
 
 		}
 
-		intersectionSet[ id ].push( intersectionId );
+		intersectionSet.get( id ).push( intersectionId );
+
+		if ( coplanar ) {
+
+			if ( ! coplanarSet.has( id ) ) {
+
+				coplanarSet.set( id, new Set() );
+
+			}
+
+			coplanarSet.get( id ).add( id );
+
+		}
 
 	}
 
