@@ -10,22 +10,6 @@ export class Brush extends Mesh {
 
 }
 
-export class TypedAttributeData {
-
-	groupAttributes: object[];
-	groupCount: number;
-
-	getType( name: string ): string;
-	getTotalLength( name: string ): number;
-	getGroupSet( index?: number ): object;
-	getGroupAttrArray( name: string, index?: number ): Array<number>;
-	initializeArray( name: string, type: string ): void;
-	clear(): void;
-	delete( key: string ): void;
-	reset(): void;
-
-}
-
 export enum CSGOperation{}
 export const ADDITION: CSGOperation;
 export const SUBTRACTION: CSGOperation;

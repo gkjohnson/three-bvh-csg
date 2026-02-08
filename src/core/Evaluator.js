@@ -1,5 +1,4 @@
 import { TriangleSplitter } from './TriangleSplitter.js';
-import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
