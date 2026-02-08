@@ -4,42 +4,13 @@ import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
-import { trimAttributes } from './operations/GeometryUtils.js';
-
-// merges groups with common material indices in place
-function joinGroups( groups ) {
-
-	for ( let i = 0; i < groups.length - 1; i ++ ) {
-
-		const group = groups[ i ];
-		const nextGroup = groups[ i + 1 ];
-		if ( group.materialIndex === nextGroup.materialIndex ) {
-
-			const start = group.start;
-			const end = nextGroup.start + nextGroup.count;
-			nextGroup.start = start;
-			nextGroup.count = end - start;
-
-			groups.splice( i, 1 );
-			i --;
-
-		}
-
-	}
-
-}
-
-// initialize the target geometry and attribute data to be based on
-// the given reference geometry
-function prepareAttributesData( referenceGeometry, targetGeometry, attributeData, relevantAttributes ) {
-
-
-}
+import { trimAttributes, joinGroups } from './operations/GeometryUtils.js';
 
 // Assigns the given tracked attribute data to the geometry and returns whether the
 // geometry needs to be disposed of.
 function assignBufferData( geometry, attributeData, groupOrder ) {
 
+	// TODO: move this to a TypedAttributeData
 	let needsDisposal = false;
 	let drawRange = - 1;
 
