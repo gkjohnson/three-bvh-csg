@@ -4,7 +4,7 @@ import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
-import { trimAttributes, joinGroups } from './operations/GeometryUtils.js';
+import { trimAttributes, joinGroups, getMaterialList } from './operations/GeometryUtils.js';
 
 // Assigns the given tracked attribute data to the geometry and returns whether the
 // geometry needs to be disposed of.
@@ -104,25 +104,6 @@ function assignBufferData( geometry, attributeData, groupOrder ) {
 
 }
 
-// Returns the list of materials used for the given set of groups
-function getMaterialList( groups, materials ) {
-
-	let result = materials;
-	if ( ! Array.isArray( materials ) ) {
-
-		result = [];
-		groups.forEach( g => {
-
-			result[ g.materialIndex ] = materials;
-
-		} );
-
-	}
-
-	return result;
-
-}
-
 // Utility class for performing CSG operations
 export class Evaluator {
 
@@ -139,9 +120,16 @@ export class Evaluator {
 
 	getGroupRanges( geometry ) {
 
-		return ! this.useGroups || geometry.groups.length === 0 ?
-			[ { start: 0, count: Infinity, materialIndex: 0 } ] :
-			geometry.groups.map( group => ( { ...group } ) );
+		const singleGroup = ! this.useGroups || geometry.groups.length === 0;
+		if ( singleGroup ) {
+
+			return [ { start: 0, count: Infinity, materialIndex: 0 } ];
+
+		} else {
+
+			return geometry.groups.map( group => ( { ...group } ) );
+
+		}
 
 	}
 
@@ -167,6 +155,7 @@ export class Evaluator {
 
 		}
 
+		// initialize the geometry fields
 		a.prepareGeometry();
 		b.prepareGeometry();
 
@@ -207,8 +196,12 @@ export class Evaluator {
 		const bMaterials = getMaterialList( bGroups, b.material );
 		bGroups.forEach( g => g.materialIndex += aMaterials.length );
 
-		let groups = [ ...aGroups, ...bGroups ]
-			.map( ( group, index ) => ( { ...group, index } ) );
+		// get the full set of groups
+		let groups = [ ...aGroups, ...bGroups ].map( ( group, index ) => {
+
+			return { ...group, index };
+
+		} );
 
 		// generate the minimum set of materials needed for the list of groups and adjust the groups
 		// if they're needed

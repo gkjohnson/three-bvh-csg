@@ -37,3 +37,23 @@ export function joinGroups( groups ) {
 	}
 
 }
+
+
+// Returns the list of materials used for the given set of groups
+export function getMaterialList( groups, materials ) {
+
+	let result = materials;
+	if ( ! Array.isArray( materials ) ) {
+
+		result = [];
+		groups.forEach( g => {
+
+			result[ g.materialIndex ] = materials;
+
+		} );
+
+	}
+
+	return result;
+
+}
