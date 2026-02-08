@@ -276,10 +276,8 @@ export class GeometryBuilder {
 
 				} else {
 
-					arr.push( attr.getX( index ) );
-					if ( itemSize > 1 ) arr.push( attr.getY( index ) );
-					if ( itemSize > 2 ) arr.push( attr.getZ( index ) );
-					if ( itemSize > 3 ) arr.push( attr.getW( index ) );
+					_vec4.fromBufferAttribute( attr, index );
+					pushItemSize( _vec4, itemSize, arr );
 
 				}
 
