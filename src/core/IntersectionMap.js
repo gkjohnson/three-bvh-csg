@@ -10,7 +10,7 @@ export class IntersectionMap {
 	add( id, intersectionId ) {
 
 		const { intersectionSet, ids } = this;
-		if ( ! intersectionSet[ id ] ) {
+		if ( ! intersectionSet.has( id ) ) {
 
 			intersectionSet.set( id, [] );
 			ids.push( id );
