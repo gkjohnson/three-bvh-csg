@@ -21,12 +21,6 @@ const _barycoordTri = new Triangle();
 const _attr = [];
 const _actions = [];
 
-function getFirstIdFromSet( set ) {
-
-	for ( const id of set ) return id;
-
-}
-
 // runs the given operation against a and b using the splitter and appending data to the
 // attributeData object.
 export function performOperation(
@@ -226,21 +220,27 @@ function performWholeTriangleOperations(
 	const stack = [];
 	const halfEdges = a.geometry.halfEdges;
 
-
-	// TODO: this can be simplified / skipped by tracking a "traversed" function and the
-	// remaining number of triangles that have yet to be handled to end early.
+	// iterate over every whole triangle, skipping those that are clipped
 	const traversedSet = new Set( splitTriSet.ids );
 	const triCount = getTriCount( a.geometry );
 	for ( let id = 0; id < triCount; id ++ ) {
 
+		// if we've iterated over every triangle then stop
+		if ( traversedSet.size === triCount ) {
+
+			break;
+
+		}
+
+		// skip this triangle if we've already traversed it
 		if ( traversedSet.has( id ) ) {
 
 			continue;
 
 		}
 
+		// track the traversal
 		traversedSet.add( id );
-
 		stack.push( id );
 
 		// get the vertex indices
