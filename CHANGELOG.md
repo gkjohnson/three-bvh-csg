@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Small performance improvement during whole triangle traversal.
 - Support for retaining indices for whole triangles across operations.
 
+### Changed
+- Adjusted minimum three-mesh-bvh version.
+
 ## [0.0.17] - 2025-04-04
 ### Fixed
 - Add hollow operations to types.
