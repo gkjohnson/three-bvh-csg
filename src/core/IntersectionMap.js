@@ -2,7 +2,7 @@ export class IntersectionMap {
 
 	constructor() {
 
-		this.intersectionSet = {};
+		this.intersectionSet = new Map();
 		this.ids = [];
 
 	}
@@ -12,12 +12,12 @@ export class IntersectionMap {
 		const { intersectionSet, ids } = this;
 		if ( ! intersectionSet[ id ] ) {
 
-			intersectionSet[ id ] = [];
+			intersectionSet.set( id, [] );
 			ids.push( id );
 
 		}
 
-		intersectionSet[ id ].push( intersectionId );
+		intersectionSet.get( id ).push( intersectionId );
 
 	}
 
