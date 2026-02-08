@@ -4,6 +4,7 @@ import { TypedAttributeData } from './TypedAttributeData.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
+import { trimAttributes } from './operations/GeometryUtils.js';
 
 // merges groups with common material indices in place
 function joinGroups( groups ) {
@@ -32,38 +33,6 @@ function joinGroups( groups ) {
 // the given reference geometry
 function prepareAttributesData( referenceGeometry, targetGeometry, attributeData, relevantAttributes ) {
 
-	attributeData.clear();
-
-	// initialize and clear unused data from the attribute buffers and vice versa
-	const aAttributes = referenceGeometry.attributes;
-	for ( let i = 0, l = relevantAttributes.length; i < l; i ++ ) {
-
-		const key = relevantAttributes[ i ];
-		const aAttr = aAttributes[ key ];
-		attributeData.initializeArray( key, aAttr.array.constructor, aAttr.itemSize, aAttr.normalized );
-
-	}
-
-	for ( const key in attributeData.attributes ) {
-
-		if ( ! relevantAttributes.includes( key ) ) {
-
-			attributeData.delete( key );
-
-		}
-
-	}
-
-	for ( const key in targetGeometry.attributes ) {
-
-		if ( ! relevantAttributes.includes( key ) ) {
-
-			targetGeometry.deleteAttribute( key );
-			targetGeometry.dispose();
-
-		}
-
-	}
 
 }
 
@@ -249,7 +218,8 @@ export class Evaluator {
 		// prepare the attribute data buffer information
 		targetBrushes.forEach( ( brush, i ) => {
 
-			prepareAttributesData( a.geometry, brush.geometry, attributeData[ i ], attributes );
+			attributeData[ i ].initFromGeometry( a.geometry, attributes );
+			trimAttributes( brush.geometry, attributes );
 
 		} );
 

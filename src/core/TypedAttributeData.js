@@ -64,7 +64,7 @@ export class TypedAttributeData {
 	getGroupAttrSet( index = 0 ) {
 
 		// TODO: can this be abstracted?
-		// Return the exiting group set if necessary
+		// Return the existing group set if necessary
 		const { groupAttributes } = this;
 		if ( groupAttributes[ index ] ) {
 
@@ -184,6 +184,33 @@ export class TypedAttributeData {
 
 		this.groupAttributes = [];
 		this.groupCount = 0;
+
+	}
+
+	// Initialize the typed attribute data instance from a geometry
+	initFromGeometry( referenceGeometry, relevantAttributes = Object.keys( referenceGeometry.attributes ) ) {
+
+		this.clear();
+
+		// initialize and clear unused data from the attribute buffers and vice versa
+		const aAttributes = referenceGeometry.attributes;
+		for ( let i = 0, l = relevantAttributes.length; i < l; i ++ ) {
+
+			const key = relevantAttributes[ i ];
+			const aAttr = aAttributes[ key ];
+			this.initializeArray( key, aAttr.array.constructor, aAttr.itemSize, aAttr.normalized );
+
+		}
+
+		for ( const key in this.attributes ) {
+
+			if ( ! relevantAttributes.includes( key ) ) {
+
+				this.delete( key );
+
+			}
+
+		}
 
 	}
 
