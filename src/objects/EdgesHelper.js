@@ -21,6 +21,7 @@ export class EdgesHelper extends LineSegments {
 		const { geometry } = this;
 		const points = edges.flatMap( e => [ e.start, e.end ] );
 		geometry.dispose();
+		geometry.deleteAttribute( 'position' );
 		geometry.setFromPoints( points );
 
 	}
