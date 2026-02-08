@@ -4,6 +4,7 @@ import {
 	DirectionalLight,
 	AmbientLight,
 	PerspectiveCamera,
+	BoxGeometry,
 	CylinderGeometry,
 	FrontSide,
 	DoubleSide,
@@ -29,6 +30,23 @@ import {
 	HOLLOW_INTERSECTION,
 	HOLLOW_SUBTRACTION,
 } from '..';
+
+const USE_CYLINDERS = true;
+const CYLINDER_SEGMENTS = 20;
+
+function makeGeometry( width, height, depth ) {
+
+	if ( USE_CYLINDERS ) {
+
+		return new CylinderGeometry( width / 2, width / 2, height, CYLINDER_SEGMENTS );
+
+	} else {
+
+		return new BoxGeometry( width, height, depth );
+
+	}
+
+}
 
 const params = {
 	operation: SUBTRACTION,
@@ -215,8 +233,8 @@ function buildTestCases() {
 
 		const posStart = new Vector3( 0, 2, 0 );
 		const rotStart = new Quaternion();
-		const brush1 = new Brush( new CylinderGeometry( 1, 1, 2, 20 ) );
-		const brush2 = new Brush( new CylinderGeometry( 1, 1, 2, 20 ) );
+		const brush1 = new Brush( makeGeometry( 2, 2, 2 ) );
+		const brush2 = new Brush( makeGeometry( 2, 2, 2 ) );
 		brush2.position.copy( posStart );
 		cases.push( {
 			label: 'axis-aligned',
@@ -236,8 +254,8 @@ function buildTestCases() {
 		const q = new Quaternion().setFromEuler( new Euler( 0.7, 0.4, 0.3 ) );
 		const posStart = new Vector3( 0, 2, 0 ).applyQuaternion( q );
 		const rotStart = q.clone();
-		const brush1 = new Brush( new CylinderGeometry( 1, 1, 2, 20 ) );
-		const brush2 = new Brush( new CylinderGeometry( 1, 1, 2, 20 ) );
+		const brush1 = new Brush( makeGeometry( 2, 2, 2 ) );
+		const brush2 = new Brush( makeGeometry( 2, 2, 2 ) );
 		brush1.quaternion.copy( q );
 		brush2.quaternion.copy( q );
 		brush2.position.copy( posStart );
@@ -258,8 +276,8 @@ function buildTestCases() {
 
 		const posStart = new Vector3( 0, 1.5, 0 );
 		const rotStart = new Quaternion();
-		const brush1 = new Brush( new CylinderGeometry( 1, 1, 2, 20 ) );
-		const brush2 = new Brush( new CylinderGeometry( 0.5, 0.5, 1, 20 ) );
+		const brush1 = new Brush( makeGeometry( 2, 2, 2 ) );
+		const brush2 = new Brush( makeGeometry( 1, 1, 1 ) );
 		brush2.position.copy( posStart );
 		cases.push( {
 			label: 'partial overlap',
@@ -278,8 +296,8 @@ function buildTestCases() {
 
 		const posStart = new Vector3( 0, 2 + 1e-7, 0 );
 		const rotStart = new Quaternion();
-		const brush1 = new Brush( new CylinderGeometry( 1, 1, 2, 20 ) );
-		const brush2 = new Brush( new CylinderGeometry( 1, 1, 2, 20 ) );
+		const brush1 = new Brush( makeGeometry( 2, 2, 2 ) );
+		const brush2 = new Brush( makeGeometry( 2, 2, 2 ) );
 		brush2.position.copy( posStart );
 		cases.push( {
 			label: 'epsilon offset',
@@ -299,8 +317,8 @@ function buildTestCases() {
 		const posStart = new Vector3( 0, 2, 0 );
 		const rotStart = new Quaternion().setFromEuler( new Euler( 0, Math.PI / 4, 0 ) );
 		const rotEnd = new Quaternion().setFromAxisAngle( new Vector3( 0, 1, 0 ), 3 * Math.PI / 4 );
-		const brush1 = new Brush( new CylinderGeometry( 1, 1, 2, 20 ) );
-		const brush2 = new Brush( new CylinderGeometry( 1, 1, 2, 20 ) );
+		const brush1 = new Brush( makeGeometry( 2, 2, 2 ) );
+		const brush2 = new Brush( makeGeometry( 2, 2, 2 ) );
 		brush2.quaternion.copy( rotStart );
 		brush2.position.copy( posStart );
 		cases.push( {
@@ -320,8 +338,8 @@ function buildTestCases() {
 
 		const posStart = new Vector3( 0, 1.75, 0 );
 		const rotStart = new Quaternion();
-		const brush1 = new Brush( new CylinderGeometry( 1.5, 1.5, 3, 20 ) );
-		const brush2 = new Brush( new CylinderGeometry( 0.25, 0.25, 0.5, 20 ) );
+		const brush1 = new Brush( makeGeometry( 3, 3, 3 ) );
+		const brush2 = new Brush( makeGeometry( 0.5, 0.5, 0.5 ) );
 		brush2.position.copy( posStart );
 		cases.push( {
 			label: 'scale mismatch',
