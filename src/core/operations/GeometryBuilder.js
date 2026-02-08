@@ -184,9 +184,9 @@ export class GeometryBuilder {
 
 			} else {
 
-				_vec4_0.fromBufferAttribute( attr, i0 );
-				_vec4_1.fromBufferAttribute( attr, i1 );
-				_vec4_2.fromBufferAttribute( attr, i2 );
+				v0 = _vec4_0.fromBufferAttribute( attr, i0 );
+				v1 = _vec4_1.fromBufferAttribute( attr, i1 );
+				v2 = _vec4_2.fromBufferAttribute( attr, i2 );
 
 			}
 
