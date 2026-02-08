@@ -20,7 +20,7 @@ const _actions = [];
 const _builders = [];
 
 // runs the given operation against a and b using the splitter and appending data to the
-// attributeData object.
+// geometry builder.
 export function performOperation(
 	a,
 	b,

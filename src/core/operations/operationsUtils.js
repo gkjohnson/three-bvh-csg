@@ -1,4 +1,4 @@
-import { Ray, Matrix4, DoubleSide, Vector3, Vector4, Triangle, Line3 } from 'three';
+import { Ray, Matrix4, DoubleSide, Vector3, Line3 } from 'three';
 import { IntersectionMap } from '../IntersectionMap.js';
 import {
 	ADDITION,
@@ -13,14 +13,6 @@ import { isTriDegenerate } from '../utils/triangleUtils.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
-const _tri = new Triangle();
-const _vec3 = new Vector3();
-const _vec4a = new Vector4();
-const _vec4b = new Vector4();
-const _vec4c = new Vector4();
-const _vec4_0 = new Vector4();
-const _vec4_1 = new Vector4();
-const _vec4_2 = new Vector4();
 const _edge = new Line3();
 const _normal = new Vector3();
 const JITTER_EPSILON = 1e-8;
