@@ -90,8 +90,6 @@ function edgesToIndices( edges ) {
 
 	}
 
-	console.log( vertexMap )
-
 	return { vertices, indices };
 
 	function hashVertex( v ) {
@@ -170,6 +168,7 @@ export class TriangleSplitter2 {
 		const { normal, baseTri, projU, projV, projOrigin } = this;
 		tri.getNormal( normal );
 		baseTri.copy( tri );
+		baseTri.needsUpdate = true;
 
 		const e0 = new Line3();
 		e0.start.copy( tri.a );
@@ -227,8 +226,6 @@ export class TriangleSplitter2 {
 
 		}
 
-		this._triangulate();
-
 	}
 
 	// Project a 3D point onto the 2D frame defined by _projOrigin / _projU / _projV
@@ -253,7 +250,7 @@ export class TriangleSplitter2 {
 	// Run the CDT and populate this.triangles with the result.
 	_triangulate() {
 
-		const { triangles, trianglePool, baseTri } = this;
+		const { triangles, trianglePool } = this;
 
 		triangles.length = 0;
 		trianglePool.clear();
@@ -270,8 +267,6 @@ export class TriangleSplitter2 {
 
 		const { vertices, indices } = edgesToIndices( edges2d );
 		const coords = vertices.flatMap( v => [ v.x, v.y ] );
-
-
 		const del = new Delaunator( coords );
 		if ( indices.length > 0 ) {
 
