@@ -134,15 +134,15 @@ function performSplitTriangleOperations(
 		for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
 
 			const ib3 = 3 * intersectingIndices[ ib ];
-			const ib0 = ib3 + 0;
-			const ib1 = ib3 + 1;
-			const ib2 = ib3 + 2;
+			let ib0 = ib3 + 0;
+			let ib1 = ib3 + 1;
+			let ib2 = ib3 + 2;
 
 			if ( bIndex ) {
 
-				bIndex.getX( ib0 );
-				bIndex.getX( ib1 );
-				bIndex.getX( ib2 );
+				ib0 = bIndex.getX( ib0 );
+				ib1 = bIndex.getX( ib1 );
+				ib2 = bIndex.getX( ib2 );
 
 			}
 
