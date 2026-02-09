@@ -100,21 +100,21 @@ function edgesToIndices( edges, existingVerts ) {
 
 }
 
+class Pool {
 
-class TrianglePool {
+	constructor( createFn ) {
 
-	constructor() {
-
+		this.createFn = createFn;
 		this._pool = [];
 		this._index = 0;
 
 	}
 
-	getTriangle() {
+	getInstance() {
 
 		if ( this._index >= this._pool.length ) {
 
-			this._pool.push( new Triangle() );
+			this._pool.push( this.createFn() );
 
 		}
 
@@ -137,6 +137,22 @@ class TrianglePool {
 
 }
 
+class TrianglePool extends Pool {
+
+	constructor() {
+
+		super( () => new ExtendedTriangle() );
+
+	}
+
+	getTriangle() {
+
+		return this.getInstance();
+
+	}
+
+}
+
 // CDT-based triangle splitter. Drop-in replacement for TriangleSplitter.
 export class TriangleSplitter2 {
 
@@ -149,14 +165,9 @@ export class TriangleSplitter2 {
 		this.projU = new Vector3();
 		this.projV = new Vector3();
 		this.baseTri = new ExtendedTriangle();
+		this.edges = [];
 
 		this.coplanarTriangleUsed = false;
-
-		// collected constraint edges for the CDT pass
-		this._edges = [];
-
-		// CDT working arrays
-		this._coords = [];
 
 	}
 
@@ -168,8 +179,9 @@ export class TriangleSplitter2 {
 		const { normal, baseTri, projU, projV, projOrigin } = this;
 		tri.getNormal( normal );
 		baseTri.copy( tri );
-		baseTri.needsUpdate = true;
-		this._edges.length = 0;
+		baseTri.update();
+
+		this.edges.length = 0;
 
 		// Step 1: Build 2D projection frame from base triangle
 		projOrigin.copy( baseTri.a );
@@ -179,7 +191,7 @@ export class TriangleSplitter2 {
 	}
 
 	// Collect constraint edges from an intersecting triangle.
-	// Computes intersection segment(s) and stores them in _edges.
+	// Computes intersection segment(s) and stores them in edges.
 	splitByTriangle( triangle ) {
 
 		const { normal, baseTri } = this;
@@ -195,7 +207,7 @@ export class TriangleSplitter2 {
 			const count = getCoplanarIntersectionEdges( baseTri, triangle, normal, _coplanarEdges );
 			for ( let i = 0; i < count; i ++ ) {
 
-				this._edges.push( _coplanarEdges[ i ].clone() );
+				this.edges.push( _coplanarEdges[ i ].clone() );
 
 			}
 
@@ -207,7 +219,7 @@ export class TriangleSplitter2 {
 
 			if ( _splittingTri.intersectsTriangle( baseTri, _intersectionEdge, true ) ) {
 
-				this._edges.push( _intersectionEdge.clone() );
+				this.edges.push( _intersectionEdge.clone() );
 
 			}
 
@@ -216,7 +228,7 @@ export class TriangleSplitter2 {
 	}
 
 	// Project a 3D point onto the 2D frame defined by _projOrigin / _projU / _projV
-	_projectToUV( point, target = new Vector3() ) {
+	_to2D( point, target = new Vector3() ) {
 
 		const { projOrigin, projU, projV } = this;
 		_vec.subVectors( point, projOrigin );
@@ -224,7 +236,7 @@ export class TriangleSplitter2 {
 
 	}
 
-	_unprojectFromUV( u, v, target ) {
+	_from2D( u, v, target ) {
 
 		const { projOrigin, projU, projV } = this;
 		target.copy( projOrigin )
@@ -235,41 +247,37 @@ export class TriangleSplitter2 {
 	}
 
 	// Run the CDT and populate this.triangles with the result.
-	_triangulate() {
+	triangulate() {
 
-		const { triangles, trianglePool, baseTri } = this;
+		const { triangles, trianglePool, baseTri, edges } = this;
 
 		triangles.length = 0;
 		trianglePool.clear();
 
 		// Step 2: Project base triangle vertices (indices 0, 1, 2)
-		const edges2d = this._edges.map( e => {
+		const edges2d = edges.map( e => {
 
 			const e2d = e.clone();
-			this._projectToUV( e.start, e2d.start );
-			this._projectToUV( e.end, e2d.end );
+			this._to2D( e.start, e2d.start );
+			this._to2D( e.end, e2d.end );
 			return e2d;
 
 		} );
 
 		const existing2d = [ baseTri.a, baseTri.b, baseTri.c ].map( v => {
 
-			return this._projectToUV( v );
+			return this._to2D( v );
 
 		} );
 
 		const info = edgesToIndices( edges2d, existing2d );
-		window.INFO = info;
-
 		const { vertices, indices } = info;
 		const coords = vertices.flatMap( v => [ v.x, v.y ] );
 
-		// const v0 = this._projectToUV( baseTri.a );
-		// const v1 = this._projectToUV( baseTri.b );
-		// const v2 = this._projectToUV( baseTri.c );
+		// const v0 = this._to2D( baseTri.a );
+		// const v1 = this._to2D( baseTri.b );
+		// const v2 = this._to2D( baseTri.c );
 		// coords.push( v0.x, v0.y, v1.x, v1.y, v2.x, v2.y );
-
-
 
 		const del = new Delaunator( coords );
 		if ( indices.length > 0 ) {
@@ -293,9 +301,9 @@ export class TriangleSplitter2 {
 			// Unproject each vertex: p3d = origin + u * _projU + v * _projV
 			const tri = trianglePool.getTriangle();
 
-			this._unprojectFromUV( delCoords[ 2 * i0 ], delCoords[ 2 * i0 + 1 ], tri.a );
-			this._unprojectFromUV( delCoords[ 2 * i1 ], delCoords[ 2 * i1 + 1 ], tri.b );
-			this._unprojectFromUV( delCoords[ 2 * i2 ], delCoords[ 2 * i2 + 1 ], tri.c );
+			this._from2D( delCoords[ 2 * i0 ], delCoords[ 2 * i0 + 1 ], tri.a );
+			this._from2D( delCoords[ 2 * i1 ], delCoords[ 2 * i1 + 1 ], tri.b );
+			this._from2D( delCoords[ 2 * i2 ], delCoords[ 2 * i2 + 1 ], tri.c );
 
 			// TODO: how can this happen
 			if ( isTriDegenerate( tri ) ) continue;
@@ -324,7 +332,7 @@ export class TriangleSplitter2 {
 		this.triangles.length = 0;
 		this.trianglePool.clear();
 		this.coplanarTriangleUsed = false;
-		this._edges.length = 0;
+		this.edges.length = 0;
 
 	}
 

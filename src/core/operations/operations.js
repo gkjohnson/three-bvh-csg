@@ -153,7 +153,7 @@ function performSplitTriangleOperations(
 
 		}
 
-		splitter._triangulate();
+		splitter.triangulate();
 
 		// for all triangles in the split result
 		const triangles = splitter.triangles;
