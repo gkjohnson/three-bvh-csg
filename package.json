@@ -63,5 +63,9 @@
     "typescript-eslint": "^8.48.1",
     "vite": "^6.2.2",
     "vitest": "^4.0.14"
+  },
+  "dependencies": {
+    "@kninnug/constrainautor": "^4.0.1",
+    "delaunator": "^5.0.1"
   }
 }
