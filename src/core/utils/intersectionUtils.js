@@ -90,10 +90,9 @@ function clipSegmentToTriangle( segStart, segEnd, tri, triNormal, target ) {
 // triA by coplanar triB in a constrained triangulation.
 //
 // If triNormal is not provided it is computed from triA.
-// Returns the target array of Line3 segments.
+// Reuses existing Line3 objects in the target array, allocating new ones only
+// when the array is too short. Returns the number of clipped segments found.
 export function getCoplanarIntersectionEdges( triA, triB, triNormal = null, target = [] ) {
-
-	target.length = 0;
 
 	if ( triNormal === null ) {
 
@@ -102,6 +101,7 @@ export function getCoplanarIntersectionEdges( triA, triB, triNormal = null, targ
 
 	}
 
+	let count = 0;
 	const bVerts = [ triB.a, triB.b, triB.c ];
 	for ( let i = 0; i < 3; i ++ ) {
 
@@ -111,12 +111,20 @@ export function getCoplanarIntersectionEdges( triA, triB, triNormal = null, targ
 		const result = clipSegmentToTriangle( v0, v1, triA, triNormal, _tempLine );
 		if ( result !== null ) {
 
-			target.push( new Line3( result.start.clone(), result.end.clone() ) );
+			if ( count >= target.length ) {
+
+				target.push( new Line3() );
+
+			}
+
+			target[ count ].start.copy( result.start );
+			target[ count ].end.copy( result.end );
+			count ++;
 
 		}
 
 	}
 
-	return target;
+	return count;
 
 }
