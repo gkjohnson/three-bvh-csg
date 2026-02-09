@@ -156,12 +156,9 @@ export class TriangleSplitter2 {
 
 		// collected constraint edges for the CDT pass
 		this._edges = [];
-		this._edgeCount = 0;
 
 		// CDT working arrays
 		this._coords = [];
-		this._vertCount = 0;
-		this._constraintEdges = [];
 
 	}
 
@@ -174,11 +171,24 @@ export class TriangleSplitter2 {
 		tri.getNormal( normal );
 		baseTri.copy( tri );
 
+		const e0 = new Line3();
+		e0.start.copy( tri.a );
+		e0.end.copy( tri.b );
+
+		const e1 = new Line3();
+		e1.start.copy( tri.b );
+		e1.end.copy( tri.c );
+
+		const e2 = new Line3();
+		e2.start.copy( tri.c );
+		e2.end.copy( tri.a );
+		this._edges.length = 0;
+		this._edges.push( e0, e1, e2 );
+
 		// Step 1: Build 2D projection frame from base triangle
 		projOrigin.copy( baseTri.a );
 		projU.subVectors( baseTri.b, baseTri.a ).normalize();
 		projV.crossVectors( normal, projU ).normalize();
-		this._edges.length = 0;
 
 	}
 
@@ -261,10 +271,6 @@ export class TriangleSplitter2 {
 		const { vertices, indices } = edgesToIndices( edges2d );
 		const coords = vertices.flatMap( v => [ v.x, v.y ] );
 
-		const v0 = this._projectToUV( baseTri.a );
-		const v1 = this._projectToUV( baseTri.b );
-		const v2 = this._projectToUV( baseTri.c );
-		coords.push( v0.x, v0.y, v1.x, v1.y, v2.x, v2.y );
 
 		const del = new Delaunator( coords );
 		if ( indices.length > 0 ) {
@@ -320,9 +326,6 @@ export class TriangleSplitter2 {
 		this.trianglePool.clear();
 		this.coplanarTriangleUsed = false;
 		this._edges.length = 0;
-		this._edgeCount = 0;
-		this._vertCount = 0;
-		this._constraintEdges.length = 0;
 
 	}
 
