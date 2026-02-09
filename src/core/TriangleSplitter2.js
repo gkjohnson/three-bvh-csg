@@ -18,7 +18,6 @@ const _coplanarEdges = [];
 // Projection frame temporaries
 function edgesToIndices( edges, existingVerts ) {
 
-	const vertexMap = new Map();
 	const vertices = [];
 	const indices = [];
 	const params = [];
@@ -83,21 +82,19 @@ function edgesToIndices( edges, existingVerts ) {
 
 	function getIndex( v ) {
 
-		const hash = hashVertex( v );
-		if ( ! vertexMap.has( hash ) ) {
+		for ( let i = 0; i < vertices.length; i ++ ) {
 
-			vertexMap.set( hash, vertices.length );
-			vertices.push( v.clone() );
+			const v2 = vertices[ i ];
+			if ( v === v2 || v.distanceToSquared( v2 ) < 1e-7 ) {
+
+				return i;
+
+			}
 
 		}
 
-		return vertexMap.get( hash );
-
-	}
-
-	function hashVertex( v ) {
-
-		return `${ v.x.toFixed( 4 ) }_${ v.y.toFixed( 4 ) }_${ v.z.toFixed( 4 ) }`;
+		vertices.push( v.clone() );
+		return vertices.length;
 
 	}
 
