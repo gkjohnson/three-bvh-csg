@@ -16,44 +16,32 @@ const _intersectionEdge = new Line3();
 const _coplanarEdges = [];
 
 // Projection frame temporaries
-function edgesToIndices( edges ) {
+function edgesToIndices( edges, existingVerts ) {
 
 	const vertexMap = new Map();
 	const vertices = [];
 	const indices = [];
+	const params = [];
+
+	existingVerts.forEach( v => {
+
+		getIndex( v );
+
+	} );
 
 	for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
 		const edge0 = edges[ i ];
-		const startHash = hashVertex( edge0.start );
-		const endHash = hashVertex( edge0.end );
-		if ( ! vertexMap.has( startHash ) ) {
-
-			vertexMap.set( startHash, vertices.length );
-			vertices.push( edge0.start.clone() );
-
-		}
-
-		if ( ! vertexMap.has( endHash ) ) {
-
-			vertexMap.set( endHash, vertices.length );
-			vertices.push( edge0.end.clone() );
-
-		}
+		getIndex( edge0.start );
+		getIndex( edge0.end );
 
 		for ( let i1 = i + 1; i1 < l; i1 ++ ) {
 
 			const edge1 = edges[ i1 ];
 			const dist = edge0.distanceSqToLine3( edge1, _vec, _vec2 );
-			if ( dist <= 1e-14 ) {
+			if ( dist === 0 ) {
 
-				const hash = hashVertex( _vec2 );
-				if ( ! vertexMap.has( hash ) ) {
-
-					vertexMap.set( hash, vertices.length );
-					vertices.push( _vec2.clone() );
-
-				}
+				getIndex( _vec2 );
 
 			}
 
@@ -80,6 +68,7 @@ function edgesToIndices( edges ) {
 		}
 
 		arr.sort( ( a, b ) => a.param - b.param );
+		params.push( arr );
 
 		for ( let a = 0, la = arr.length - 1; a < la; a ++ ) {
 
@@ -90,7 +79,21 @@ function edgesToIndices( edges ) {
 
 	}
 
-	return { vertices, indices };
+	return { vertices, indices, params };
+
+	function getIndex( v ) {
+
+		const hash = hashVertex( v );
+		if ( ! vertexMap.has( hash ) ) {
+
+			vertexMap.set( hash, vertices.length );
+			vertices.push( v.clone() );
+
+		}
+
+		return vertexMap.get( hash );
+
+	}
 
 	function hashVertex( v ) {
 
@@ -169,20 +172,7 @@ export class TriangleSplitter2 {
 		tri.getNormal( normal );
 		baseTri.copy( tri );
 		baseTri.needsUpdate = true;
-
-		const e0 = new Line3();
-		e0.start.copy( tri.a );
-		e0.end.copy( tri.b );
-
-		const e1 = new Line3();
-		e1.start.copy( tri.b );
-		e1.end.copy( tri.c );
-
-		const e2 = new Line3();
-		e2.start.copy( tri.c );
-		e2.end.copy( tri.a );
 		this._edges.length = 0;
-		this._edges.push( e0, e1, e2 );
 
 		// Step 1: Build 2D projection frame from base triangle
 		projOrigin.copy( baseTri.a );
@@ -250,7 +240,7 @@ export class TriangleSplitter2 {
 	// Run the CDT and populate this.triangles with the result.
 	_triangulate() {
 
-		const { triangles, trianglePool } = this;
+		const { triangles, trianglePool, baseTri } = this;
 
 		triangles.length = 0;
 		trianglePool.clear();
@@ -265,8 +255,25 @@ export class TriangleSplitter2 {
 
 		} );
 
-		const { vertices, indices } = edgesToIndices( edges2d );
+		const existing2d = [ baseTri.a, baseTri.b, baseTri.c ].map( v => {
+
+			return this._projectToUV( v );
+
+		} );
+
+		const info = edgesToIndices( edges2d, existing2d );
+		window.INFO = info;
+
+		const { vertices, indices } = info;
 		const coords = vertices.flatMap( v => [ v.x, v.y ] );
+
+		// const v0 = this._projectToUV( baseTri.a );
+		// const v1 = this._projectToUV( baseTri.b );
+		// const v2 = this._projectToUV( baseTri.c );
+		// coords.push( v0.x, v0.y, v1.x, v1.y, v2.x, v2.y );
+
+
+
 		const del = new Delaunator( coords );
 		if ( indices.length > 0 ) {
 
