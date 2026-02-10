@@ -14,13 +14,6 @@ const _splittingTri = new ExtendedTriangle();
 const _intersectionEdge = new Line3();
 const _coplanarEdges = [];
 
-// TODO:
-// - report infinite loop bug
-//  - caused when adding edges in for the triangle sides
-//  - possible due to duplicate or near duplicate points?
-// - request clarifications on tolerances
-
-// Projection frame temporaries
 function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 
 	outputVertices.length = 0;
