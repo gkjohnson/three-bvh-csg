@@ -65,10 +65,6 @@
     "vitest": "^4.0.14"
   },
   "dependencies": {
-    "@kninnug/constrainautor": "^4.0.1",
-    "cdt2d": "^1.0.0",
-    "clean-pslg": "^1.1.2",
-    "delaunator": "^5.0.1",
-    "vite-plugin-node-polyfills": "^0.25.0"
+    "cdt2d": "^1.0.0"
   }
 }
