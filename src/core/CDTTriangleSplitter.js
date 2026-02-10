@@ -3,11 +3,11 @@ import { ExtendedTriangle } from 'three-mesh-bvh';
 import { getCoplanarIntersectionEdges } from './utils/intersectionUtils.js';
 import cdt2d from 'cdt2d';
 
-const PARALLEL_EPSILON = 1e-10;
+const PARALLEL_EPSILON = 1e-16;
 
 // relative tolerance factor — multiplied by the max absolute coordinate
 // of the base triangle to get scale-appropriate thresholds
-const RELATIVE_EPSILON = 1e-10;
+const RELATIVE_EPSILON = 1e-16;
 
 // tolerance for merging nearby vertices (squared distance)
 const VERTEX_MERGE_EPSILON = 1e-16;
@@ -177,7 +177,6 @@ export class CDTTriangleSplitter {
 
 		this.trianglePool = new Pool( () => new ExtendedTriangle() );
 		this.linePool = new Pool( () => new Line3() );
-		this.vectorPool = new Pool( () => new Vector3() );
 
 		this.triangles = [];
 		this.normal = new Vector3();
@@ -281,7 +280,7 @@ export class CDTTriangleSplitter {
 	// Run the CDT and populate this.triangles with the result
 	triangulate() {
 
-		const { triangles, trianglePool, linePool, vectorPool, baseTri, edges } = this;
+		const { triangles, trianglePool, linePool, baseTri, edges } = this;
 
 		triangles.length = 0;
 		trianglePool.clear();
@@ -340,7 +339,6 @@ export class CDTTriangleSplitter {
 	reset() {
 
 		this.trianglePool.clear();
-		this.vectorPool.clear();
 		this.linePool.clear();
 		this.triangles.length = 0;
 		this.edges.length = 0;
