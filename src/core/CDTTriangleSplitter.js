@@ -1,11 +1,7 @@
 import { Vector3, Line3 } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 import { getCoplanarIntersectionEdges } from './utils/intersectionUtils.js';
-import { isTriDegenerate } from './utils/triangleUtils.js';
 import cdt2d from 'cdt2d';
-import cleanPSLG from 'clean-pslg';
-import Delaunator from 'delaunator';
-import Constrainautor from '@kninnug/constrainautor';
 
 const PARALLEL_EPSILON = 1e-10;
 
@@ -55,26 +51,19 @@ class Pool {
 
 const _vec = new Vector3();
 const _vec2 = new Vector3();
-const _triNormal = new Vector3();
 const _triangleNormal = new Vector3();
 const _splittingTri = new ExtendedTriangle();
 const _intersectionEdge = new Line3();
 const _coplanarEdges = [];
 const _paramPool = new Pool( () => ( { param: 0, index: 0 } ) );
+const _vectorPool = new Pool( () => new Vector3() );
 
-function edgesToIndices( edges, existingVerts, outputVertices, outputIndices, epsilonScale ) {
+function edgesToIndices( edges, outputVertices, outputIndices, epsilonScale ) {
 
 	_paramPool.clear();
 
 	outputVertices.length = 0;
 	outputIndices.length = 0;
-
-	// Add existing (unconstrained) vertices
-	for ( let i = 0, l = existingVerts.length; i < l; i ++ ) {
-
-		getIndex( existingVerts[ i ] );
-
-	}
 
 	// Add edge endpoints and find edge-edge intersection points
 	for ( let i = 0, l = edges.length; i < l; i ++ ) {
@@ -175,7 +164,7 @@ function edgesToIndices( edges, existingVerts, outputVertices, outputIndices, ep
 
 		}
 
-		outputVertices.push( v.clone() );
+		outputVertices.push( _vectorPool.getInstance().copy( v ) );
 		return outputVertices.length - 1;
 
 	}
@@ -200,7 +189,7 @@ export class CDTTriangleSplitter {
 
 		this.coplanarTriangleUsed = false;
 		this.useCleanPSLG = false;
-		this.useConstrainautor = false;
+		this.useConstrainautor = true;
 
 	}
 
@@ -209,20 +198,23 @@ export class CDTTriangleSplitter {
 
 		this.reset();
 
-		const { normal, baseTri, projU, projV, projOrigin, edges } = this;
+		const { normal, baseTri, projU, projV, projOrigin, edges, linePool } = this;
 		tri.getNormal( normal );
 		baseTri.copy( tri );
 		baseTri.update();
 
+		// initialize constrained edges to the triangle boundary
 		edges.length = 0;
 
-		const e0 = this.linePool.getInstance();
-		const e1 = this.linePool.getInstance();
-		const e2 = this.linePool.getInstance();
+		const e0 = linePool.getInstance();
 		e0.start.copy( baseTri.a );
 		e0.end.copy( baseTri.b );
+
+		const e1 = linePool.getInstance();
 		e1.start.copy( baseTri.b );
 		e1.end.copy( baseTri.c );
+
+		const e2 = linePool.getInstance();
 		e2.start.copy( baseTri.c );
 		e2.end.copy( baseTri.a );
 		edges.push( e0, e1, e2 );
@@ -306,130 +298,38 @@ export class CDTTriangleSplitter {
 
 		}
 
-		// Mark the triangle corners as unconstrained points
-		const existing2d = [
-			this._to2D( baseTri.a, vectorPool.getInstance() ),
-			this._to2D( baseTri.b, vectorPool.getInstance() ),
-			this._to2D( baseTri.c, vectorPool.getInstance() ),
-		];
-
 		// Precompute scale factor from base triangle for epsilon scaling
 		let epsilonScale = 0;
 		for ( let i = 0; i < 3; i ++ ) {
 
-			const v = existing2d[ i ];
+			const v = this._to2D( baseTri.points[ i ], _vec );
 			epsilonScale = Math.max( epsilonScale, Math.abs( v.x ), Math.abs( v.y ) );
 
 		}
 
-		let points, indices;
+		// Use custom deduplication and edge splitting
+		const vertices = [];
+		const indices = [];
+		edgesToIndices( edges2d, vertices, indices, epsilonScale );
 
-		if ( this.useCleanPSLG ) {
+		const cdt2dPoints = [];
+		for ( let i = 0, l = vertices.length; i < l; i ++ ) {
 
-			// Build points and edges directly for clean-pslg
-			points = existing2d.map( v => [ v.x, v.y ] );
-			indices = [];
-
-			for ( let i = 0, l = edges2d.length; i < l; i ++ ) {
-
-				const e = edges2d[ i ];
-				const startIdx = points.length;
-				points.push( [ e.start.x, e.start.y ] );
-				const endIdx = points.length;
-				points.push( [ e.end.x, e.end.y ] );
-				indices.push( [ startIdx, endIdx ] );
-
-			}
-
-			cleanPSLG( points, indices );
-
-		} else {
-
-			// Use custom deduplication and edge splitting
-			const vertices = [];
-			indices = [];
-			edgesToIndices( edges2d, existing2d, vertices, indices, epsilonScale );
-
-			points = [];
-			for ( let i = 0, l = vertices.length; i < l; i ++ ) {
-
-				const vert = vertices[ i ];
-				points.push( [ vert.x, vert.y ] );
-
-			}
+			const vert = vertices[ i ];
+			cdt2dPoints.push( [ vert.x, vert.y ] );
 
 		}
 
 		// Run the CDT triangulation
-		let triangulation;
-		if ( this.useConstrainautor ) {
-
-			const flatCoords = new Float64Array( points.length * 2 );
-			for ( let i = 0, l = points.length; i < l; i ++ ) {
-
-				flatCoords[ i * 2 ] = points[ i ][ 0 ];
-				flatCoords[ i * 2 + 1 ] = points[ i ][ 1 ];
-
-			}
-
-			const del = new Delaunator( flatCoords );
-			new Constrainautor( del, indices );
-
-			triangulation = [];
-			for ( let i = 0, l = del.triangles.length; i < l; i += 3 ) {
-
-				triangulation.push( [ del.triangles[ i ], del.triangles[ i + 1 ], del.triangles[ i + 2 ] ] );
-
-			}
-
-		} else {
-
-			triangulation = cdt2d( points, indices, { exterior: false } );
-
-		}
-
+		let triangulation = cdt2d( cdt2dPoints, indices, { exterior: false } );
 		for ( let i = 0, l = triangulation.length; i < l; i ++ ) {
 
-			const [ i0, i1, i2 ] = triangulation[ i ];
-
 			// covert back to 2d
+			const [ i0, i1, i2 ] = triangulation[ i ];
 			const tri = trianglePool.getInstance();
-			this._from2D( points[ i0 ][ 0 ], points[ i0 ][ 1 ], tri.a );
-			this._from2D( points[ i1 ][ 0 ], points[ i1 ][ 1 ], tri.b );
-			this._from2D( points[ i2 ][ 0 ], points[ i2 ][ 1 ], tri.c );
-
-			// TODO: how can this happen
-			if ( isTriDegenerate( tri ) ) {
-
-				continue;
-
-			}
-
-			// Ensure winding matches the base triangle normal
-			// TODO: is this needed?
-			if ( this.useConstrainautor || true ) {
-
-				tri.getNormal( _triNormal );
-				if ( _triNormal.dot( this.normal ) < 0 ) {
-
-					// Flip winding by swapping b and c
-					// _vec.copy( tri.b );
-					// tri.b.copy( tri.c );
-					// tri.c.copy( _vec );
-
-					// console
-
-					const t2 = tri.clone();
-					t2.a.set( points[ i0 ][ 0 ], points[ i0 ][ 1 ], 0 );
-					t2.b.set( points[ i1 ][ 0 ], points[ i1 ][ 1 ], 0 );
-					t2.c.set( points[ i2 ][ 0 ], points[ i2 ][ 1 ], 0 );
-
-					console.log('TEST', t2)
-					debugger
-
-				}
-
-			}
+			this._from2D( cdt2dPoints[ i0 ][ 0 ], cdt2dPoints[ i0 ][ 1 ], tri.a );
+			this._from2D( cdt2dPoints[ i1 ][ 0 ], cdt2dPoints[ i1 ][ 1 ], tri.b );
+			this._from2D( cdt2dPoints[ i2 ][ 0 ], cdt2dPoints[ i2 ][ 1 ], tri.c );
 
 			triangles.push( tri );
 
