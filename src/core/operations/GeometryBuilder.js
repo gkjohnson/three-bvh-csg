@@ -124,7 +124,7 @@ export class GeometryBuilder {
 
 	}
 
-	initInterpolatedData( geometry, matrix, normalMatrix, i0, i1, i2, invert ) {
+	initInterpolatedData( geometry, matrix, normalMatrix, i0, i1, i2 ) {
 
 		const { attributeData, interpolatedFields } = this;
 		const { attributes } = geometry;
@@ -152,27 +152,11 @@ export class GeometryBuilder {
 				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).applyNormalMatrix( normalMatrix );
 				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).applyNormalMatrix( normalMatrix );
 
-				if ( invert ) {
-
-					_vec3_0.multiplyScalar( - 1 );
-					_vec3_1.multiplyScalar( - 1 );
-					_vec3_2.multiplyScalar( - 1 );
-
-				}
-
 			} else if ( key === 'tangent' ) {
 
 				v0 = _vec3_0.fromBufferAttribute( attr, i0 ).transformDirection( matrix );
 				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).transformDirection( matrix );
 				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).transformDirection( matrix );
-
-				if ( invert ) {
-
-					_vec3_0.multiplyScalar( - 1 );
-					_vec3_1.multiplyScalar( - 1 );
-					_vec3_2.multiplyScalar( - 1 );
-
-				}
 
 			} else {
 
@@ -214,7 +198,7 @@ export class GeometryBuilder {
 		indexData.push( attributeData.position.count + 1 );
 		indexData.push( attributeData.position.count + 2 );
 
-		this.initInterpolatedData( geometry, matrix, normalMatrix, i0, i1, i2, false );
+		this.initInterpolatedData( geometry, matrix, normalMatrix, i0, i1, i2 );
 
 		for ( const key in attributeData ) {
 
