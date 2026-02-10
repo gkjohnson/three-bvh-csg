@@ -56,7 +56,7 @@ const params = {
 	displayBrushes: true,
 };
 
-let renderer, camera, scene, gui, outputContainer;
+let renderer, camera, scene, gui;
 let controls;
 let needsUpdate = true;
 let csgEvaluator;
@@ -67,8 +67,6 @@ init();
 function init() {
 
 	const bgColor = 0x111111;
-
-	outputContainer = document.getElementById( 'output' );
 
 	// renderer setup
 	renderer = new WebGLRenderer( { antialias: true } );

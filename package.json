@@ -45,7 +45,7 @@
   },
   "homepage": "https://github.com/gkjohnson/three-bvh-csg#readme",
   "peerDependencies": {
-    "three": ">=0.151.0",
+    "three": ">=0.179.0",
     "three-mesh-bvh": ">=0.9.7"
   },
   "devDependencies": {
@@ -63,5 +63,8 @@
     "typescript-eslint": "^8.48.1",
     "vite": "^6.2.2",
     "vitest": "^4.0.14"
+  },
+  "dependencies": {
+    "cdt2d": "^1.0.0"
   }
 }

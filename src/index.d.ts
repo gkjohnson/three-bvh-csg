@@ -67,7 +67,7 @@ export class TrianglePool {
 
 }
 
-export class TriangleSplitter {
+export class LegacyTriangleSplitter {
 
 	trianglePool: TrianglePool;
 	triangles: Triangle[];
@@ -85,7 +85,7 @@ export class HalfEdgeMap {
 	constructor( geometry?: BufferGeometry );
 	getSiblingTriangleIndex( triIndex: number, edgeIndex: number ): number;
 	getSiblingEdgeIndex( triIndex: number, edgeIndex: number ): number;
-	updateFrom( geomtry: BufferGeometry ): void;
+	updateFrom( geometry: BufferGeometry ): void;
 
 }
 

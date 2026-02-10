@@ -111,13 +111,13 @@ function performSplitTriangleOperations(
 		// get the triangle in the geometry B local frame
 		const ia3 = 3 * ia;
 		let ia0 = ia3 + 0;
-		let ia1 = ia3 + 0;
-		let ia2 = ia3 + 0;
+		let ia1 = ia3 + 1;
+		let ia2 = ia3 + 2;
 		if ( aIndex ) {
 
-			ia0 = aIndex.getX( ia3 + 0 );
-			ia1 = aIndex.getX( ia3 + 1 );
-			ia2 = aIndex.getX( ia3 + 2 );
+			ia0 = aIndex.getX( ia0 );
+			ia1 = aIndex.getX( ia1 );
+			ia2 = aIndex.getX( ia2 );
 
 		}
 
@@ -134,15 +134,26 @@ function performSplitTriangleOperations(
 		for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
 
 			const ib3 = 3 * intersectingIndices[ ib ];
-			const ib0 = bIndex.getX( ib3 + 0 );
-			const ib1 = bIndex.getX( ib3 + 1 );
-			const ib2 = bIndex.getX( ib3 + 2 );
+			let ib0 = ib3 + 0;
+			let ib1 = ib3 + 1;
+			let ib2 = ib3 + 2;
+
+			if ( bIndex ) {
+
+				ib0 = bIndex.getX( ib0 );
+				ib1 = bIndex.getX( ib1 );
+				ib2 = bIndex.getX( ib2 );
+
+			}
+
 			_triB.a.fromBufferAttribute( bPosition, ib0 );
 			_triB.b.fromBufferAttribute( bPosition, ib1 );
 			_triB.c.fromBufferAttribute( bPosition, ib2 );
 			splitter.splitByTriangle( _triB );
 
 		}
+
+		splitter.triangulate();
 
 		// for all triangles in the split result
 		const triangles = splitter.triangles;
