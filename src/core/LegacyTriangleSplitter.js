@@ -53,7 +53,7 @@ class TrianglePool {
 }
 
 // Utility class for splitting triangles
-export class TriangleSplitter {
+export class LegacyTriangleSplitter {
 
 	constructor() {
 
@@ -388,6 +388,10 @@ export class TriangleSplitter {
 			}
 
 		}
+
+	}
+
+	triangulate() {
 
 	}
 

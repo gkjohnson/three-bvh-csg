@@ -1,4 +1,5 @@
-import { TriangleSplitter } from './TriangleSplitter.js';
+// import { CDTTriangleSplitter } from './CDTTriangleSplitter.js';
+import { LegacyTriangleSplitter } from './LegacyTriangleSplitter.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
@@ -10,7 +11,7 @@ export class Evaluator {
 
 	constructor() {
 
-		this.triangleSplitter = new TriangleSplitter();
+		this.triangleSplitter = new LegacyTriangleSplitter();
 		this.geometryBuilders = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
