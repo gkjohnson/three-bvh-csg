@@ -202,7 +202,19 @@ function performSplitTriangleOperations(
 					const action = _actions[ k ];
 					const invertTri = action === INVERT_TRI;
 					const invert = invertedGeometry !== invertTri;
-					builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, _barycoordTri.b, _barycoordTri.c, invert );
+
+					builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, invert );
+					if ( invert ) {
+
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, invert );
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, invert );
+
+					} else {
+
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, invert );
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, invert );
+
+					}
 
 				}
 

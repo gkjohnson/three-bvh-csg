@@ -184,8 +184,8 @@ export class GeometryBuilder {
 
 	}
 
-	// push data from the given barycoords onto the geometry
-	appendInterpolatedAttributeData( group, b0, b1, b2, invert ) {
+	// push data from the given barycoord onto the geometry
+	appendInterpolatedAttributeData( group, barycoord, invert ) {
 
 		const { groupIndices, attributeData, interpolatedFields } = this;
 		while ( groupIndices.length <= group ) {
@@ -196,44 +196,23 @@ export class GeometryBuilder {
 
 		const indexData = groupIndices[ group ];
 		indexData.push( attributeData.position.count );
-		indexData.push( attributeData.position.count + 1 );
-		indexData.push( attributeData.position.count + 2 );
 
 		for ( const key in interpolatedFields ) {
 
-			const arr = attributeData[ key ];
-
 			// handle normals and positions specially because they require transforming
+			const arr = attributeData[ key ];
 			const isDirection = key === 'normal' || key === 'tangent';
 			const invertVector = invert && isDirection;
 			const itemSize = arr.itemSize;
 			const [ v0, v1, v2 ] = interpolatedFields[ key ];
-
-			getBarycoordValue( v0, v1, v2, b0, _vec4, isDirection, invertVector );
+			getBarycoordValue( v0, v1, v2, barycoord, _vec4, isDirection, invertVector );
 			pushItemSize( _vec4, itemSize, arr );
-
-			if ( invert ) {
-
-				getBarycoordValue( v0, v1, v2, b2, _vec4, isDirection, invertVector );
-				pushItemSize( _vec4, itemSize, arr );
-
-				getBarycoordValue( v0, v1, v2, b1, _vec4, isDirection, invertVector );
-				pushItemSize( _vec4, itemSize, arr );
-
-			} else {
-
-				getBarycoordValue( v0, v1, v2, b1, _vec4, isDirection, invertVector );
-				pushItemSize( _vec4, itemSize, arr );
-
-				getBarycoordValue( v0, v1, v2, b2, _vec4, isDirection, invertVector );
-				pushItemSize( _vec4, itemSize, arr );
-
-			}
 
 		}
 
 	}
 
+	// append the given vertex index from the source geometry to this one
 	appendIndexFromGeometry( geometry, matrix, normalMatrix, group, index, invert = false ) {
 
 		const { groupIndices, attributeData, indexMap } = this;
