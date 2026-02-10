@@ -11,7 +11,7 @@ const _vec4_0 = new Vector4();
 const _vec4_1 = new Vector4();
 const _vec4_2 = new Vector4();
 
-function getBarycoordValue( a, b, c, barycoord, target, normalize = false ) {
+function getBarycoordValue( a, b, c, barycoord, target, normalize = false, invert = false ) {
 
 	target.set( 0, 0, 0, 0 )
 		.addScaledVector( a, barycoord.x )
@@ -21,6 +21,12 @@ function getBarycoordValue( a, b, c, barycoord, target, normalize = false ) {
 	if ( normalize ) {
 
 		target.normalize();
+
+	}
+
+	if ( invert ) {
+
+		target.multiplyScalar( - 1 );
 
 	}
 
@@ -208,7 +214,7 @@ export class GeometryBuilder {
 		indexData.push( attributeData.position.count + 1 );
 		indexData.push( attributeData.position.count + 2 );
 
-		this.initInterpolatedData( geometry, matrix, normalMatrix, i0, i1, i2, invert );
+		this.initInterpolatedData( geometry, matrix, normalMatrix, i0, i1, i2, false );
 
 		for ( const key in attributeData ) {
 
@@ -225,23 +231,23 @@ export class GeometryBuilder {
 			const itemSize = arr.itemSize;
 			const [ v0, v1, v2 ] = interpolatedFields[ key ];
 
-			getBarycoordValue( v0, v1, v2, b0, _vec4, normalize );
+			getBarycoordValue( v0, v1, v2, b0, _vec4, normalize, invert );
 			pushItemSize( _vec4, itemSize, arr );
 
 			if ( invert ) {
 
-				getBarycoordValue( v0, v1, v2, b2, _vec4, normalize );
+				getBarycoordValue( v0, v1, v2, b2, _vec4, normalize, invert );
 				pushItemSize( _vec4, itemSize, arr );
 
-				getBarycoordValue( v0, v1, v2, b1, _vec4, normalize );
+				getBarycoordValue( v0, v1, v2, b1, _vec4, normalize, invert );
 				pushItemSize( _vec4, itemSize, arr );
 
 			} else {
 
-				getBarycoordValue( v0, v1, v2, b1, _vec4, normalize );
+				getBarycoordValue( v0, v1, v2, b1, _vec4, normalize, invert );
 				pushItemSize( _vec4, itemSize, arr );
 
-				getBarycoordValue( v0, v1, v2, b2, _vec4, normalize );
+				getBarycoordValue( v0, v1, v2, b2, _vec4, normalize, invert );
 				pushItemSize( _vec4, itemSize, arr );
 
 			}
