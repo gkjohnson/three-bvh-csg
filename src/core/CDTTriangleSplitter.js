@@ -216,6 +216,17 @@ export class CDTTriangleSplitter {
 
 		edges.length = 0;
 
+		const e0 = this.linePool.getInstance();
+		const e1 = this.linePool.getInstance();
+		const e2 = this.linePool.getInstance();
+		e0.start.copy( baseTri.a );
+		e0.end.copy( baseTri.b );
+		e1.start.copy( baseTri.b );
+		e1.end.copy( baseTri.c );
+		e2.start.copy( baseTri.c );
+		e2.end.copy( baseTri.a );
+		edges.push( e0, e1, e2 );
+
 		// Build 2D projection frame from base triangle
 		projOrigin.copy( baseTri.a );
 		projU.subVectors( baseTri.b, baseTri.a ).normalize();
@@ -373,7 +384,7 @@ export class CDTTriangleSplitter {
 
 		} else {
 
-			triangulation = cdt2d( points, indices );
+			triangulation = cdt2d( points, indices, { exterior: false } );
 
 		}
 
@@ -396,13 +407,27 @@ export class CDTTriangleSplitter {
 
 			// Ensure winding matches the base triangle normal
 			// TODO: is this needed?
-			tri.getNormal( _triNormal );
-			if ( _triNormal.dot( this.normal ) < 0 ) {
+			if ( this.useConstrainautor || true ) {
 
-				// Flip winding by swapping b and c
-				_vec.copy( tri.b );
-				tri.b.copy( tri.c );
-				tri.c.copy( _vec );
+				tri.getNormal( _triNormal );
+				if ( _triNormal.dot( this.normal ) < 0 ) {
+
+					// Flip winding by swapping b and c
+					// _vec.copy( tri.b );
+					// tri.b.copy( tri.c );
+					// tri.c.copy( _vec );
+
+					// console
+
+					const t2 = tri.clone();
+					t2.a.set( points[ i0 ][ 0 ], points[ i0 ][ 1 ], 0 );
+					t2.b.set( points[ i1 ][ 0 ], points[ i1 ][ 1 ], 0 );
+					t2.c.set( points[ i2 ][ 0 ], points[ i2 ][ 1 ], 0 );
+
+					console.log('TEST', t2)
+					debugger
+
+				}
 
 			}
 
