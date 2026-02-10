@@ -1,4 +1,4 @@
-import { Line3 } from 'three';
+import { Line3, Vector3, Plane } from 'three';
 
 // tolerance for considering a clipped segment degenerate (zero-length)
 const CLIP_EPSILON = 1e-10;
@@ -7,17 +7,22 @@ const CLIP_EPSILON = 1e-10;
 const PARALLEL_EPSILON = 1e-15;
 
 const _tempLine = new Line3();
+const _inputSeg = new Line3();
+const _dir = new Vector3();
+const _edge = new Vector3();
+const _edgeNormal = new Vector3();
+const _edgePlane = new Plane();
 
-// Clips a line segment (segStart > segEnd) to the interior of a coplanar triangle.
+// Clips a line segment to the interior of a coplanar triangle using the Cyrus–Beck algorithm
+// generalized to 3D half-planes.
+// Reference: Cyrus & Beck, "Generalized two- and three-dimensional clipping"
 // Returns the target Line3 with clipped endpoints, or null if entirely outside.
-function clipSegmentToTriangle( segStart, segEnd, tri, normal, target ) {
+function clipSegmentToTriangle( segment, tri, normal, target ) {
 
 	let tMin = 0;
 	let tMax = 1;
 
-	const dx = segEnd.x - segStart.x;
-	const dy = segEnd.y - segStart.y;
-	const dz = segEnd.z - segStart.z;
+	segment.delta( _dir );
 
 	const verts = [ tri.a, tri.b, tri.c ];
 	for ( let i = 0; i < 3; i ++ ) {
@@ -25,67 +30,70 @@ function clipSegmentToTriangle( segStart, segEnd, tri, normal, target ) {
 		const v0 = verts[ i ];
 		const v1 = verts[ ( i + 1 ) % 3 ];
 
-		// inward-pointing edge normal: cross( triNormal, edge )
-		const ex = v1.x - v0.x;
-		const ey = v1.y - v0.y;
-		const ez = v1.z - v0.z;
-		const nx = normal.y * ez - normal.z * ey;
-		const ny = normal.z * ex - normal.x * ez;
-		const nz = normal.x * ey - normal.y * ex;
+		// build the inward-facing edge plane
+		_edge.subVectors( v1, v0 );
+		_edgeNormal.crossVectors( normal, _edge );
+		_edgePlane.setFromNormalAndCoplanarPoint( _edgeNormal, v0 );
 
-		// signed distance of segment start from the edge half-plane
-		const dist = nx * ( segStart.x - v0.x ) + ny * ( segStart.y - v0.y ) + nz * ( segStart.z - v0.z );
+		// signed distance of segment start from the edge plane
+		const dist = _edgePlane.distanceToPoint( segment.start );
 
 		// rate of change of distance along segment direction
-		const denom = nx * dx + ny * dy + nz * dz;
-
+		const denom = _edgePlane.normal.dot( _dir );
 		if ( Math.abs( denom ) < PARALLEL_EPSILON ) {
 
 			// segment parallel to edge — entirely inside or outside this half-plane
-			if ( dist < - CLIP_EPSILON ) return null;
-			continue;
+			if ( dist < - CLIP_EPSILON ) {
+
+				return null;
+
+			} else {
+
+				continue;
+
+			}
 
 		}
 
 		const t = - dist / denom;
-
 		if ( denom > 0 ) {
 
-			// segment enters the half-plane at t
+			// segment enters the plane at t from the negative side
 			tMin = Math.max( tMin, t );
 
 		} else {
 
-			// segment exits the half-plane at t
+			// segment exits the plane at t from the positive side
 			tMax = Math.min( tMax, t );
 
 		}
 
-		if ( tMin > tMax + CLIP_EPSILON ) return null;
+		// edge is outside the triangle
+		if ( tMin > tMax + CLIP_EPSILON ) {
+
+			return null;
+
+		}
 
 	}
 
-	if ( tMax - tMin < CLIP_EPSILON ) return null;
+	// segment is degenerate
+	if ( tMax - tMin < CLIP_EPSILON ) {
 
-	target.start.set(
-		segStart.x + tMin * dx,
-		segStart.y + tMin * dy,
-		segStart.z + tMin * dz
-	);
+		return null;
 
-	target.end.set(
-		segStart.x + tMax * dx,
-		segStart.y + tMax * dy,
-		segStart.z + tMax * dz
-	);
+	}
+
+	segment.at( tMin, target.start );
+	segment.at( tMax, target.end );
 
 	return target;
 
 }
 
-// Computes the segments of triB's edges that lie inside triA. Both triangles
-// must be coplanar. These segments are the constraint edges needed to split
-// triA by coplanar triB in a constrained triangulation.
+// Computes the segments of triB's edges that lie inside triA. Both triangles must be coplanar.
+// These segments are the constraint edges needed to split triA by coplanar triB in a constrained
+// triangulation.
 export function getCoplanarIntersectionEdges( triA, triB, normal, target ) {
 
 	let count = 0;
@@ -93,11 +101,11 @@ export function getCoplanarIntersectionEdges( triA, triB, normal, target ) {
 	for ( let i = 0; i < 3; i ++ ) {
 
 		// the edge vertices
-		const v0 = bVerts[ i ];
-		const v1 = bVerts[ ( i + 1 ) % 3 ];
+		_inputSeg.start.copy( bVerts[ i ] );
+		_inputSeg.end.copy( bVerts[ ( i + 1 ) % 3 ] );
 
 		// clip the segment
-		const result = clipSegmentToTriangle( v0, v1, triA, normal, _tempLine );
+		const result = clipSegmentToTriangle( _inputSeg, triA, normal, _tempLine );
 		if ( result !== null ) {
 
 			// expand the list of necessary
