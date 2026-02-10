@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Small performance improvement during whole triangle traversal.
 - Support for retaining indices for whole triangles across operations.
+- Evaluator: Added "removeUnusedMaterial" option.
 
 ### Changed
 - Adjusted minimum three-mesh-bvh version.
