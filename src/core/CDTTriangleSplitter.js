@@ -179,6 +179,7 @@ export class CDTTriangleSplitter {
 		this.linePool = new Pool( () => new Line3() );
 
 		this.triangles = [];
+		this.halfEdges = [];
 		this.normal = new Vector3();
 		this.projOrigin = new Vector3();
 		this.projU = new Vector3();
@@ -320,7 +321,54 @@ export class CDTTriangleSplitter {
 		}
 
 		// Run the CDT triangulation
-		let triangulation = cdt2d( cdt2dPoints, indices, { exterior: false } );
+		const triangulation = cdt2d( cdt2dPoints, indices, { exterior: false } );
+
+		// construct the half edge structure
+		const connectivity = [];
+		const constrainedEdgeHashes = new Set();
+		indices.forEach( pair => {
+
+			constrainedEdgeHashes.add( `${ pair[ 0 ] }_${ pair[ 1 ] }` );
+			constrainedEdgeHashes.add( `${ pair[ 1 ] }_${ pair[ 0 ] }` );
+
+		} );
+
+		const halfEdgeMap = new Map();
+		triangulation.forEach( ( points, ti ) => {
+
+			const others = [];
+			connectivity.push( others );
+			for ( let i = 0; i < 3; i ++ ) {
+
+				const ni = ( i + 1 ) % 3;
+				const p0 = points[ i ];
+				const p1 = points[ ni ];
+
+				const hash0 = `${ p0 }_${ p1 }`;
+				if ( constrainedEdgeHashes.has( hash0 ) ) {
+
+					continue;
+
+				}
+
+				if ( halfEdgeMap.has( hash0 ) ) {
+
+					const index = halfEdgeMap.get( hash0 );
+					others.push( index );
+					connectivity[ index ].push( ti );
+
+				} else {
+
+					const hash1 = `${ p1 }_${ p0 }`;
+					halfEdgeMap.set( hash1, ti );
+
+				}
+
+			}
+
+		} );
+
+		this.connectivity = connectivity;
 		for ( let i = 0, l = triangulation.length; i < l; i ++ ) {
 
 			// covert back to 2d

@@ -156,11 +156,17 @@ function performSplitTriangleOperations(
 		splitter.triangulate();
 
 		// for all triangles in the split result
-		const triangles = splitter.triangles;
+		const triangles = [ ...splitter.triangles ];
+		const connectivity = splitter.connectivity;
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
 			// get the barycentric coordinates of the clipped triangle to add
 			const clippedTri = triangles[ ib ];
+			if ( clippedTri === null ) {
+
+				continue;
+
+			}
 
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach
@@ -185,19 +191,44 @@ function performSplitTriangleOperations(
 
 			if ( _builders.length !== 0 ) {
 
-				_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
-				_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
-				_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
+				const stack = [ ib ];
+				while ( stack.length > 0 ) {
 
-				for ( let k = 0, lk = _builders.length; k < lk; k ++ ) {
+					const index = stack.pop();
+					const tri = triangles[ index ];
+					triangles[ index ] = null;
+					if ( tri === null ) {
 
-					const builder = _builders[ k ];
-					const action = _actions[ k ];
-					const invertTri = action === INVERT_TRI;
-					const invert = invertedGeometry !== invertTri;
-					builder.appendInterpolatedAttributes( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, ia0, ia1, ia2, _barycoordTri.a, _barycoordTri.b, _barycoordTri.c, invert );
+						continue;
+
+					}
+
+					connectivity[ index ].forEach( id => {
+
+						if ( triangles[ id ] !== null ) {
+
+							stack.push( id );
+
+						}
+
+					} );
+
+					_triA.getBarycoord( tri.a, _barycoordTri.a );
+					_triA.getBarycoord( tri.b, _barycoordTri.b );
+					_triA.getBarycoord( tri.c, _barycoordTri.c );
+
+					for ( let k = 0, lk = _builders.length; k < lk; k ++ ) {
+
+						const builder = _builders[ k ];
+						const action = _actions[ k ];
+						const invertTri = action === INVERT_TRI;
+						const invert = invertedGeometry !== invertTri;
+						builder.appendInterpolatedAttributes( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, ia0, ia1, ia2, _barycoordTri.a, _barycoordTri.b, _barycoordTri.c, invert );
+
+					}
 
 				}
+
 
 			}
 
