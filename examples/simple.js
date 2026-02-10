@@ -222,7 +222,7 @@ async function init() {
 	wireframeResult = new Mesh( resultObject.geometry, new MeshBasicMaterial( {
 		wireframe: true,
 		color: 0,
-		opacity: 0.15,
+		opacity: 0.5,
 		transparent: true,
 	} ) );
 	scene.add( wireframeResult );

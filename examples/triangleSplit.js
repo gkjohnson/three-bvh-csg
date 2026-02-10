@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { TriangleSplitter, TriangleSetHelper } from '..';
+import { LegacyTriangleSplitter, TriangleSetHelper } from '..';
 
 let renderer, camera, scene;
 let controls, transformControls;
@@ -87,7 +87,7 @@ function init() {
 	initialTris = new TriangleSetHelper();
 	clippedTris = new TriangleSetHelper();
 
-	splitter = new TriangleSplitter();
+	splitter = new LegacyTriangleSplitter();
 
 	scene.add( initialTris, clippedTris );
 
