@@ -226,7 +226,6 @@ function updateCSG() {
 
 		const b = brushes[ i ];
 		finalBrush = csgEvaluator.evaluate( finalBrush, b, ADDITION );
-		finalBrush.material = material;
 
 	}
 
