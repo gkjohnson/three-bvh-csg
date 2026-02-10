@@ -177,13 +177,16 @@ export class CDTTriangleSplitter {
 
 		this.trianglePool = new Pool( () => new ExtendedTriangle() );
 		this.linePool = new Pool( () => new Line3() );
+		// TODO: use array pool
 
 		this.triangles = [];
+		this.triangleIndices = [];
 		this.normal = new Vector3();
 		this.projOrigin = new Vector3();
 		this.projU = new Vector3();
 		this.projV = new Vector3();
 		this.baseTri = new ExtendedTriangle();
+		this.baseIndices = new Array( 3 );
 		this.edges = [];
 
 		this.coplanarTriangleUsed = false;
@@ -193,14 +196,17 @@ export class CDTTriangleSplitter {
 	}
 
 	// initialize the class with a triangle to be split
-	initialize( tri ) {
+	initialize( tri, i0 = null, i1 = null, i2 = null ) {
 
 		this.reset();
 
-		const { normal, baseTri, projU, projV, projOrigin, edges, linePool } = this;
+		const { normal, baseTri, projU, projV, projOrigin, edges, linePool, baseIndices } = this;
 		tri.getNormal( normal );
 		baseTri.copy( tri );
 		baseTri.update();
+		baseIndices[ 0 ] = i0;
+		baseIndices[ 1 ] = i1;
+		baseIndices[ 2 ] = i2;
 
 		// initialize constrained edges to the triangle boundary
 		edges.length = 0;
@@ -334,6 +340,18 @@ export class CDTTriangleSplitter {
 
 		}
 
+		const { baseIndices } = this;
+		const key = `${ baseIndices[ 0 ] }_${ baseIndices[ 1 ] }_${ baseIndices[ 2 ] }_`;
+		this.triangleIndices = triangulation.map( indices => {
+
+			return indices.map( v => {
+
+				return key + v;
+
+			} );
+
+		} );
+
 	}
 
 	reset() {
@@ -341,6 +359,7 @@ export class CDTTriangleSplitter {
 		this.trianglePool.clear();
 		this.linePool.clear();
 		this.triangles.length = 0;
+		this.triangleIndices.length = 0;
 		this.edges.length = 0;
 		this.coplanarTriangleUsed = false;
 

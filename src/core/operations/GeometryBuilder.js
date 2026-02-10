@@ -185,9 +185,9 @@ export class GeometryBuilder {
 	}
 
 	// push data from the given barycoord onto the geometry
-	appendInterpolatedAttributeData( group, barycoord, invert ) {
+	appendInterpolatedAttributeData( group, barycoord, index, invert ) {
 
-		const { groupIndices, attributeData, interpolatedFields } = this;
+		const { groupIndices, attributeData, interpolatedFields, indexMap } = this;
 		while ( groupIndices.length <= group ) {
 
 			groupIndices.push( new AttributeData( Uint32Array ) );
@@ -195,18 +195,27 @@ export class GeometryBuilder {
 		}
 
 		const indexData = groupIndices[ group ];
-		indexData.push( attributeData.position.count );
+		if ( index !== null && indexMap.has( index ) ) {
 
-		for ( const key in interpolatedFields ) {
+			indexData.push( indexMap.get( index ) );
 
-			// handle normals and positions specially because they require transforming
-			const arr = attributeData[ key ];
-			const isDirection = key === 'normal' || key === 'tangent';
-			const invertVector = invert && isDirection;
-			const itemSize = arr.itemSize;
-			const [ v0, v1, v2 ] = interpolatedFields[ key ];
-			getBarycoordValue( v0, v1, v2, barycoord, _vec4, isDirection, invertVector );
-			pushItemSize( _vec4, itemSize, arr );
+		} else {
+
+			indexMap.set( index, attributeData.position.count );
+			indexData.push( attributeData.position.count );
+
+			for ( const key in interpolatedFields ) {
+
+				// handle normals and positions specially because they require transforming
+				const arr = attributeData[ key ];
+				const isDirection = key === 'normal' || key === 'tangent';
+				const invertVector = invert && isDirection;
+				const itemSize = arr.itemSize;
+				const [ v0, v1, v2 ] = interpolatedFields[ key ];
+				getBarycoordValue( v0, v1, v2, barycoord, _vec4, isDirection, invertVector );
+				pushItemSize( _vec4, itemSize, arr );
+
+			}
 
 		}
 

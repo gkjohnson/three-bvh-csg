@@ -127,7 +127,7 @@ function performSplitTriangleOperations(
 
 		// initialize the splitter with the triangle from geometry A
 		splitter.reset();
-		splitter.initialize( _triA );
+		splitter.initialize( _triA, ia0, ia1, ia2 );
 
 		// split the triangle with the intersecting triangles from B
 		const intersectingIndices = intersectionSet.get( ia );
@@ -156,7 +156,7 @@ function performSplitTriangleOperations(
 		splitter.triangulate();
 
 		// cache all the attribute data
-		const triangles = splitter.triangles;
+		const { triangles, triangleIndices = [] } = splitter;
 		for ( let i = 0, l = builders.length; i < l; i ++ ) {
 
 			builders[ i ].initInterpolatedAttributeData( a.geometry, a.matrixWorld, _normalMatrix, ia0, ia1, ia2 );
@@ -168,6 +168,15 @@ function performSplitTriangleOperations(
 
 			// get the barycentric coordinates of the clipped triangle to add
 			const clippedTri = triangles[ ib ];
+			const indices = triangleIndices[ ib ];
+			let t0 = null, t1 = null, t2 = null;
+			if ( indices ) {
+
+				t0 = indices[ 0 ];
+				t1 = indices[ 1 ];
+				t2 = indices[ 2 ];
+
+			}
 
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach
@@ -203,16 +212,16 @@ function performSplitTriangleOperations(
 					const invertTri = action === INVERT_TRI;
 					const invert = invertedGeometry !== invertTri;
 
-					builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, invert );
+					builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, t0, invert );
 					if ( invert ) {
 
-						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, invert );
-						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, invert );
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert );
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert );
 
 					} else {
 
-						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, invert );
-						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, invert );
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert );
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert );
 
 					}
 
