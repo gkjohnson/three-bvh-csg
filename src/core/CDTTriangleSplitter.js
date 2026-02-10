@@ -4,6 +4,8 @@ import { getCoplanarIntersectionEdges } from './utils/intersectionUtils.js';
 import { isTriDegenerate } from './utils/triangleUtils.js';
 import cdt2d from 'cdt2d';
 import cleanPSLG from 'clean-pslg';
+import Delaunator from 'delaunator';
+import Constrainautor from '@kninnug/constrainautor';
 
 const PARALLEL_EPSILON = 1e-10;
 
@@ -208,6 +210,7 @@ export class CDTTriangleSplitter {
 
 		this.coplanarTriangleUsed = false;
 		this.useCleanPSLG = false;
+		this.useConstrainautor = false;
 
 	}
 
@@ -348,7 +351,33 @@ export class CDTTriangleSplitter {
 		}
 
 		// Run the CDT triangulation
-		const triangulation = cdt2d( points, indices );
+		let triangulation;
+		if ( this.useConstrainautor ) {
+
+			const flatCoords = new Float64Array( points.length * 2 );
+			for ( let i = 0, l = points.length; i < l; i ++ ) {
+
+				flatCoords[ i * 2 ] = points[ i ][ 0 ];
+				flatCoords[ i * 2 + 1 ] = points[ i ][ 1 ];
+
+			}
+
+			const del = new Delaunator( flatCoords );
+			new Constrainautor( del, indices );
+
+			triangulation = [];
+			for ( let i = 0, l = del.triangles.length; i < l; i += 3 ) {
+
+				triangulation.push( [ del.triangles[ i ], del.triangles[ i + 1 ], del.triangles[ i + 2 ] ] );
+
+			}
+
+		} else {
+
+			triangulation = cdt2d( points, indices );
+
+		}
+
 		for ( let i = 0, l = triangulation.length; i < l; i ++ ) {
 
 			const [ i0, i1, i2 ] = triangulation[ i ];
