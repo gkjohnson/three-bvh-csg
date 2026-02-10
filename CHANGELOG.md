@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Evaluator: Added "removeUnusedMaterial" option.
 
 ### Changed
-- Adjusted minimum three-mesh-bvh version.
+- Adjusted minimum three.js, three-mesh-bvh version.
 
 ## [0.0.17] - 2025-04-04
 ### Fixed
