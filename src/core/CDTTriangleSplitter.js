@@ -140,7 +140,8 @@ function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 		for ( let i = 0; i < outputVertices.length; i ++ ) {
 
 			const v2 = outputVertices[ i ];
-			if ( v === v2 || v.distanceToSquared( v2 ) < VERTEX_MERGE_EPSILON ) {
+			const scale = getMaxAbsValue( ...v, ...v2 ) ** 2;
+			if ( v === v2 || v.distanceToSquared( v2 ) < VERTEX_MERGE_EPSILON * scale ) {
 
 				return i;
 
