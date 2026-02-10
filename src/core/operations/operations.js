@@ -155,8 +155,15 @@ function performSplitTriangleOperations(
 
 		splitter.triangulate();
 
-		// for all triangles in the split result
+		// cache all the attribute data
 		const triangles = splitter.triangles;
+		for ( let i = 0, l = builders.length; i < l; i ++ ) {
+
+			builders[ i ].initInterpolatedAttributeData( a.geometry, a.matrixWorld, _normalMatrix, ia0, ia1, ia2 );
+
+		}
+
+		// for all triangles in the split result
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
 			// get the barycentric coordinates of the clipped triangle to add
@@ -195,7 +202,7 @@ function performSplitTriangleOperations(
 					const action = _actions[ k ];
 					const invertTri = action === INVERT_TRI;
 					const invert = invertedGeometry !== invertTri;
-					builder.appendInterpolatedAttributes( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, ia0, ia1, ia2, _barycoordTri.a, _barycoordTri.b, _barycoordTri.c, invert );
+					builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, _barycoordTri.b, _barycoordTri.c, invert );
 
 				}
 

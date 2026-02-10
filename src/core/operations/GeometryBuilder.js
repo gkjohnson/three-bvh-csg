@@ -124,7 +124,8 @@ export class GeometryBuilder {
 
 	}
 
-	initInterpolatedData( geometry, matrix, normalMatrix, i0, i1, i2, invert ) {
+	// init and cache all the attribute data for the given indices so we can use it to append interpolated attribute data
+	initInterpolatedAttributeData( geometry, matrix, normalMatrix, i0, i1, i2, invert ) {
 
 		const { attributeData, interpolatedFields } = this;
 		const { attributes } = geometry;
@@ -199,10 +200,9 @@ export class GeometryBuilder {
 
 	}
 
-	appendInterpolatedAttributes( geometry, matrix, normalMatrix, group, i0, i1, i2, b0, b1, b2, invert ) {
+	appendInterpolatedAttributeData( group, b0, b1, b2, invert ) {
 
 		const { groupIndices, attributeData, interpolatedFields } = this;
-		const { attributes } = geometry;
 		while ( groupIndices.length <= group ) {
 
 			groupIndices.push( new AttributeData( Uint32Array ) );
@@ -214,17 +214,9 @@ export class GeometryBuilder {
 		indexData.push( attributeData.position.count + 1 );
 		indexData.push( attributeData.position.count + 2 );
 
-		this.initInterpolatedData( geometry, matrix, normalMatrix, i0, i1, i2, false );
-
-		for ( const key in attributeData ) {
+		for ( const key in interpolatedFields ) {
 
 			const arr = attributeData[ key ];
-			const attr = attributes[ key ];
-			if ( ! attr ) {
-
-				throw new Error( `CSG Operations: Attribute ${ key } not available on geometry.` );
-
-			}
 
 			// handle normals and positions specially because they require transforming
 			const isDirection = key === 'normal' || key === 'tangent';
@@ -409,6 +401,9 @@ export class GeometryBuilder {
 	clear() {
 
 		const { groupIndices, attributeData } = this;
+
+		this.interpolatedFields = {};
+
 		for ( const key in attributeData ) {
 
 			attributeData[ key ].clear();
