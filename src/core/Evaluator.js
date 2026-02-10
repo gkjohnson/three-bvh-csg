@@ -3,8 +3,8 @@ import { LegacyTriangleSplitter } from './LegacyTriangleSplitter.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
-import { trimAttributes, joinGroups, getMaterialList } from './operations/GeometryUtils.js';
 import { GeometryBuilder } from './operations/GeometryBuilder.js';
+import * as GeometryUtils from './operations/GeometryUtils.js';
 
 // Utility class for performing CSG operations
 export class Evaluator {
@@ -16,6 +16,7 @@ export class Evaluator {
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
 		this.consolidateGroups = true;
+		this.removeUnusedMaterials = true;
 		this.debug = new OperationDebugData();
 
 	}
@@ -67,6 +68,7 @@ export class Evaluator {
 			attributes,
 			useGroups,
 			consolidateGroups,
+			removeUnusedMaterials,
 			debug,
 		} = this;
 
@@ -81,7 +83,7 @@ export class Evaluator {
 		targetBrushes.forEach( ( brush, i ) => {
 
 			geometryBuilders[ i ].initFromGeometry( a.geometry, attributes );
-			trimAttributes( brush.geometry, attributes );
+			GeometryUtils.trimAttributes( brush.geometry, attributes );
 
 		} );
 
@@ -92,81 +94,27 @@ export class Evaluator {
 
 		// get the materials and group ranges
 		const aGroups = this.getGroupRanges( a.geometry );
-		const aMaterials = getMaterialList( aGroups, a.material );
+		const aMaterials = GeometryUtils.getMaterialList( aGroups, a.material );
 
 		const bGroups = this.getGroupRanges( b.geometry );
-		const bMaterials = getMaterialList( bGroups, b.material );
+		const bMaterials = GeometryUtils.getMaterialList( bGroups, b.material );
 		bGroups.forEach( g => g.materialIndex += aMaterials.length );
 
-		// get the full set of groups
-		let groups = [ ...aGroups, ...bGroups ].map( ( group, index ) => {
+		// get the full set of groups and materials
+		const materials = [ ...aMaterials, ...bMaterials ];
+		let groups = [ ...aGroups, ...bGroups ].map( ( group, index ) => ( { ...group, index } ) );
 
-			return { ...group, index };
-
-		} );
-
-		// generate the minimum set of materials needed for the list of groups and adjust the groups
-		// if they're needed
-		if ( useGroups ) {
-
-			const allMaterials = [ ...aMaterials, ...bMaterials ];
-			if ( consolidateGroups ) {
-
-				groups = groups
-					.map( group => {
-
-						const mat = allMaterials[ group.materialIndex ];
-						group.materialIndex = allMaterials.indexOf( mat );
-						return group;
-
-					} )
-					.sort( ( a, b ) => {
-
-						return a.materialIndex - b.materialIndex;
-
-					} );
-
-			}
-
-			// create a map from old to new index and remove materials that aren't used
-			const finalMaterials = [];
-			for ( let i = 0, l = allMaterials.length; i < l; i ++ ) {
-
-				let foundGroup = false;
-				for ( let g = 0, lg = groups.length; g < lg; g ++ ) {
-
-					const group = groups[ g ];
-					if ( group.materialIndex === i ) {
-
-						foundGroup = true;
-						group.materialIndex = finalMaterials.length;
-
-					}
-
-				}
-
-				if ( foundGroup ) {
-
-					finalMaterials.push( allMaterials[ i ] );
-
-				}
-
-			}
-
-			targetBrushes.forEach( tb => {
-
-				tb.material = finalMaterials;
-
-			} );
-
-		} else {
+		// adjust the groups
+		if ( ! useGroups ) {
 
 			groups = [ { start: 0, count: Infinity, index: 0, materialIndex: 0 } ];
-			targetBrushes.forEach( tb => {
 
-				tb.material = aMaterials[ 0 ];
+		} else if ( useGroups && consolidateGroups ) {
 
-			} );
+			// use the same material for any group thats pointing to the same material in different slots
+			// so we can merge these groups later
+			groups = GeometryUtils.useCommonMaterials( groups, materials );
+			groups.sort( ( a, b ) => a.materialIndex - b.materialIndex );
 
 		}
 
@@ -176,9 +124,25 @@ export class Evaluator {
 			const targetGeometry = brush.geometry;
 			geometryBuilders[ i ].buildGeometry( targetGeometry, groups );
 
-			if ( consolidateGroups ) {
+			if ( useGroups ) {
 
-				joinGroups( targetGeometry.groups );
+				brush.material = materials;
+
+				if ( consolidateGroups ) {
+
+					GeometryUtils.joinGroups( targetGeometry.groups );
+
+				}
+
+				if ( removeUnusedMaterials ) {
+
+					brush.material = GeometryUtils.removeUnusedMaterials( targetGeometry.groups, materials );
+
+				}
+
+			} else {
+
+				brush.material = materials[ 0 ];
 
 			}
 
