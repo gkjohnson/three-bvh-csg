@@ -3,8 +3,16 @@ import { ExtendedTriangle } from 'three-mesh-bvh';
 import { getCoplanarIntersectionEdges } from './utils/intersectionUtils.js';
 import { isTriDegenerate } from './utils/triangleUtils.js';
 import cdt2d from 'cdt2d';
+import cleanPSLG from 'clean-pslg';
 
 const PARALLEL_EPSILON = 1e-10;
+
+// relative tolerance factor — multiplied by squared edge length to get
+// scale-appropriate thresholds for intersection and on-edge tests
+const RELATIVE_EPSILON = 1e-10;
+
+// tolerance for merging nearby vertices (squared distance)
+const VERTEX_MERGE_EPSILON = 1e-7;
 
 const _vec = new Vector3();
 const _vec2 = new Vector3();
@@ -14,30 +22,44 @@ const _splittingTri = new ExtendedTriangle();
 const _intersectionEdge = new Line3();
 const _coplanarEdges = [];
 
+function getMaxAbsValue( ...args ) {
+
+	let res = 0;
+	for ( let i = 0, l = args.length; i < l; i ++ ) {
+
+		res = Math.max( res, Math.abs( args[ i ] ) );
+
+	}
+
+	return res;
+
+}
+
 function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 
 	outputVertices.length = 0;
 	outputIndices.length = 0;
 
+	// Add existing (unconstrained) vertices
 	for ( let i = 0, l = existingVerts.length; i < l; i ++ ) {
 
 		getIndex( existingVerts[ i ] );
 
 	}
 
+	// Add edge endpoints and find edge-edge intersection points
 	for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
 		const edge0 = edges[ i ];
 		getIndex( edge0.start );
 		getIndex( edge0.end );
 
-		// split the edges on intersection
-		// TODO: is this needed?
 		for ( let i1 = i + 1; i1 < l; i1 ++ ) {
 
 			const edge1 = edges[ i1 ];
 			const dist = edge0.distanceSqToLine3( edge1, _vec, _vec2 );
-			if ( dist === 0 ) {
+			const scale = getMaxAbsValue( ...edge0.start, ...edge0.end, ...edge1.start, ...edge1.end );
+			if ( dist < RELATIVE_EPSILON * scale ) {
 
 				getIndex( _vec2 );
 
@@ -47,20 +69,20 @@ function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 
 	}
 
-	// find all generated sub segments from splits
+	// Build sub-segments by finding all vertices on each edge
 	const arr = [];
 	for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
 		arr.length = 0;
 
 		const edge = edges[ i ];
+		const scale = getMaxAbsValue( ...edge.start, ...edge.end );
 		for ( let v = 0, lv = outputVertices.length; v < lv; v ++ ) {
 
-			// TODO: make this more robust - raising the tolerance causes CDT breakage
 			const vec = outputVertices[ v ];
 			edge.closestPointToPoint( vec, false, _vec );
 
-			if ( vec.distanceToSquared( _vec ) < 1e-14 ) {
+			if ( vec.distanceToSquared( _vec ) < RELATIVE_EPSILON * scale ) {
 
 				const param = edge.closestPointToPointParameter( vec, false );
 				arr.push( { param, index: v } );
@@ -73,14 +95,37 @@ function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 
 		for ( let a = 0, la = arr.length - 1; a < la; a ++ ) {
 
-			const an = a + 1;
-			outputIndices.push( [ arr[ a ].index, arr[ an ].index ] );
+			const i0 = arr[ a ].index;
+			const i1 = arr[ a + 1 ].index;
+
+			// Skip self-loops (can arise when two endpoints merge)
+			if ( i0 === i1 ) continue;
+
+			outputIndices.push( [ i0, i1 ] );
 
 		}
 
 	}
 
-	return { vertices: outputVertices, indices: outputIndices };
+	// Remove duplicate edges
+	const edgeSet = new Set();
+	let ptr = 0;
+	for ( let i = 0, l = outputIndices.length; i < l; i ++ ) {
+
+		const e = outputIndices[ i ];
+		const lo = Math.min( e[ 0 ], e[ 1 ] );
+		const hi = Math.max( e[ 0 ], e[ 1 ] );
+		const key = lo + ',' + hi;
+		if ( ! edgeSet.has( key ) ) {
+
+			edgeSet.add( key );
+			outputIndices[ ptr ++ ] = e;
+
+		}
+
+	}
+
+	outputIndices.length = ptr;
 
 	function paramSort( a, b ) {
 
@@ -93,7 +138,7 @@ function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 		for ( let i = 0; i < outputVertices.length; i ++ ) {
 
 			const v2 = outputVertices[ i ];
-			if ( v === v2 || v.distanceToSquared( v2 ) < 1e-7 ) {
+			if ( v === v2 || v.distanceToSquared( v2 ) < VERTEX_MERGE_EPSILON ) {
 
 				return i;
 
@@ -102,7 +147,7 @@ function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 		}
 
 		outputVertices.push( v.clone() );
-		return outputVertices.length;
+		return outputVertices.length - 1;
 
 	}
 
@@ -162,6 +207,7 @@ export class CDTTriangleSplitter {
 		this.edges = [];
 
 		this.coplanarTriangleUsed = false;
+		this.useCleanPSLG = false;
 
 	}
 
@@ -263,31 +309,55 @@ export class CDTTriangleSplitter {
 			this._to2D( baseTri.c, vectorPool.getInstance() ),
 		];
 
-		// Get the deduplicated points and connectivity
-		const vertices = [];
-		const indices = [];
-		edgesToIndices( edges2d, existing2d, vertices, indices );
+		let points, indices;
 
-		// Get the coordinates in a format suitable for delaunator
-		const coords = [];
-		for ( let i = 0, l = vertices.length; i < l; i ++ ) {
+		if ( this.useCleanPSLG ) {
 
-			const vert = vertices[ i ];
-			coords.push( [ vert.x, vert.y ] );
+			// Build points and edges directly for clean-pslg
+			points = existing2d.map( v => [ v.x, v.y ] );
+			indices = [];
+
+			for ( let i = 0, l = edges2d.length; i < l; i ++ ) {
+
+				const e = edges2d[ i ];
+				const startIdx = points.length;
+				points.push( [ e.start.x, e.start.y ] );
+				const endIdx = points.length;
+				points.push( [ e.end.x, e.end.y ] );
+				indices.push( [ startIdx, endIdx ] );
+
+			}
+
+			cleanPSLG( points, indices );
+
+		} else {
+
+			// Use custom deduplication and edge splitting
+			const vertices = [];
+			indices = [];
+			edgesToIndices( edges2d, existing2d, vertices, indices );
+
+			points = [];
+			for ( let i = 0, l = vertices.length; i < l; i ++ ) {
+
+				const vert = vertices[ i ];
+				points.push( [ vert.x, vert.y ] );
+
+			}
 
 		}
 
 		// Run the CDT triangulation
-		const triangulation = cdt2d( coords, indices );
+		const triangulation = cdt2d( points, indices );
 		for ( let i = 0, l = triangulation.length; i < l; i ++ ) {
 
 			const [ i0, i1, i2 ] = triangulation[ i ];
 
 			// covert back to 2d
 			const tri = trianglePool.getInstance();
-			this._from2D( coords[ i0 ][ 0 ], coords[ i0 ][ 1 ], tri.a );
-			this._from2D( coords[ i1 ][ 0 ], coords[ i1 ][ 1 ], tri.b );
-			this._from2D( coords[ i2 ][ 0 ], coords[ i2 ][ 1 ], tri.c );
+			this._from2D( points[ i0 ][ 0 ], points[ i0 ][ 1 ], tri.a );
+			this._from2D( points[ i1 ][ 0 ], points[ i1 ][ 1 ], tri.b );
+			this._from2D( points[ i2 ][ 0 ], points[ i2 ][ 1 ], tri.c );
 
 			// TODO: how can this happen
 			if ( isTriDegenerate( tri ) ) {

@@ -3,6 +3,9 @@ import fs from 'fs';
 
 export default {
 
+	define: {
+		global: 'globalThis',
+	},
 	root: './examples/',
 	base: '',
 	build: {
