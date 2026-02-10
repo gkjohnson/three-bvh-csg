@@ -38,8 +38,8 @@ export function performOperation(
 
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
-	performSplitTriangleOperations( a, b, aIntersections, operations, false, splitter, builders, groupOffset );
 	performWholeTriangleOperations( a, b, aIntersections, operations, false, builders, groupOffset );
+	performSplitTriangleOperations( a, b, aIntersections, operations, false, splitter, builders, groupOffset );
 
 	// find whether the set of operations contains a non-hollow operations. If it does then we need
 	// to perform the second set of triangle additions
@@ -52,8 +52,8 @@ export function performOperation(
 		builders.forEach( builder => builder.clearIndexMap() );
 
 		groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
-		performSplitTriangleOperations( b, a, bIntersections, operations, true, splitter, builders, groupOffset );
 		performWholeTriangleOperations( b, a, bIntersections, operations, true, builders, groupOffset );
+		performSplitTriangleOperations( b, a, bIntersections, operations, true, splitter, builders, groupOffset );
 
 	}
 
