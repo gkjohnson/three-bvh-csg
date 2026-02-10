@@ -184,6 +184,7 @@ export class GeometryBuilder {
 
 	}
 
+	// push data from the given barycoords onto the geometry
 	appendInterpolatedAttributeData( group, b0, b1, b2, invert ) {
 
 		const { groupIndices, attributeData, interpolatedFields } = this;
