@@ -227,27 +227,28 @@ export class GeometryBuilder {
 			}
 
 			// handle normals and positions specially because they require transforming
-			let normalize = key === 'normal' || key === 'tangent';
+			const isDirection = key === 'normal' || key === 'tangent';
+			const invertVector = invert && isDirection;
 			const itemSize = arr.itemSize;
 			const [ v0, v1, v2 ] = interpolatedFields[ key ];
 
-			getBarycoordValue( v0, v1, v2, b0, _vec4, normalize, invert );
+			getBarycoordValue( v0, v1, v2, b0, _vec4, isDirection, invertVector );
 			pushItemSize( _vec4, itemSize, arr );
 
 			if ( invert ) {
 
-				getBarycoordValue( v0, v1, v2, b2, _vec4, normalize, invert );
+				getBarycoordValue( v0, v1, v2, b2, _vec4, isDirection, invertVector );
 				pushItemSize( _vec4, itemSize, arr );
 
-				getBarycoordValue( v0, v1, v2, b1, _vec4, normalize, invert );
+				getBarycoordValue( v0, v1, v2, b1, _vec4, isDirection, invertVector );
 				pushItemSize( _vec4, itemSize, arr );
 
 			} else {
 
-				getBarycoordValue( v0, v1, v2, b1, _vec4, normalize, invert );
+				getBarycoordValue( v0, v1, v2, b1, _vec4, isDirection, invertVector );
 				pushItemSize( _vec4, itemSize, arr );
 
-				getBarycoordValue( v0, v1, v2, b2, _vec4, normalize, invert );
+				getBarycoordValue( v0, v1, v2, b2, _vec4, isDirection, invertVector );
 				pushItemSize( _vec4, itemSize, arr );
 
 			}
