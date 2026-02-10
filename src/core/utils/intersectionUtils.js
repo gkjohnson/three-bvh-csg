@@ -1,4 +1,4 @@
-import { Vector3, Line3 } from 'three';
+import { Line3 } from 'three';
 
 // tolerance for considering a clipped segment degenerate (zero-length)
 const CLIP_EPSILON = 1e-10;
@@ -6,13 +6,11 @@ const CLIP_EPSILON = 1e-10;
 // tolerance for treating a denominator as zero (segment parallel to edge)
 const PARALLEL_EPSILON = 1e-15;
 
-const _triNormal = new Vector3();
 const _tempLine = new Line3();
 
-// Clips a line segment (segStart→segEnd) to the interior of a coplanar triangle.
-// triNormal must be the pre-computed normal of tri.
+// Clips a line segment (segStart > segEnd) to the interior of a coplanar triangle.
 // Returns the target Line3 with clipped endpoints, or null if entirely outside.
-function clipSegmentToTriangle( segStart, segEnd, tri, triNormal, target ) {
+function clipSegmentToTriangle( segStart, segEnd, tri, normal, target ) {
 
 	let tMin = 0;
 	let tMax = 1;
@@ -31,9 +29,9 @@ function clipSegmentToTriangle( segStart, segEnd, tri, triNormal, target ) {
 		const ex = v1.x - v0.x;
 		const ey = v1.y - v0.y;
 		const ez = v1.z - v0.z;
-		const nx = triNormal.y * ez - triNormal.z * ey;
-		const ny = triNormal.z * ex - triNormal.x * ez;
-		const nz = triNormal.x * ey - triNormal.y * ex;
+		const nx = normal.y * ez - normal.z * ey;
+		const ny = normal.z * ex - normal.x * ez;
+		const nz = normal.x * ey - normal.y * ex;
 
 		// signed distance of segment start from the edge half-plane
 		const dist = nx * ( segStart.x - v0.x ) + ny * ( segStart.y - v0.y ) + nz * ( segStart.z - v0.z );
@@ -88,43 +86,35 @@ function clipSegmentToTriangle( segStart, segEnd, tri, triNormal, target ) {
 // Computes the segments of triB's edges that lie inside triA. Both triangles
 // must be coplanar. These segments are the constraint edges needed to split
 // triA by coplanar triB in a constrained triangulation.
-//
-// If triNormal is not provided it is computed from triA.
-// Reuses existing Line3 objects in the target array, allocating new ones only
-// when the array is too short. Returns the number of clipped segments found.
-export function getCoplanarIntersectionEdges( triA, triB, triNormal = null, target = [] ) {
-
-	if ( triNormal === null ) {
-
-		triA.getNormal( _triNormal );
-		triNormal = _triNormal;
-
-	}
+export function getCoplanarIntersectionEdges( triA, triB, normal, target ) {
 
 	let count = 0;
 	const bVerts = [ triB.a, triB.b, triB.c ];
 	for ( let i = 0; i < 3; i ++ ) {
 
+		// the edge vertices
 		const v0 = bVerts[ i ];
 		const v1 = bVerts[ ( i + 1 ) % 3 ];
 
-		const result = clipSegmentToTriangle( v0, v1, triA, triNormal, _tempLine );
+		// clip the segment
+		const result = clipSegmentToTriangle( v0, v1, triA, normal, _tempLine );
 		if ( result !== null ) {
 
+			// expand the list of necessary
 			if ( count >= target.length ) {
 
 				target.push( new Line3() );
 
 			}
 
-			target[ count ].start.copy( result.start );
-			target[ count ].end.copy( result.end );
+			target[ count ].copy( result );
 			count ++;
 
 		}
 
 	}
 
+	// returns the number of segments generated
 	return count;
 
 }
