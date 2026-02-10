@@ -2,8 +2,7 @@ import { Vector3, Line3 } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 import { getCoplanarIntersectionEdges } from './utils/intersectionUtils.js';
 import { isTriDegenerate } from './utils/triangleUtils.js';
-import Delaunator from 'delaunator';
-import Constrainautor from '@kninnug/constrainautor';
+import cdt2d from 'cdt2d';
 
 const PARALLEL_EPSILON = 1e-10;
 
@@ -281,36 +280,21 @@ export class CDTTriangleSplitter {
 		for ( let i = 0, l = vertices.length; i < l; i ++ ) {
 
 			const vert = vertices[ i ];
-			coords.push( vert.x, vert.y );
+			coords.push( [ vert.x, vert.y ] );
 
 		}
-
-		// const v0 = this._to2D( baseTri.a );
-		// const v1 = this._to2D( baseTri.b );
-		// const v2 = this._to2D( baseTri.c );
-		// coords.push( v0.x, v0.y, v1.x, v1.y, v2.x, v2.y );
 
 		// Run the CDT triangulation
-		const del = new Delaunator( coords );
-		if ( indices.length > 0 ) {
+		const triangulation = cdt2d( coords, indices );
+		for ( let i = 0, l = triangulation.length; i < l; i ++ ) {
 
-			new Constrainautor( del, indices );
-
-		}
-
-		// convert the triangulation to a set of triangles
-		const triangulation = del.triangles;
-		for ( let i = 0, l = triangulation.length; i < l; i += 3 ) {
-
-			const i0 = triangulation[ i ];
-			const i1 = triangulation[ i + 1 ];
-			const i2 = triangulation[ i + 2 ];
+			const [ i0, i1, i2 ] = triangulation[ i ];
 
 			// covert back to 2d
 			const tri = trianglePool.getInstance();
-			this._from2D( coords[ 2 * i0 ], coords[ 2 * i0 + 1 ], tri.a );
-			this._from2D( coords[ 2 * i1 ], coords[ 2 * i1 + 1 ], tri.b );
-			this._from2D( coords[ 2 * i2 ], coords[ 2 * i2 + 1 ], tri.c );
+			this._from2D( coords[ i0 ][ 0 ], coords[ i0 ][ 1 ], tri.a );
+			this._from2D( coords[ i1 ][ 0 ], coords[ i1 ][ 1 ], tri.b );
+			this._from2D( coords[ i2 ][ 0 ], coords[ i2 ][ 1 ], tri.c );
 
 			// TODO: how can this happen
 			if ( isTriDegenerate( tri ) ) {
