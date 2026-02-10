@@ -125,7 +125,7 @@ export class GeometryBuilder {
 	}
 
 	// init and cache all the attribute data for the given indices so we can use it to append interpolated attribute data
-	initInterpolatedAttributeData( geometry, matrix, normalMatrix, i0, i1, i2, invert ) {
+	initInterpolatedAttributeData( geometry, matrix, normalMatrix, i0, i1, i2 ) {
 
 		const { attributeData, interpolatedFields } = this;
 		const { attributes } = geometry;
@@ -153,27 +153,11 @@ export class GeometryBuilder {
 				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).applyNormalMatrix( normalMatrix );
 				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).applyNormalMatrix( normalMatrix );
 
-				if ( invert ) {
-
-					_vec3_0.multiplyScalar( - 1 );
-					_vec3_1.multiplyScalar( - 1 );
-					_vec3_2.multiplyScalar( - 1 );
-
-				}
-
 			} else if ( key === 'tangent' ) {
 
 				v0 = _vec3_0.fromBufferAttribute( attr, i0 ).transformDirection( matrix );
 				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).transformDirection( matrix );
 				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).transformDirection( matrix );
-
-				if ( invert ) {
-
-					_vec3_0.multiplyScalar( - 1 );
-					_vec3_1.multiplyScalar( - 1 );
-					_vec3_2.multiplyScalar( - 1 );
-
-				}
 
 			} else {
 
