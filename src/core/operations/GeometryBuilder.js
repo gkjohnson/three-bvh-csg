@@ -78,6 +78,7 @@ export class GeometryBuilder {
 		this.attributeData = {};
 		this.groupIndices = [];
 		this.indexMap = new Map();
+		this.interpolatedFields = {};
 
 	}
 
@@ -117,24 +118,13 @@ export class GeometryBuilder {
 
 	}
 
-	appendInterpolatedAttributes( geometry, matrix, normalMatrix, group, i0, i1, i2, b0, b1, b2, invert ) {
+	initInterpolatedData( geometry, matrix, normalMatrix, i0, i1, i2, invert ) {
 
-		const { groupIndices, attributeData } = this;
+		const { attributeData, interpolatedFields } = this;
 		const { attributes } = geometry;
-		while ( groupIndices.length <= group ) {
-
-			groupIndices.push( new AttributeData( Uint32Array ) );
-
-		}
-
-		const indexData = groupIndices[ group ];
-		indexData.push( attributeData.position.count );
-		indexData.push( attributeData.position.count + 1 );
-		indexData.push( attributeData.position.count + 2 );
 
 		for ( const key in attributeData ) {
 
-			const arr = attributeData[ key ];
 			const attr = attributes[ key ];
 			if ( ! attr ) {
 
@@ -143,8 +133,6 @@ export class GeometryBuilder {
 			}
 
 			// handle normals and positions specially because they require transforming
-			let normalize = false;
-			const itemSize = arr.itemSize;
 			let v0, v1, v2;
 			if ( key === 'position' ) {
 
@@ -154,7 +142,6 @@ export class GeometryBuilder {
 
 			} else if ( key === 'normal' ) {
 
-				normalize = true;
 				v0 = _vec3_0.fromBufferAttribute( attr, i0 ).applyNormalMatrix( normalMatrix );
 				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).applyNormalMatrix( normalMatrix );
 				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).applyNormalMatrix( normalMatrix );
@@ -169,7 +156,6 @@ export class GeometryBuilder {
 
 			} else if ( key === 'tangent' ) {
 
-				normalize = true;
 				v0 = _vec3_0.fromBufferAttribute( attr, i0 ).transformDirection( matrix );
 				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).transformDirection( matrix );
 				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).transformDirection( matrix );
@@ -189,6 +175,55 @@ export class GeometryBuilder {
 				v2 = _vec4_2.fromBufferAttribute( attr, i2 );
 
 			}
+
+			if ( ! interpolatedFields[ key ] ) {
+
+				interpolatedFields[ key ] = [ v0.clone(), v1.clone(), v2.clone() ];
+
+			} else {
+
+				const fields = interpolatedFields[ key ];
+				fields[ 0 ].copy( v0 );
+				fields[ 1 ].copy( v1 );
+				fields[ 2 ].copy( v2 );
+
+			}
+
+		}
+
+	}
+
+	appendInterpolatedAttributes( geometry, matrix, normalMatrix, group, i0, i1, i2, b0, b1, b2, invert ) {
+
+		const { groupIndices, attributeData, interpolatedFields } = this;
+		const { attributes } = geometry;
+		while ( groupIndices.length <= group ) {
+
+			groupIndices.push( new AttributeData( Uint32Array ) );
+
+		}
+
+		const indexData = groupIndices[ group ];
+		indexData.push( attributeData.position.count );
+		indexData.push( attributeData.position.count + 1 );
+		indexData.push( attributeData.position.count + 2 );
+
+		this.initInterpolatedData( geometry, matrix, normalMatrix, i0, i1, i2, invert );
+
+		for ( const key in attributeData ) {
+
+			const arr = attributeData[ key ];
+			const attr = attributes[ key ];
+			if ( ! attr ) {
+
+				throw new Error( `CSG Operations: Attribute ${ key } not available on geometry.` );
+
+			}
+
+			// handle normals and positions specially because they require transforming
+			let normalize = key === 'normal' || key === 'tangent';
+			const itemSize = arr.itemSize;
+			const [ v0, v1, v2 ] = interpolatedFields[ key ];
 
 			getBarycoordValue( v0, v1, v2, b0, _vec4, normalize );
 			pushItemSize( _vec4, itemSize, arr );
