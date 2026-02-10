@@ -9,12 +9,49 @@ import Constrainautor from '@kninnug/constrainautor';
 
 const PARALLEL_EPSILON = 1e-10;
 
-// relative tolerance factor — multiplied by squared edge length to get
-// scale-appropriate thresholds for intersection and on-edge tests
+// relative tolerance factor — multiplied by the max absolute coordinate
+// of the base triangle to get scale-appropriate thresholds
 const RELATIVE_EPSILON = 1e-10;
 
 // tolerance for merging nearby vertices (squared distance)
-const VERTEX_MERGE_EPSILON = 1e-7;
+const VERTEX_MERGE_EPSILON = 1e-16;
+
+class Pool {
+
+	constructor( createFn ) {
+
+		this.createFn = createFn;
+		this._pool = [];
+		this._index = 0;
+
+	}
+
+	getInstance() {
+
+		if ( this._index >= this._pool.length ) {
+
+			this._pool.push( this.createFn() );
+
+		}
+
+		return this._pool[ this._index ++ ];
+
+	}
+
+	clear() {
+
+		this._index = 0;
+
+	}
+
+	reset() {
+
+		this._pool.length = 0;
+		this._index = 0;
+
+	}
+
+}
 
 const _vec = new Vector3();
 const _vec2 = new Vector3();
@@ -23,21 +60,11 @@ const _triangleNormal = new Vector3();
 const _splittingTri = new ExtendedTriangle();
 const _intersectionEdge = new Line3();
 const _coplanarEdges = [];
+const _paramPool = new Pool( () => ( { param: 0, index: 0 } ) );
 
-function getMaxAbsValue( ...args ) {
+function edgesToIndices( edges, existingVerts, outputVertices, outputIndices, epsilonScale ) {
 
-	let res = 0;
-	for ( let i = 0, l = args.length; i < l; i ++ ) {
-
-		res = Math.max( res, Math.abs( args[ i ] ) );
-
-	}
-
-	return res;
-
-}
-
-function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
+	_paramPool.clear();
 
 	outputVertices.length = 0;
 	outputIndices.length = 0;
@@ -60,8 +87,7 @@ function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 
 			const edge1 = edges[ i1 ];
 			const dist = edge0.distanceSqToLine3( edge1, _vec, _vec2 );
-			const scale = getMaxAbsValue( ...edge0.start, ...edge0.end, ...edge1.start, ...edge1.end );
-			if ( dist < RELATIVE_EPSILON * scale ) {
+			if ( dist < RELATIVE_EPSILON * epsilonScale ) {
 
 				getIndex( _vec2 );
 
@@ -78,16 +104,17 @@ function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 		arr.length = 0;
 
 		const edge = edges[ i ];
-		const scale = getMaxAbsValue( ...edge.start, ...edge.end );
 		for ( let v = 0, lv = outputVertices.length; v < lv; v ++ ) {
 
 			const vec = outputVertices[ v ];
-			edge.closestPointToPoint( vec, false, _vec );
+			const param = edge.closestPointToPointParameter( vec, true );
+			edge.at( param, _vec );
+			if ( vec.distanceToSquared( _vec ) < RELATIVE_EPSILON * epsilonScale ) {
 
-			if ( vec.distanceToSquared( _vec ) < RELATIVE_EPSILON * scale ) {
-
-				const param = edge.closestPointToPointParameter( vec, false );
-				arr.push( { param, index: v } );
+				const entry = _paramPool.getInstance();
+				entry.param = param;
+				entry.index = v;
+				arr.push( entry );
 
 			}
 
@@ -140,8 +167,7 @@ function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 		for ( let i = 0; i < outputVertices.length; i ++ ) {
 
 			const v2 = outputVertices[ i ];
-			const scale = getMaxAbsValue( ...v, ...v2 ) ** 2;
-			if ( v === v2 || v.distanceToSquared( v2 ) < VERTEX_MERGE_EPSILON * scale ) {
+			if ( v === v2 || v.distanceToSquared( v2 ) < VERTEX_MERGE_EPSILON * epsilonScale ) {
 
 				return i;
 
@@ -151,43 +177,6 @@ function edgesToIndices( edges, existingVerts, outputVertices, outputIndices ) {
 
 		outputVertices.push( v.clone() );
 		return outputVertices.length - 1;
-
-	}
-
-}
-
-class Pool {
-
-	constructor( createFn ) {
-
-		this.createFn = createFn;
-		this._pool = [];
-		this._index = 0;
-
-	}
-
-	getInstance() {
-
-		if ( this._index >= this._pool.length ) {
-
-			this._pool.push( this.createFn() );
-
-		}
-
-		return this._pool[ this._index ++ ];
-
-	}
-
-	clear() {
-
-		this._index = 0;
-
-	}
-
-	reset() {
-
-		this._pool.length = 0;
-		this._index = 0;
 
 	}
 
@@ -313,6 +302,15 @@ export class CDTTriangleSplitter {
 			this._to2D( baseTri.c, vectorPool.getInstance() ),
 		];
 
+		// Precompute scale factor from base triangle for epsilon scaling
+		let epsilonScale = 0;
+		for ( let i = 0; i < 3; i ++ ) {
+
+			const v = existing2d[ i ];
+			epsilonScale = Math.max( epsilonScale, Math.abs( v.x ), Math.abs( v.y ) );
+
+		}
+
 		let points, indices;
 
 		if ( this.useCleanPSLG ) {
@@ -339,7 +337,7 @@ export class CDTTriangleSplitter {
 			// Use custom deduplication and edge splitting
 			const vertices = [];
 			indices = [];
-			edgesToIndices( edges2d, existing2d, vertices, indices );
+			edgesToIndices( edges2d, existing2d, vertices, indices, epsilonScale );
 
 			points = [];
 			for ( let i = 0, l = vertices.length; i < l; i ++ ) {
