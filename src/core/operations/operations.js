@@ -18,6 +18,7 @@ const _tri = new Triangle();
 const _barycoordTri = new Triangle();
 const _actions = [];
 const _builders = [];
+const _traversed = new Set();
 
 // runs the given operation against a and b using the splitter and appending data to the
 // geometry builder.
@@ -156,7 +157,7 @@ function performSplitTriangleOperations(
 		splitter.triangulate();
 
 		// cache all the attribute data
-		const { triangles, triangleIndices = [] } = splitter;
+		const { triangles, triangleIndices = [], triangleConnectivity = [] } = splitter;
 		for ( let i = 0, l = builders.length; i < l; i ++ ) {
 
 			builders[ i ].initInterpolatedAttributeData( a.geometry, a.matrixWorld, _normalMatrix, ia0, ia1, ia2 );
@@ -164,22 +165,19 @@ function performSplitTriangleOperations(
 		}
 
 		// for all triangles in the split result
+		_traversed.clear();
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
-			// get the barycentric coordinates of the clipped triangle to add
-			const clippedTri = triangles[ ib ];
-			const indices = triangleIndices[ ib ];
-			let t0 = null, t1 = null, t2 = null;
-			if ( indices ) {
+			// skip the triangle if we've already traversed
+			if ( _traversed.has( ib ) ) {
 
-				t0 = indices[ 0 ];
-				t1 = indices[ 1 ];
-				t2 = indices[ 2 ];
+				continue;
 
 			}
 
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach
+			const clippedTri = triangles[ ib ];
 			const hitSide = splitter.coplanarTriangleUsed ?
 				getHitSideWithCoplanarCheck( clippedTri, bBVH ) :
 				getHitSide( clippedTri, bBVH );
@@ -187,6 +185,7 @@ function performSplitTriangleOperations(
 			_actions.length = 0;
 			_builders.length = 0;
 
+			// determine action to take for each builder
 			for ( let o = 0, lo = operations.length; o < lo; o ++ ) {
 
 				const op = getOperationAction( operations[ o ], hitSide, invert );
@@ -201,27 +200,70 @@ function performSplitTriangleOperations(
 
 			if ( _builders.length !== 0 ) {
 
-				_triA.getBarycoord( clippedTri.a, _barycoordTri.a );
-				_triA.getBarycoord( clippedTri.b, _barycoordTri.b );
-				_triA.getBarycoord( clippedTri.c, _barycoordTri.c );
+				// traverse the connectivity of the triangles to add them to the geometry
+				const stack = [ ib ];
+				while ( stack.length > 0 ) {
 
-				for ( let k = 0, lk = _builders.length; k < lk; k ++ ) {
+					const index = stack.pop();
+					if ( _traversed.has( index ) ) {
 
-					const builder = _builders[ k ];
-					const action = _actions[ k ];
-					const invertTri = action === INVERT_TRI;
-					const invert = invertedGeometry !== invertTri;
+						continue;
 
-					builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, t0, invert );
-					if ( invert ) {
+					}
 
-						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert );
-						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert );
+					// mark this triangle as traversed
+					_traversed.add( index );
 
-					} else {
+					// push the connected triangle ids onto the stack
+					const connected = triangleConnectivity[ index ];
+					for ( let c = 0, l = connected.length; c < l; c ++ ) {
 
-						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert );
-						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert );
+						const connectedIndex = connected[ c ];
+						if ( triangles[ connectedIndex ] !== null ) {
+
+							stack.push( connectedIndex );
+
+						}
+
+					}
+
+					// get the triangle indices
+					const indices = triangleIndices[ index ];
+					let t0 = null, t1 = null, t2 = null;
+					if ( indices ) {
+
+						t0 = indices[ 0 ];
+						t1 = indices[ 1 ];
+						t2 = indices[ 2 ];
+
+					}
+
+					// get the barycentric coordinates relative to the base triangle
+					const tri = triangles[ index ];
+					_triA.getBarycoord( tri.a, _barycoordTri.a );
+					_triA.getBarycoord( tri.b, _barycoordTri.b );
+					_triA.getBarycoord( tri.c, _barycoordTri.c );
+
+					// append the triangle to all builders
+					for ( let k = 0, lk = _builders.length; k < lk; k ++ ) {
+
+						const builder = _builders[ k ];
+						const action = _actions[ k ];
+						const invertTri = action === INVERT_TRI;
+						const invert = invertedGeometry !== invertTri;
+
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, t0, invert );
+						if ( invert ) {
+
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert );
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert );
+
+						} else {
+
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert );
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert );
+
+						}
 
 					}
 
