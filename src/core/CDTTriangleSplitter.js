@@ -1,7 +1,7 @@
 import { Vector3, Line3 } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 import { getCoplanarIntersectionEdges } from './utils/intersectionUtils.js';
-import cdt2d from 'cdt2d';
+import cdt2d from '../libs/cdt2d.js';
 
 const PARALLEL_EPSILON = 1e-16;
 
