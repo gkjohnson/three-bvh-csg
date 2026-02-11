@@ -286,7 +286,7 @@ export class CDTTriangleSplitter {
 	// Run the CDT and populate this.triangles with the result
 	triangulate() {
 
-		const { triangles, trianglePool, linePool, baseTri, constrainedEdges } = this;
+		const { triangles, trianglePool, triangleIndices, linePool, baseTri, constrainedEdges } = this;
 
 		triangles.length = 0;
 		trianglePool.clear();
@@ -374,30 +374,30 @@ export class CDTTriangleSplitter {
 		} );
 
 		this.connectivity = connectivity;
-		for ( let i = 0, l = triangulation.length; i < l; i ++ ) {
+
+		const { baseIndices } = this;
+		const key = `${ baseIndices[ 0 ] }_${ baseIndices[ 1 ] }_${ baseIndices[ 2 ] }_`;
+		for ( let ti = 0, l = triangulation.length; ti < l; ti ++ ) {
 
 			// covert back to 2d
-			const [ i0, i1, i2 ] = triangulation[ i ];
+			const indexList = triangulation[ ti ];
+			const [ i0, i1, i2 ] = indexList;
 			const tri = trianglePool.getInstance();
 			this._from2D( cdt2dPoints[ i0 ][ 0 ], cdt2dPoints[ i0 ][ 1 ], tri.a );
 			this._from2D( cdt2dPoints[ i1 ][ 0 ], cdt2dPoints[ i1 ][ 1 ], tri.b );
 			this._from2D( cdt2dPoints[ i2 ][ 0 ], cdt2dPoints[ i2 ][ 1 ], tri.c );
-
 			triangles.push( tri );
 
+			const newIndices = [];
+			triangleIndices.push( newIndices );
+			for ( let i = 0; i < 3; i ++ ) {
+
+				const p0 = indexList[ i ];
+				newIndices.push( key + p0 );
+
+			}
+
 		}
-
-		const { baseIndices } = this;
-		const key = `${ baseIndices[ 0 ] }_${ baseIndices[ 1 ] }_${ baseIndices[ 2 ] }_`;
-		this.triangleIndices = triangulation.map( indices => {
-
-			return indices.map( v => {
-
-				return key + v;
-
-			} );
-
-		} );
 
 	}
 
