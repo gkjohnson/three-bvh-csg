@@ -145,6 +145,14 @@ consolidateGroups = true : Boolean
 
 If true then any group in the final geometry that shares a common material with another group will be merged into one to reduce the number of draw calls required by the resulting mesh.
 
+### .removeUnusedMaterials
+
+```js
+removeUnusedMaterials = true : Boolean
+```
+
+If true then any unused materials not used in the final result will be removed from the joined material arrays.
+
 ### .evaluate
 
 ```js

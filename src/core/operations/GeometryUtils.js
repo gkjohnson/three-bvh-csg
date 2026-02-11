@@ -15,6 +15,48 @@ export function trimAttributes( targetGeometry, relevantAttributes ) {
 
 }
 
+// writes new groups to point to the same material index in the given materials array
+export function useCommonMaterials( groups, materials ) {
+
+	const result = [];
+	for ( let i = 0, l = groups.length; i < l; i ++ ) {
+
+		const group = groups[ i ];
+		const mat = materials[ group.materialIndex ];
+		result.push( {
+			...group,
+			materialIndex: materials.indexOf( mat ),
+		} );
+
+	}
+
+	return result;
+
+}
+
+// returns a new list of materials and modifies the groups in place to reference those materials
+export function removeUnusedMaterials( groups, materials ) {
+
+	const newMaterials = [];
+	const indexMap = new Map();
+	for ( let g = 0, lg = groups.length; g < lg; g ++ ) {
+
+		const group = groups[ g ];
+		if ( ! indexMap.has( group.materialIndex ) ) {
+
+			indexMap.set( group.materialIndex, newMaterials.length );
+			newMaterials.push( materials[ group.materialIndex ] );
+
+		}
+
+		group.materialIndex = indexMap.get( group.materialIndex );
+
+	}
+
+	return newMaterials;
+
+}
+
 // merges groups with common material indices in place
 export function joinGroups( groups ) {
 

@@ -11,7 +11,7 @@ const _vec4_0 = new Vector4();
 const _vec4_1 = new Vector4();
 const _vec4_2 = new Vector4();
 
-function getBarycoordValue( a, b, c, barycoord, target, normalize = false ) {
+function getBarycoordValue( a, b, c, barycoord, target, normalize = false, invert = false ) {
 
 	target.set( 0, 0, 0, 0 )
 		.addScaledVector( a, barycoord.x )
@@ -21,6 +21,12 @@ function getBarycoordValue( a, b, c, barycoord, target, normalize = false ) {
 	if ( normalize ) {
 
 		target.normalize();
+
+	}
+
+	if ( invert ) {
+
+		target.multiplyScalar( - 1 );
 
 	}
 
@@ -78,6 +84,7 @@ export class GeometryBuilder {
 		this.attributeData = {};
 		this.groupIndices = [];
 		this.indexMap = new Map();
+		this.interpolatedFields = {};
 
 	}
 
@@ -117,24 +124,14 @@ export class GeometryBuilder {
 
 	}
 
-	appendInterpolatedAttributes( geometry, matrix, normalMatrix, group, i0, i1, i2, b0, b1, b2, invert ) {
+	// init and cache all the attribute data for the given indices so we can use it to append interpolated attribute data
+	initInterpolatedAttributeData( geometry, matrix, normalMatrix, i0, i1, i2 ) {
 
-		const { groupIndices, attributeData } = this;
+		const { attributeData, interpolatedFields } = this;
 		const { attributes } = geometry;
-		while ( groupIndices.length <= group ) {
-
-			groupIndices.push( new AttributeData( Uint32Array ) );
-
-		}
-
-		const indexData = groupIndices[ group ];
-		indexData.push( attributeData.position.count );
-		indexData.push( attributeData.position.count + 1 );
-		indexData.push( attributeData.position.count + 2 );
 
 		for ( const key in attributeData ) {
 
-			const arr = attributeData[ key ];
 			const attr = attributes[ key ];
 			if ( ! attr ) {
 
@@ -143,8 +140,6 @@ export class GeometryBuilder {
 			}
 
 			// handle normals and positions specially because they require transforming
-			let normalize = false;
-			const itemSize = arr.itemSize;
 			let v0, v1, v2;
 			if ( key === 'position' ) {
 
@@ -154,33 +149,15 @@ export class GeometryBuilder {
 
 			} else if ( key === 'normal' ) {
 
-				normalize = true;
 				v0 = _vec3_0.fromBufferAttribute( attr, i0 ).applyNormalMatrix( normalMatrix );
 				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).applyNormalMatrix( normalMatrix );
 				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).applyNormalMatrix( normalMatrix );
 
-				if ( invert ) {
-
-					_vec3_0.multiplyScalar( - 1 );
-					_vec3_1.multiplyScalar( - 1 );
-					_vec3_2.multiplyScalar( - 1 );
-
-				}
-
 			} else if ( key === 'tangent' ) {
 
-				normalize = true;
 				v0 = _vec3_0.fromBufferAttribute( attr, i0 ).transformDirection( matrix );
 				v1 = _vec3_1.fromBufferAttribute( attr, i1 ).transformDirection( matrix );
 				v2 = _vec3_2.fromBufferAttribute( attr, i2 ).transformDirection( matrix );
-
-				if ( invert ) {
-
-					_vec3_0.multiplyScalar( - 1 );
-					_vec3_1.multiplyScalar( - 1 );
-					_vec3_2.multiplyScalar( - 1 );
-
-				}
 
 			} else {
 
@@ -190,23 +167,52 @@ export class GeometryBuilder {
 
 			}
 
-			getBarycoordValue( v0, v1, v2, b0, _vec4, normalize );
-			pushItemSize( _vec4, itemSize, arr );
+			if ( ! interpolatedFields[ key ] ) {
 
-			if ( invert ) {
-
-				getBarycoordValue( v0, v1, v2, b2, _vec4, normalize );
-				pushItemSize( _vec4, itemSize, arr );
-
-				getBarycoordValue( v0, v1, v2, b1, _vec4, normalize );
-				pushItemSize( _vec4, itemSize, arr );
+				interpolatedFields[ key ] = [ v0.clone(), v1.clone(), v2.clone() ];
 
 			} else {
 
-				getBarycoordValue( v0, v1, v2, b1, _vec4, normalize );
-				pushItemSize( _vec4, itemSize, arr );
+				const fields = interpolatedFields[ key ];
+				fields[ 0 ].copy( v0 );
+				fields[ 1 ].copy( v1 );
+				fields[ 2 ].copy( v2 );
 
-				getBarycoordValue( v0, v1, v2, b2, _vec4, normalize );
+			}
+
+		}
+
+	}
+
+	// push data from the given barycoord onto the geometry
+	appendInterpolatedAttributeData( group, barycoord, index, invert ) {
+
+		const { groupIndices, attributeData, interpolatedFields, indexMap } = this;
+		while ( groupIndices.length <= group ) {
+
+			groupIndices.push( new AttributeData( Uint32Array ) );
+
+		}
+
+		const indexData = groupIndices[ group ];
+		if ( index !== null && indexMap.has( index ) ) {
+
+			indexData.push( indexMap.get( index ) );
+
+		} else {
+
+			indexMap.set( index, attributeData.position.count );
+			indexData.push( attributeData.position.count );
+
+			for ( const key in interpolatedFields ) {
+
+				// handle normals and positions specially because they require transforming
+				const arr = attributeData[ key ];
+				const isDirection = key === 'normal' || key === 'tangent';
+				const invertVector = invert && isDirection;
+				const itemSize = arr.itemSize;
+				const [ v0, v1, v2 ] = interpolatedFields[ key ];
+				getBarycoordValue( v0, v1, v2, barycoord, _vec4, isDirection, invertVector );
 				pushItemSize( _vec4, itemSize, arr );
 
 			}
@@ -215,6 +221,7 @@ export class GeometryBuilder {
 
 	}
 
+	// append the given vertex index from the source geometry to this one
 	appendIndexFromGeometry( geometry, matrix, normalMatrix, group, index, invert = false ) {
 
 		const { groupIndices, attributeData, indexMap } = this;
@@ -367,6 +374,9 @@ export class GeometryBuilder {
 	clear() {
 
 		const { groupIndices, attributeData } = this;
+
+		this.interpolatedFields = {};
+
 		for ( const key in attributeData ) {
 
 			attributeData[ key ].clear();

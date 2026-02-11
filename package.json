@@ -10,10 +10,11 @@
   "scripts": {
     "start": "vite --config ./vite.config.js",
     "build-examples": "vite build --config ./vite.config.js",
-    "build": "rollup -c",
+    "build": "npm run build-cdt2d && rollup -c",
     "lint": "eslint . && tsc --noEmit",
     "benchmark": "node ./benchmark/benchmark.js",
     "test": "vitest run",
+    "build-cdt2d": "esbuild node_modules/cdt2d/cdt2d.js --bundle --format=esm --outfile=src/libs/cdt2d.js --banner:js='// Auto-generated ESM bundle of cdt2d'",
     "prepublishOnly": "npm run build"
   },
   "files": [
@@ -62,9 +63,7 @@
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.48.1",
     "vite": "^6.2.2",
-    "vitest": "^4.0.14"
-  },
-  "dependencies": {
+    "vitest": "^4.0.14",
     "cdt2d": "^1.0.0"
   }
 }
