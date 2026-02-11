@@ -286,7 +286,7 @@ export class CDTTriangleSplitter {
 	// Run the CDT and populate this.triangles with the result
 	triangulate() {
 
-		const { triangles, trianglePool, triangleIndices, linePool, baseTri, constrainedEdges } = this;
+		const { triangles, trianglePool, triangleIndices, linePool, baseTri, constrainedEdges, baseIndices } = this;
 
 		triangles.length = 0;
 		trianglePool.clear();
@@ -375,8 +375,7 @@ export class CDTTriangleSplitter {
 
 		this.connectivity = connectivity;
 
-		const { baseIndices } = this;
-		const key = `${ baseIndices[ 0 ] }_${ baseIndices[ 1 ] }_${ baseIndices[ 2 ] }_`;
+		const indexKeyPrefix = `${ baseIndices[ 0 ] }_${ baseIndices[ 1 ] }_${ baseIndices[ 2 ] }_`;
 		for ( let ti = 0, l = triangulation.length; ti < l; ti ++ ) {
 
 			// covert back to 2d
@@ -388,12 +387,12 @@ export class CDTTriangleSplitter {
 			this._from2D( cdt2dPoints[ i2 ][ 0 ], cdt2dPoints[ i2 ][ 1 ], tri.c );
 			triangles.push( tri );
 
-			const newIndices = [];
-			triangleIndices.push( newIndices );
+			const indexKeys = [];
+			triangleIndices.push( indexKeys );
 			for ( let i = 0; i < 3; i ++ ) {
 
 				const p0 = indexList[ i ];
-				newIndices.push( key + p0 );
+				indexKeys.push( indexKeyPrefix + p0 );
 
 			}
 
