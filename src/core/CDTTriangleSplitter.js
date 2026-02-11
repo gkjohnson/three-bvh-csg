@@ -181,13 +181,15 @@ export class CDTTriangleSplitter {
 
 		this.triangles = [];
 		this.triangleIndices = [];
+		this.constrainedEdges = [];
+		this.triangleConnectivity = [];
+
 		this.normal = new Vector3();
 		this.projOrigin = new Vector3();
 		this.projU = new Vector3();
 		this.projV = new Vector3();
 		this.baseTri = new ExtendedTriangle();
 		this.baseIndices = new Array( 3 );
-		this.edges = [];
 
 		this.coplanarTriangleUsed = false;
 		this.useCleanPSLG = false;
@@ -200,7 +202,7 @@ export class CDTTriangleSplitter {
 
 		this.reset();
 
-		const { normal, baseTri, projU, projV, projOrigin, edges, linePool, baseIndices } = this;
+		const { normal, baseTri, projU, projV, projOrigin, constrainedEdges, linePool, baseIndices } = this;
 		tri.getNormal( normal );
 		baseTri.copy( tri );
 		baseTri.update();
@@ -209,7 +211,7 @@ export class CDTTriangleSplitter {
 		baseIndices[ 2 ] = i2;
 
 		// initialize constrained edges to the triangle boundary
-		edges.length = 0;
+		constrainedEdges.length = 0;
 
 		const e0 = linePool.getInstance();
 		e0.start.copy( baseTri.a );
@@ -222,7 +224,7 @@ export class CDTTriangleSplitter {
 		const e2 = linePool.getInstance();
 		e2.start.copy( baseTri.c );
 		e2.end.copy( baseTri.a );
-		edges.push( e0, e1, e2 );
+		constrainedEdges.push( e0, e1, e2 );
 
 		// Build 2D projection frame from base triangle
 		projOrigin.copy( baseTri.a );
@@ -235,7 +237,7 @@ export class CDTTriangleSplitter {
 	// Computes intersection segment(s) and stores them in edges.
 	splitByTriangle( triangle ) {
 
-		const { normal, baseTri, edges } = this;
+		const { normal, baseTri, constrainedEdges } = this;
 		triangle.getNormal( _triangleNormal ).normalize();
 
 		const isCoplanar = Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON;
@@ -247,7 +249,7 @@ export class CDTTriangleSplitter {
 			const count = getCoplanarIntersectionEdges( baseTri, triangle, normal, _coplanarEdges );
 			for ( let i = 0; i < count; i ++ ) {
 
-				edges.push( _coplanarEdges[ i ].clone() );
+				constrainedEdges.push( _coplanarEdges[ i ].clone() );
 
 			}
 
@@ -258,7 +260,7 @@ export class CDTTriangleSplitter {
 
 			if ( _splittingTri.intersectsTriangle( baseTri, _intersectionEdge, true ) ) {
 
-				edges.push( _intersectionEdge.clone() );
+				constrainedEdges.push( _intersectionEdge.clone() );
 
 			}
 
@@ -286,16 +288,16 @@ export class CDTTriangleSplitter {
 	// Run the CDT and populate this.triangles with the result
 	triangulate() {
 
-		const { triangles, trianglePool, linePool, baseTri, edges } = this;
+		const { triangles, trianglePool, triangleConnectivity, triangleIndices, linePool, baseTri, constrainedEdges, baseIndices } = this;
 
 		triangles.length = 0;
 		trianglePool.clear();
 
 		// Get the edges into a 2d frame
 		const edges2d = [];
-		for ( let i = 0, l = edges.length; i < l; i ++ ) {
+		for ( let i = 0, l = constrainedEdges.length; i < l; i ++ ) {
 
-			const edge = edges[ i ];
+			const edge = constrainedEdges[ i ];
 			const e2d = linePool.getInstance();
 			this._to2D( edge.start, e2d.start );
 			this._to2D( edge.end, e2d.end );
@@ -326,31 +328,67 @@ export class CDTTriangleSplitter {
 		}
 
 		// Run the CDT triangulation
-		let triangulation = cdt2d( cdt2dPoints, indices, { exterior: false } );
-		for ( let i = 0, l = triangulation.length; i < l; i ++ ) {
+		const triangulation = cdt2d( cdt2dPoints, indices, { exterior: false } );
+
+		// construct the half edge structure, marking the constrained edges as disconnected to
+		// mark the polygon edges
+		const halfEdgeMap = new Map();
+		for ( let i = 0, l = indices.length; i < l; i ++ ) {
+
+			const pair = indices[ i ];
+			halfEdgeMap.set( `${ pair[ 0 ] }_${ pair[ 1 ] }`, - 1 );
+			halfEdgeMap.set( `${ pair[ 1 ] }_${ pair[ 0 ] }`, - 1 );
+
+		}
+
+		// create an index key to construct unique indices across the geometry
+		const indexKeyPrefix = `${ baseIndices[ 0 ] }_${ baseIndices[ 1 ] }_${ baseIndices[ 2 ] }_`;
+		for ( let ti = 0, l = triangulation.length; ti < l; ti ++ ) {
 
 			// covert back to 2d
-			const [ i0, i1, i2 ] = triangulation[ i ];
+			const indexList = triangulation[ ti ];
+			const [ i0, i1, i2 ] = indexList;
 			const tri = trianglePool.getInstance();
 			this._from2D( cdt2dPoints[ i0 ][ 0 ], cdt2dPoints[ i0 ][ 1 ], tri.a );
 			this._from2D( cdt2dPoints[ i1 ][ 0 ], cdt2dPoints[ i1 ][ 1 ], tri.b );
 			this._from2D( cdt2dPoints[ i2 ][ 0 ], cdt2dPoints[ i2 ][ 1 ], tri.c );
-
 			triangles.push( tri );
 
+			// construct the connectivity and custom index list
+			const connected = [];
+			triangleConnectivity.push( connected );
+
+			const indexKeys = [];
+			triangleIndices.push( indexKeys );
+			for ( let i = 0; i < 3; i ++ ) {
+
+				// construct a unique index key for this vertex
+				const p0 = indexList[ i ];
+				indexKeys.push( indexKeyPrefix + p0 );
+
+				// find the connected triangles
+				const p1 = indexList[ ( i + 1 ) % 3 ];
+				const hash0 = `${ p0 }_${ p1 }`;
+				if ( halfEdgeMap.has( hash0 ) ) {
+
+					const index = halfEdgeMap.get( hash0 );
+					if ( index !== - 1 ) {
+
+						connected.push( index );
+						triangleConnectivity[ index ].push( ti );
+
+					}
+
+				} else {
+
+					const hash1 = `${ p1 }_${ p0 }`;
+					halfEdgeMap.set( hash1, ti );
+
+				}
+
+			}
+
 		}
-
-		const { baseIndices } = this;
-		const key = `${ baseIndices[ 0 ] }_${ baseIndices[ 1 ] }_${ baseIndices[ 2 ] }_`;
-		this.triangleIndices = triangulation.map( indices => {
-
-			return indices.map( v => {
-
-				return key + v;
-
-			} );
-
-		} );
 
 	}
 
@@ -360,7 +398,8 @@ export class CDTTriangleSplitter {
 		this.linePool.clear();
 		this.triangles.length = 0;
 		this.triangleIndices.length = 0;
-		this.edges.length = 0;
+		this.triangleConnectivity.length = 0;
+		this.constrainedEdges.length = 0;
 		this.coplanarTriangleUsed = false;
 
 	}
