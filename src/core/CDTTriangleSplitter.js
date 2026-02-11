@@ -182,6 +182,8 @@ export class CDTTriangleSplitter {
 		this.triangles = [];
 		this.triangleIndices = [];
 		this.constrainedEdges = [];
+		this.triangleConnectivity = [];
+
 		this.normal = new Vector3();
 		this.projOrigin = new Vector3();
 		this.projU = new Vector3();
@@ -286,7 +288,7 @@ export class CDTTriangleSplitter {
 	// Run the CDT and populate this.triangles with the result
 	triangulate() {
 
-		const { triangles, trianglePool, triangleIndices, linePool, baseTri, constrainedEdges, baseIndices } = this;
+		const { triangles, trianglePool, triangleConnectivity, triangleIndices, linePool, baseTri, constrainedEdges, baseIndices } = this;
 
 		triangles.length = 0;
 		trianglePool.clear();
@@ -328,53 +330,18 @@ export class CDTTriangleSplitter {
 		// Run the CDT triangulation
 		const triangulation = cdt2d( cdt2dPoints, indices, { exterior: false } );
 
-		// construct the half edge structure
-		const connectivity = [];
-		const constrainedEdgeHashes = new Set();
-		indices.forEach( pair => {
-
-			constrainedEdgeHashes.add( `${ pair[ 0 ] }_${ pair[ 1 ] }` );
-			constrainedEdgeHashes.add( `${ pair[ 1 ] }_${ pair[ 0 ] }` );
-
-		} );
-
+		// construct the half edge structure, marking the constrained edges as disconnected to
+		// mark the polygon edges
 		const halfEdgeMap = new Map();
-		triangulation.forEach( ( points, ti ) => {
+		for ( let i = 0, l = indices.length; i < l; i ++ ) {
 
-			const others = [];
-			connectivity.push( others );
-			for ( let i = 0; i < 3; i ++ ) {
+			const pair = indices[ i ];
+			halfEdgeMap.set( `${ pair[ 0 ] }_${ pair[ 1 ] }`, - 1 );
+			halfEdgeMap.set( `${ pair[ 1 ] }_${ pair[ 0 ] }`, - 1 );
 
-				const ni = ( i + 1 ) % 3;
-				const p0 = points[ i ];
-				const p1 = points[ ni ];
+		}
 
-				const hash0 = `${ p0 }_${ p1 }`;
-				if ( constrainedEdgeHashes.has( hash0 ) ) {
-
-					continue;
-
-				}
-
-				if ( halfEdgeMap.has( hash0 ) ) {
-
-					const index = halfEdgeMap.get( hash0 );
-					others.push( index );
-					connectivity[ index ].push( ti );
-
-				} else {
-
-					const hash1 = `${ p1 }_${ p0 }`;
-					halfEdgeMap.set( hash1, ti );
-
-				}
-
-			}
-
-		} );
-
-		this.connectivity = connectivity;
-
+		// create an index key to construct unique indices across the geometry
 		const indexKeyPrefix = `${ baseIndices[ 0 ] }_${ baseIndices[ 1 ] }_${ baseIndices[ 2 ] }_`;
 		for ( let ti = 0, l = triangulation.length; ti < l; ti ++ ) {
 
@@ -387,12 +354,37 @@ export class CDTTriangleSplitter {
 			this._from2D( cdt2dPoints[ i2 ][ 0 ], cdt2dPoints[ i2 ][ 1 ], tri.c );
 			triangles.push( tri );
 
+			// construct the connectivity and custom index list
+			const connected = [];
+			triangleConnectivity.push( connected );
+
 			const indexKeys = [];
 			triangleIndices.push( indexKeys );
 			for ( let i = 0; i < 3; i ++ ) {
 
+				// construct a unique index key for this vertex
 				const p0 = indexList[ i ];
 				indexKeys.push( indexKeyPrefix + p0 );
+
+				// find the connected triangles
+				const p1 = indexList[ ( i + 1 ) % 3 ];
+				const hash0 = `${ p0 }_${ p1 }`;
+				if ( halfEdgeMap.has( hash0 ) ) {
+
+					const index = halfEdgeMap.get( hash0 );
+					if ( index !== - 1 ) {
+
+						connected.push( index );
+						triangleConnectivity[ index ].push( ti );
+
+					}
+
+				} else {
+
+					const hash1 = `${ p1 }_${ p0 }`;
+					halfEdgeMap.set( hash1, ti );
+
+				}
 
 			}
 
@@ -406,6 +398,7 @@ export class CDTTriangleSplitter {
 		this.linePool.clear();
 		this.triangles.length = 0;
 		this.triangleIndices.length = 0;
+		this.triangleConnectivity.length = 0;
 		this.constrainedEdges.length = 0;
 		this.coplanarTriangleUsed = false;
 
