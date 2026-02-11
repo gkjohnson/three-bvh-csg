@@ -181,13 +181,13 @@ export class CDTTriangleSplitter {
 
 		this.triangles = [];
 		this.triangleIndices = [];
+		this.constrainedEdges = [];
 		this.normal = new Vector3();
 		this.projOrigin = new Vector3();
 		this.projU = new Vector3();
 		this.projV = new Vector3();
 		this.baseTri = new ExtendedTriangle();
 		this.baseIndices = new Array( 3 );
-		this.edges = [];
 
 		this.coplanarTriangleUsed = false;
 		this.useCleanPSLG = false;
@@ -200,7 +200,7 @@ export class CDTTriangleSplitter {
 
 		this.reset();
 
-		const { normal, baseTri, projU, projV, projOrigin, edges, linePool, baseIndices } = this;
+		const { normal, baseTri, projU, projV, projOrigin, constrainedEdges, linePool, baseIndices } = this;
 		tri.getNormal( normal );
 		baseTri.copy( tri );
 		baseTri.update();
@@ -209,7 +209,7 @@ export class CDTTriangleSplitter {
 		baseIndices[ 2 ] = i2;
 
 		// initialize constrained edges to the triangle boundary
-		edges.length = 0;
+		constrainedEdges.length = 0;
 
 		const e0 = linePool.getInstance();
 		e0.start.copy( baseTri.a );
@@ -222,7 +222,7 @@ export class CDTTriangleSplitter {
 		const e2 = linePool.getInstance();
 		e2.start.copy( baseTri.c );
 		e2.end.copy( baseTri.a );
-		edges.push( e0, e1, e2 );
+		constrainedEdges.push( e0, e1, e2 );
 
 		// Build 2D projection frame from base triangle
 		projOrigin.copy( baseTri.a );
@@ -235,7 +235,7 @@ export class CDTTriangleSplitter {
 	// Computes intersection segment(s) and stores them in edges.
 	splitByTriangle( triangle ) {
 
-		const { normal, baseTri, edges } = this;
+		const { normal, baseTri, constrainedEdges } = this;
 		triangle.getNormal( _triangleNormal ).normalize();
 
 		const isCoplanar = Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON;
@@ -247,7 +247,7 @@ export class CDTTriangleSplitter {
 			const count = getCoplanarIntersectionEdges( baseTri, triangle, normal, _coplanarEdges );
 			for ( let i = 0; i < count; i ++ ) {
 
-				edges.push( _coplanarEdges[ i ].clone() );
+				constrainedEdges.push( _coplanarEdges[ i ].clone() );
 
 			}
 
@@ -258,7 +258,7 @@ export class CDTTriangleSplitter {
 
 			if ( _splittingTri.intersectsTriangle( baseTri, _intersectionEdge, true ) ) {
 
-				edges.push( _intersectionEdge.clone() );
+				constrainedEdges.push( _intersectionEdge.clone() );
 
 			}
 
@@ -286,16 +286,16 @@ export class CDTTriangleSplitter {
 	// Run the CDT and populate this.triangles with the result
 	triangulate() {
 
-		const { triangles, trianglePool, linePool, baseTri, edges } = this;
+		const { triangles, trianglePool, linePool, baseTri, constrainedEdges } = this;
 
 		triangles.length = 0;
 		trianglePool.clear();
 
 		// Get the edges into a 2d frame
 		const edges2d = [];
-		for ( let i = 0, l = edges.length; i < l; i ++ ) {
+		for ( let i = 0, l = constrainedEdges.length; i < l; i ++ ) {
 
-			const edge = edges[ i ];
+			const edge = constrainedEdges[ i ];
 			const e2d = linePool.getInstance();
 			this._to2D( edge.start, e2d.start );
 			this._to2D( edge.end, e2d.end );
@@ -407,7 +407,7 @@ export class CDTTriangleSplitter {
 		this.linePool.clear();
 		this.triangles.length = 0;
 		this.triangleIndices.length = 0;
-		this.edges.length = 0;
+		this.constrainedEdges.length = 0;
 		this.coplanarTriangleUsed = false;
 
 	}
