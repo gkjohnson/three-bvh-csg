@@ -38,19 +38,18 @@ export function useCommonMaterials( groups, materials ) {
 export function removeUnusedMaterials( groups, materials ) {
 
 	const newMaterials = [];
+	const indexMap = new Map();
 	for ( let g = 0, lg = groups.length; g < lg; g ++ ) {
 
 		const group = groups[ g ];
-		const material = materials[ group.materialIndex ];
-		let index = newMaterials.indexOf( material );
-		if ( index === - 1 ) {
+		if ( ! indexMap.has( group.materialIndex ) ) {
 
-			index = newMaterials.length;
-			newMaterials.push( material );
+			indexMap.set( group.materialIndex, newMaterials.length );
+			newMaterials.push( materials[ group.materialIndex ] );
 
 		}
 
-		group.materialIndex = index;
+		group.materialIndex = indexMap.get( group.materialIndex );
 
 	}
 
