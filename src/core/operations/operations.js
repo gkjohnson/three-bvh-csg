@@ -215,7 +215,7 @@ function performSplitTriangleOperations(
 					_traversed.add( index );
 
 					// push the connected triangle ids onto the stack
-					const connected = triangleConnectivity[ index ];
+					const connected = triangleConnectivity[ index ] || [];
 					for ( let c = 0, l = connected.length; c < l; c ++ ) {
 
 						const connectedIndex = connected[ c ];
