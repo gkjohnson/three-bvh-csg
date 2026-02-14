@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Small performance improvement during whole triangle traversal.
 - Support for retaining indices for whole triangles across operations.
 - Evaluator: Added "removeUnusedMaterial" option.
+- Brush: Added ability to call "prepareGeometry" on geometry modification, operation.
+- Ability to run operations on geometry with no index.
 
 ### Changed
 - Adjusted minimum three.js, three-mesh-bvh version.
