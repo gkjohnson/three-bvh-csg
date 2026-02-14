@@ -1,7 +1,7 @@
 import { Mesh, Matrix4 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import { HalfEdgeMap } from './HalfEdgeMap.js';
-import { areSharedArrayBuffersSupported, convertToSharedArrayBuffer, ensureIndex, getTriCount } from './utils/geometryUtils.js';
+import { areSharedArrayBuffersSupported, convertToSharedArrayBuffer, getTriCount } from './utils/geometryUtils.js';
 
 export class Brush extends Mesh {
 
@@ -12,6 +12,10 @@ export class Brush extends Mesh {
 		this.isBrush = true;
 		this._previousMatrix = new Matrix4();
 		this._previousMatrix.elements.fill( 0 );
+		this._halfEdges = null;
+		this._boundsTree = null;
+		this._groupIndices = null;
+		this._hash = null;
 
 	}
 
@@ -46,6 +50,18 @@ export class Brush extends Mesh {
 		const geometry = this.geometry;
 		const attributes = geometry.attributes;
 		const useSharedArrayBuffer = areSharedArrayBuffersSupported();
+
+		const index = geometry.index;
+		const posAttr = geometry.attributes.position;
+		const indexHash = index ? `${ index.uuid }_${ index.count }_${ index.version }` : '-1_-1_-1';
+		const posHash = `${ posAttr.uuid }_${ posAttr.count }_${ posAttr.version }`;
+		const hash = `${ geometry.uuid }_${ indexHash }_${ posHash }`;
+		if ( this._hash === hash ) {
+
+			return;
+
+		}
+
 		if ( useSharedArrayBuffer ) {
 
 			for ( const key in attributes ) {
@@ -64,38 +80,35 @@ export class Brush extends Mesh {
 		}
 
 		// generate bounds tree
-		if ( ! geometry.boundsTree ) {
-
-			ensureIndex( geometry, { useSharedArrayBuffer } );
-			geometry.boundsTree = new MeshBVH( geometry, { maxLeafSize: 3, indirect: true, useSharedArrayBuffer } );
-
-		}
+		geometry.boundsTree = new MeshBVH( geometry, { maxLeafSize: 3, indirect: true, useSharedArrayBuffer } );
 
 		// generate half edges
 		if ( ! geometry.halfEdges ) {
 
-			geometry.halfEdges = new HalfEdgeMap( geometry );
+			geometry.halfEdges = new HalfEdgeMap();
 
 		}
 
+		geometry.halfEdges.updateFrom( geometry );
+
 		// save group indices for materials
-		if ( ! geometry.groupIndices ) {
+		const triCount = getTriCount( geometry );
+		if ( ! geometry.groupIndices || geometry.groupIndices.length !== triCount ) {
 
-			const triCount = getTriCount( geometry );
-			const array = new Uint16Array( triCount );
-			const groups = geometry.groups;
-			for ( let i = 0, l = groups.length; i < l; i ++ ) {
+			geometry.groupIndices = new Uint16Array( triCount );
 
-				const { start, count } = groups[ i ];
-				for ( let g = start / 3, lg = ( start + count ) / 3; g < lg; g ++ ) {
+		}
 
-					array[ g ] = i;
+		const array = geometry.groupIndices;
+		const groups = geometry.groups;
+		for ( let i = 0, l = groups.length; i < l; i ++ ) {
 
-				}
+			const { start, count } = groups[ i ];
+			for ( let g = start / 3, lg = ( start + count ) / 3; g < lg; g ++ ) {
+
+				array[ g ] = i;
 
 			}
-
-			geometry.groupIndices = array;
 
 		}
 

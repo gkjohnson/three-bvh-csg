@@ -338,9 +338,16 @@ function performWholeTriangleOperations(
 
 		// get the vertex indices
 		const i3 = 3 * id;
-		const i0 = aIndex.getX( i3 + 0 );
-		const i1 = aIndex.getX( i3 + 1 );
-		const i2 = aIndex.getX( i3 + 2 );
+		let i0 = i3 + 0;
+		let i1 = i3 + 1;
+		let i2 = i3 + 2;
+		if ( aIndex ) {
+
+			i0 = aIndex.getX( i0 );
+			i1 = aIndex.getX( i1 );
+			i2 = aIndex.getX( i2 );
+
+		}
 
 		// get the vertex position in the frame of geometry b so we can
 		// perform hit testing
@@ -385,9 +392,17 @@ function performWholeTriangleOperations(
 			if ( _builders.length !== 0 ) {
 
 				const i3 = 3 * currId;
-				const i0 = aIndex.getX( i3 + 0 );
-				const i1 = aIndex.getX( i3 + 1 );
-				const i2 = aIndex.getX( i3 + 2 );
+				let i0 = i3 + 0;
+				let i1 = i3 + 1;
+				let i2 = i3 + 2;
+				if ( aIndex ) {
+
+					i0 = aIndex.getX( i0 );
+					i1 = aIndex.getX( i1 );
+					i2 = aIndex.getX( i2 );
+
+				}
+
 				const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ currId ] + groupOffset;
 
 				_tri.a.fromBufferAttribute( aPosition, i0 );
