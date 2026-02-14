@@ -132,10 +132,10 @@ function performSplitTriangleOperations(
 
 		// split the triangle using cached edges from the bvhcast phase
 		const coplanarIndices = intersectionMap.coplanarSet.get( ia );
-		const coplanarTriangleUsed = splitter.coplanarIndices && coplanarIndices.size > 0;
 
 		if ( splitter.addConstraintEdge ) {
 
+			splitter.coplanarTriangleUsed = coplanarIndices && coplanarIndices.size > 0;
 			const edges = intersectionMap.getIntersectionEdges( ia );
 			for ( const edge of edges ) {
 
@@ -203,7 +203,7 @@ function performSplitTriangleOperations(
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach
 			const clippedTri = triangles[ ib ];
-			const hitSide = coplanarTriangleUsed ?
+			const hitSide = splitter.coplanarTriangleUsed ?
 				getHitSideWithCoplanarCheck( clippedTri, bBVH ) :
 				getHitSide( clippedTri, bBVH );
 
