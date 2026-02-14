@@ -13,6 +13,7 @@ import { isTriDegenerate } from '../utils/triangleUtils.js';
 const _matrix = new Matrix4();
 const _normalMatrix = new Matrix3();
 const _triA = new Triangle();
+const _triB = new Triangle();
 const _tri = new Triangle();
 const _barycoordTri = new Triangle();
 const _cachedEdge = new Line3();
@@ -98,6 +99,8 @@ function performSplitTriangleOperations(
 	const aPosition = a.geometry.attributes.position;
 
 	const bBVH = b.geometry.boundsTree;
+	const bIndex = b.geometry.index;
+	const bPosition = b.geometry.attributes.position;
 	const splitIds = intersectionMap.ids;
 
 	// iterate over all split triangle indices
@@ -129,18 +132,50 @@ function performSplitTriangleOperations(
 
 		// split the triangle using cached edges from the bvhcast phase
 		const coplanarIndices = intersectionMap.coplanarSet.get( ia );
-		const edges = intersectionMap.getIntersectionEdges( ia );
 		const coplanarTriangleUsed = splitter.coplanarIndices && coplanarIndices.size > 0;
-		for ( const edge of edges ) {
 
-			_cachedEdge.copy( edge );
-			if ( ! invert ) {
+		if ( splitter.addConstraintEdge ) {
 
-				_cachedEdge.applyMatrix4( _matrix );
+			const edges = intersectionMap.getIntersectionEdges( ia );
+			for ( const edge of edges ) {
+
+				_cachedEdge.copy( edge );
+				if ( ! invert ) {
+
+					_cachedEdge.applyMatrix4( _matrix );
+
+				}
+
+				splitter.addConstraintEdge( _cachedEdge );
 
 			}
 
-			splitter.addConstraintEdge( _cachedEdge );
+		} else {
+
+			// split the triangle with the intersecting triangles from B
+			const intersectionSet = intersectionMap.intersectionSet;
+			const intersectingIndices = intersectionSet.get( ia );
+			for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
+
+				const ib3 = 3 * intersectingIndices[ ib ];
+				let ib0 = ib3 + 0;
+				let ib1 = ib3 + 1;
+				let ib2 = ib3 + 2;
+
+				if ( bIndex ) {
+
+					ib0 = bIndex.getX( ib0 );
+					ib1 = bIndex.getX( ib1 );
+					ib2 = bIndex.getX( ib2 );
+
+				}
+
+				_triB.a.fromBufferAttribute( bPosition, ib0 );
+				_triB.b.fromBufferAttribute( bPosition, ib1 );
+				_triB.c.fromBufferAttribute( bPosition, ib2 );
+				splitter.splitByTriangle( _triB );
+
+			}
 
 		}
 
