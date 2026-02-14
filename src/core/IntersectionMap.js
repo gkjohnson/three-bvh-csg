@@ -11,18 +11,16 @@ export class IntersectionMap {
 
 	add( id, intersectionId, coplanar = false ) {
 
-		const { intersectionSet, edgeSet, coplanarSet, ids } = this;
+		const { intersectionSet, coplanarSet, ids } = this;
 		if ( ! intersectionSet.has( id ) ) {
 
 			intersectionSet.set( id, [] );
-			edgeSet.set( id, [] );
 			ids.push( id );
 
 		}
 
 		const arr = intersectionSet.get( id );
 		arr.push( intersectionId );
-		edgeSet.get( id ).push( null );
 
 		if ( coplanar ) {
 
@@ -42,20 +40,26 @@ export class IntersectionMap {
 
 	addEdge( id, index, edge ) {
 
-		const edges = this.edgeSet.get( id );
-		if ( edges[ index ] === null ) {
+		const { edgeSet } = this;
+		if ( ! edgeSet.has( id ) ) {
 
-			edges[ index ] = [];
+			edgeSet.set( id, new Map() );
 
 		}
 
-		edges[ index ].push( edge );
+		if ( ! edgeSet.get( id ).has( index ) ) {
+
+			edgeSet.get( id ).set( index, new Set() );
+
+		}
+
+		edgeSet.get( id ).get( index ).add( edge );
 
 	}
 
 	getEdges( id, index ) {
 
-		return this.edgeSet.get( id )[ index ];
+		return Array.from( this.edgeSet.get( id ).get( index ) );
 
 	}
 

@@ -230,9 +230,7 @@ export class CDTTriangleSplitter {
 	addConstraintEdge( edge ) {
 
 		const { constrainedEdges, linePool } = this;
-		const e = linePool.getInstance();
-		e.start.copy( edge.start );
-		e.end.copy( edge.end );
+		const e = linePool.getInstance().copy( edge );
 		constrainedEdges.push( e );
 
 	}
