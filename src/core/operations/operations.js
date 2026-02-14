@@ -129,39 +129,25 @@ function performSplitTriangleOperations(
 		splitter.initialize( _triA, ia0, ia1, ia2 );
 
 		// split the triangle using cached edges from the bvhcast phase
-		const intersectingIndices = intersectionSet.get( ia );
 		const coplanarIndices = intersectionMap.coplanarSet.get( ia );
-		for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
+		const edges = intersectionMap.getIntersectionEdges( ia );
+		for ( const edge of edges ) {
 
-			const cachedEdges = intersectionMap.getEdges( ia, ib );
+			_cachedEdge.copy( edge );
+			if ( ! invert ) {
 
-			if ( cachedEdges ) {
-
-				// cached edges are in geometry A's local frame (the original "a" in performOperation)
-				// A pass (invert=false): splitter works in b's frame, transform from A's frame
-				// B pass (invert=true): splitter works in A's frame, use directly
-				for ( let e = 0, el = cachedEdges.length; e < el; e ++ ) {
-
-					_cachedEdge.copy( cachedEdges[ e ] );
-					if ( ! invert ) {
-
-						_cachedEdge.start.applyMatrix4( _matrix );
-						_cachedEdge.end.applyMatrix4( _matrix );
-
-					}
-
-					splitter.addConstraintEdge( _cachedEdge );
-
-				}
+				_cachedEdge.start.applyMatrix4( _matrix );
+				_cachedEdge.end.applyMatrix4( _matrix );
 
 			}
 
-			// mark the splitter if this pair was coplanar
-			if ( coplanarIndices && coplanarIndices.has( intersectingIndices[ ib ] ) ) {
+			splitter.addConstraintEdge( _cachedEdge );
 
-				splitter.coplanarTriangleUsed = true;
+		}
 
-			}
+		if ( coplanarIndices && coplanarIndices.size > 0 ) {
+
+			splitter.coplanarTriangleUsed = true;
 
 		}
 

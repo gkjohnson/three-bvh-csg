@@ -33,6 +33,7 @@ function _getPooledLine() {
 	return _edgePool[ _edgePoolIndex ++ ];
 
 }
+
 const JITTER_EPSILON = 1e-8;
 const OFFSET_EPSILON = 1e-15;
 
@@ -186,9 +187,8 @@ export function collectIntersectingTriangles( a, b ) {
 						const countA = getCoplanarIntersectionEdges( triangleA, triangleB, normalA, _coplanarEdges );
 						for ( let i = 0; i < countA; i ++ ) {
 
-							const e = _getPooledLine();
-							e.copy( _coplanarEdges[ i ] );
-							aIntersections.addEdge( va, aIdx, e );
+							const e = _getPooledLine().copy( _coplanarEdges[ i ] );
+							aIntersections.addIntersectionEdge( va, e );
 
 						}
 
@@ -197,19 +197,18 @@ export function collectIntersectingTriangles( a, b ) {
 						const countB = getCoplanarIntersectionEdges( triangleB, triangleA, normalB, _coplanarEdges );
 						for ( let i = 0; i < countB; i ++ ) {
 
-							const e = _getPooledLine();
-							e.copy( _coplanarEdges[ i ] );
-							bIntersections.addEdge( vb, bIdx, e );
+							const e = _getPooledLine().copy( _coplanarEdges[ i ] );
+							bIntersections.addIntersectionEdge( vb, e );
 
 						}
 
 					} else {
 
 						// non-coplanar: single intersection edge, same for both
-						const e = _getPooledLine();
-						e.copy( _edge );
-						aIntersections.addEdge( va, aIdx, e );
-						bIntersections.addEdge( vb, bIdx, e );
+						const ea = _getPooledLine().copy( _edge );
+						const eb = _getPooledLine().copy( _edge );
+						aIntersections.addIntersectionEdge( va, ea );
+						bIntersections.addIntersectionEdge( vb, eb );
 
 					}
 
