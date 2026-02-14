@@ -175,8 +175,8 @@ export function collectIntersectingTriangles( a, b ) {
 
 					const va = a.geometry.boundsTree.resolveTriangleIndex( ia );
 					const vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
-					const aIdx = aIntersections.add( va, vb, isCoplanar );
-					const bIdx = bIntersections.add( vb, va, isCoplanar );
+					aIntersections.add( va, vb, isCoplanar );
+					bIntersections.add( vb, va, isCoplanar );
 
 					// cache intersection edges in geometry A's local frame
 					if ( isCoplanar ) {
