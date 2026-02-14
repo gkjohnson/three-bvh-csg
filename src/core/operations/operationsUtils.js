@@ -162,7 +162,9 @@ export function collectIntersectingTriangles( a, b ) {
 					const na = pa.normal;
 					const nb = pb.normal;
 
-					if ( na.dot( nb ) === 1 && Math.abs( pa.constant - pb.constant ) < FLOATING_COPLANAR_EPSILON ) {
+					// TODO: this probably needs to be a bit more forgiving
+					// TODO: use the coplanar function here to detect whether triangles are coplanar
+					if ( Math.abs( na.dot( nb ) ) === 1 && Math.abs( pa.constant - pb.constant ) < FLOATING_COPLANAR_EPSILON ) {
 
 						intersected = true;
 						isCoplanar = true;
