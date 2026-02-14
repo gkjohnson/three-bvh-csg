@@ -10,7 +10,7 @@ const _hashes = [ '', '', '' ];
 
 export class HalfEdgeMap {
 
-	constructor( geometry = null ) {
+	constructor() {
 
 		// result data
 		this.data = null;
@@ -24,12 +24,6 @@ export class HalfEdgeMap {
 		this.useAllAttributes = false;
 		this.matchDisjointEdges = false;
 		this.degenerateEpsilon = 1e-8;
-
-		if ( geometry ) {
-
-			this.updateFrom( geometry );
-
-		}
 
 	}
 
