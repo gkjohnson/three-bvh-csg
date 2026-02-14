@@ -133,7 +133,14 @@ function performSplitTriangleOperations(
 		const coplanarTriangleUsed = splitter.coplanarIndices && coplanarIndices.size > 0;
 		for ( const edge of edges ) {
 
-			splitter.addConstraintEdge( edge );
+			_cachedEdge.copy( edge );
+			if ( ! invert ) {
+
+				_cachedEdge.applyMatrix4( _matrix );
+
+			}
+
+			splitter.addConstraintEdge( _cachedEdge );
 
 		}
 
