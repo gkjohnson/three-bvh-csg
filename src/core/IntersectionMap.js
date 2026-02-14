@@ -38,28 +38,22 @@ export class IntersectionMap {
 
 	}
 
-	addEdge( id, index, edge ) {
+	addIntersectionEdge( id, edge ) {
 
 		const { edgeSet } = this;
 		if ( ! edgeSet.has( id ) ) {
 
-			edgeSet.set( id, new Map() );
+			edgeSet.set( id, new Set() );
 
 		}
 
-		if ( ! edgeSet.get( id ).has( index ) ) {
-
-			edgeSet.get( id ).set( index, new Set() );
-
-		}
-
-		edgeSet.get( id ).get( index ).add( edge );
+		edgeSet.get( id ).add( edge );
 
 	}
 
-	getEdges( id, index ) {
+	getIntersectionEdges( id ) {
 
-		return Array.from( this.edgeSet.get( id ).get( index ) );
+		return this.edgeSet.get( id );
 
 	}
 
