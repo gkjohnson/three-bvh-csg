@@ -62,6 +62,7 @@ export class Brush extends Mesh {
 
 		}
 
+		this._hash = hash;
 		if ( useSharedArrayBuffer ) {
 
 			for ( const key in attributes ) {
