@@ -1,9 +1,6 @@
 import { Vector3, Line3 } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
-import { getCoplanarIntersectionEdges } from './utils/intersectionUtils.js';
 import cdt2d from '../libs/cdt2d.js';
-
-const PARALLEL_EPSILON = 1e-16;
 
 // relative tolerance factor — multiplied by the max absolute coordinate
 // of the base triangle to get scale-appropriate thresholds
@@ -51,10 +48,6 @@ class Pool {
 
 const _vec = new Vector3();
 const _vec2 = new Vector3();
-const _triangleNormal = new Vector3();
-const _splittingTri = new ExtendedTriangle();
-const _intersectionEdge = new Line3();
-const _coplanarEdges = [];
 const _paramPool = new Pool( () => ( { param: 0, index: 0 } ) );
 const _vectorPool = new Pool( () => new Vector3() );
 
@@ -233,38 +226,14 @@ export class CDTTriangleSplitter {
 
 	}
 
-	// Collect constraint edges from an intersecting triangle.
-	// Computes intersection segment(s) and stores them in edges.
-	splitByTriangle( triangle ) {
+	// Add a pre-computed constraint edge to the splitter
+	addConstraintEdge( edge ) {
 
-		const { normal, baseTri, constrainedEdges } = this;
-		triangle.getNormal( _triangleNormal ).normalize();
-
-		const isCoplanar = Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON;
-
-		if ( isCoplanar ) {
-
-			this.coplanarTriangleUsed = true;
-
-			const count = getCoplanarIntersectionEdges( baseTri, triangle, normal, _coplanarEdges );
-			for ( let i = 0; i < count; i ++ ) {
-
-				constrainedEdges.push( _coplanarEdges[ i ].clone() );
-
-			}
-
-		} else {
-
-			_splittingTri.copy( triangle );
-			_splittingTri.needsUpdate = true;
-
-			if ( _splittingTri.intersectsTriangle( baseTri, _intersectionEdge, true ) ) {
-
-				constrainedEdges.push( _intersectionEdge.clone() );
-
-			}
-
-		}
+		const { constrainedEdges, linePool } = this;
+		const e = linePool.getInstance();
+		e.start.copy( edge.start );
+		e.end.copy( edge.end );
+		constrainedEdges.push( e );
 
 	}
 

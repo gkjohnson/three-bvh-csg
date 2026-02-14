@@ -1,4 +1,4 @@
-import { Matrix4, Matrix3, Triangle } from 'three';
+import { Matrix4, Matrix3, Triangle, Line3 } from 'three';
 import {
 	getHitSideWithCoplanarCheck,
 	getHitSide,
@@ -13,9 +13,9 @@ import { isTriDegenerate } from '../utils/triangleUtils.js';
 const _matrix = new Matrix4();
 const _normalMatrix = new Matrix3();
 const _triA = new Triangle();
-const _triB = new Triangle();
 const _tri = new Triangle();
 const _barycoordTri = new Triangle();
+const _cachedEdge = new Line3();
 const _actions = [];
 const _builders = [];
 const _traversed = new Set();
@@ -98,8 +98,6 @@ function performSplitTriangleOperations(
 	const aPosition = a.geometry.attributes.position;
 
 	const bBVH = b.geometry.boundsTree;
-	const bIndex = b.geometry.index;
-	const bPosition = b.geometry.attributes.position;
 	const splitIds = intersectionMap.ids;
 	const intersectionSet = intersectionMap.intersectionSet;
 
@@ -130,27 +128,40 @@ function performSplitTriangleOperations(
 		splitter.reset();
 		splitter.initialize( _triA, ia0, ia1, ia2 );
 
-		// split the triangle with the intersecting triangles from B
+		// split the triangle using cached edges from the bvhcast phase
 		const intersectingIndices = intersectionSet.get( ia );
+		const coplanarIndices = intersectionMap.coplanarSet.get( ia );
 		for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
 
-			const ib3 = 3 * intersectingIndices[ ib ];
-			let ib0 = ib3 + 0;
-			let ib1 = ib3 + 1;
-			let ib2 = ib3 + 2;
+			const cachedEdges = intersectionMap.getEdges( ia, ib );
 
-			if ( bIndex ) {
+			if ( cachedEdges ) {
 
-				ib0 = bIndex.getX( ib0 );
-				ib1 = bIndex.getX( ib1 );
-				ib2 = bIndex.getX( ib2 );
+				// cached edges are in geometry A's local frame (the original "a" in performOperation)
+				// A pass (invert=false): splitter works in b's frame, transform from A's frame
+				// B pass (invert=true): splitter works in A's frame, use directly
+				for ( let e = 0, el = cachedEdges.length; e < el; e ++ ) {
+
+					_cachedEdge.copy( cachedEdges[ e ] );
+					if ( ! invert ) {
+
+						_cachedEdge.start.applyMatrix4( _matrix );
+						_cachedEdge.end.applyMatrix4( _matrix );
+
+					}
+
+					splitter.addConstraintEdge( _cachedEdge );
+
+				}
 
 			}
 
-			_triB.a.fromBufferAttribute( bPosition, ib0 );
-			_triB.b.fromBufferAttribute( bPosition, ib1 );
-			_triB.c.fromBufferAttribute( bPosition, ib2 );
-			splitter.splitByTriangle( _triB );
+			// mark the splitter if this pair was coplanar
+			if ( coplanarIndices && coplanarIndices.has( intersectingIndices[ ib ] ) ) {
+
+				splitter.coplanarTriangleUsed = true;
+
+			}
 
 		}
 

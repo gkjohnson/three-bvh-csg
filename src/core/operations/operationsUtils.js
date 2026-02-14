@@ -10,11 +10,29 @@ import {
 	HOLLOW_INTERSECTION,
 } from '../constants.js';
 import { isTriDegenerate } from '../utils/triangleUtils.js';
+import { getCoplanarIntersectionEdges } from '../utils/intersectionUtils.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
 const _edge = new Line3();
 const _normal = new Vector3();
+const _coplanarEdges = [];
+
+// pooled Line3 instances for caching intersection edges without per-edge allocations
+const _edgePool = [];
+let _edgePoolIndex = 0;
+
+function _getPooledLine() {
+
+	if ( _edgePoolIndex >= _edgePool.length ) {
+
+		_edgePool.push( new Line3() );
+
+	}
+
+	return _edgePool[ _edgePoolIndex ++ ];
+
+}
 const JITTER_EPSILON = 1e-8;
 const OFFSET_EPSILON = 1e-15;
 
@@ -117,6 +135,9 @@ export function collectIntersectingTriangles( a, b ) {
 	const aIntersections = new IntersectionMap();
 	const bIntersections = new IntersectionMap();
 
+	// reset the edge pool for this operation
+	_edgePoolIndex = 0;
+
 	_matrix
 		.copy( a.matrixWorld )
 		.invert()
@@ -132,6 +153,7 @@ export function collectIntersectingTriangles( a, b ) {
 				// that are a _tiny_ fraction of a value away from each other. If we find that case then check the
 				// distance between triangles and if it's small enough consider them intersecting.
 				let intersected = triangleA.intersectsTriangle( triangleB, _edge, true );
+				let isCoplanar = false;
 				if ( ! intersected ) {
 
 					const pa = triangleA.plane;
@@ -142,6 +164,7 @@ export function collectIntersectingTriangles( a, b ) {
 					if ( na.dot( nb ) === 1 && Math.abs( pa.constant - pb.constant ) < FLOATING_COPLANAR_EPSILON ) {
 
 						intersected = true;
+						isCoplanar = true;
 
 					}
 
@@ -149,10 +172,46 @@ export function collectIntersectingTriangles( a, b ) {
 
 				if ( intersected ) {
 
-					let va = a.geometry.boundsTree.resolveTriangleIndex( ia );
-					let vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
-					aIntersections.add( va, vb );
-					bIntersections.add( vb, va );
+					const va = a.geometry.boundsTree.resolveTriangleIndex( ia );
+					const vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
+					const aIdx = aIntersections.add( va, vb, isCoplanar );
+					const bIdx = bIntersections.add( vb, va, isCoplanar );
+
+					// cache intersection edges in geometry A's local frame
+					if ( isCoplanar ) {
+
+						// coplanar: clip each triangle's edges against the other
+						// triB edges clipped to triA → used when triA is base (aIntersections)
+						const normalA = triangleA.plane.normal;
+						const countA = getCoplanarIntersectionEdges( triangleA, triangleB, normalA, _coplanarEdges );
+						for ( let i = 0; i < countA; i ++ ) {
+
+							const e = _getPooledLine();
+							e.copy( _coplanarEdges[ i ] );
+							aIntersections.addEdge( va, aIdx, e );
+
+						}
+
+						// triA edges clipped to triB → used when triB is base (bIntersections)
+						const normalB = triangleB.plane.normal;
+						const countB = getCoplanarIntersectionEdges( triangleB, triangleA, normalB, _coplanarEdges );
+						for ( let i = 0; i < countB; i ++ ) {
+
+							const e = _getPooledLine();
+							e.copy( _coplanarEdges[ i ] );
+							bIntersections.addEdge( vb, bIdx, e );
+
+						}
+
+					} else {
+
+						// non-coplanar: single intersection edge, same for both
+						const e = _getPooledLine();
+						e.copy( _edge );
+						aIntersections.addEdge( va, aIdx, e );
+						bIntersections.addEdge( vb, bIdx, e );
+
+					}
 
 					if ( _debugContext ) {
 
