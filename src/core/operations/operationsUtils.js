@@ -13,7 +13,8 @@ import { isTriDegenerate } from '../utils/triangleUtils.js';
 import { getCoplanarIntersectionEdges } from '../utils/intersectionUtils.js';
 
 const _ray = new Ray();
-const _matrix = new Matrix4();
+const _bToAMatrix = new Matrix4();
+const _aToBMatrix = new Matrix4();
 const _edge = new Line3();
 const _normal = new Vector3();
 const _coplanarEdges = [];
@@ -139,12 +140,17 @@ export function collectIntersectingTriangles( a, b ) {
 	// reset the edge pool for this operation
 	_edgePoolIndex = 0;
 
-	_matrix
+	_bToAMatrix
 		.copy( a.matrixWorld )
 		.invert()
 		.multiply( b.matrixWorld );
 
-	a.geometry.boundsTree.bvhcast( b.geometry.boundsTree, _matrix, {
+	_aToBMatrix
+		.copy( b.matrixWorld )
+		.invert()
+		.multiply( a.matrixWorld );
+
+	a.geometry.boundsTree.bvhcast( b.geometry.boundsTree, _bToAMatrix, {
 
 		intersectsTriangles( triangleA, triangleB, ia, ib ) {
 
@@ -187,7 +193,7 @@ export function collectIntersectingTriangles( a, b ) {
 						const countA = getCoplanarIntersectionEdges( triangleA, triangleB, normalA, _coplanarEdges );
 						for ( let i = 0; i < countA; i ++ ) {
 
-							const e = _getPooledLine().copy( _coplanarEdges[ i ] );
+							const e = _getPooledLine().copy( _coplanarEdges[ i ] ).applyMatrix4( _aToBMatrix );
 							aIntersections.addIntersectionEdge( va, e );
 
 						}
@@ -205,7 +211,7 @@ export function collectIntersectingTriangles( a, b ) {
 					} else {
 
 						// non-coplanar: single intersection edge, same for both
-						const ea = _getPooledLine().copy( _edge );
+						const ea = _getPooledLine().copy( _edge ).applyMatrix4( _aToBMatrix );
 						const eb = _getPooledLine().copy( _edge );
 						aIntersections.addIntersectionEdge( va, ea );
 						bIntersections.addIntersectionEdge( vb, eb );

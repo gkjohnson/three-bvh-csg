@@ -99,7 +99,6 @@ function performSplitTriangleOperations(
 
 	const bBVH = b.geometry.boundsTree;
 	const splitIds = intersectionMap.ids;
-	const intersectionSet = intersectionMap.intersectionSet;
 
 	// iterate over all split triangle indices
 	for ( let i = 0, l = splitIds.length; i < l; i ++ ) {
@@ -133,15 +132,7 @@ function performSplitTriangleOperations(
 		const edges = intersectionMap.getIntersectionEdges( ia );
 		for ( const edge of edges ) {
 
-			_cachedEdge.copy( edge );
-			if ( ! invert ) {
-
-				_cachedEdge.start.applyMatrix4( _matrix );
-				_cachedEdge.end.applyMatrix4( _matrix );
-
-			}
-
-			splitter.addConstraintEdge( _cachedEdge );
+			splitter.addConstraintEdge( edge );
 
 		}
 
