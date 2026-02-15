@@ -12,6 +12,8 @@ const _dir = new Vector3();
 const _edge = new Vector3();
 const _edgeNormal = new Vector3();
 const _edgePlane = new Plane();
+const _normalA = new Vector3();
+const _normalB = new Vector3();
 
 // Clips a line segment to the interior of a coplanar triangle using the Cyrus–Beck algorithm
 // generalized to 3D half-planes.
@@ -91,24 +93,84 @@ function clipSegmentToTriangle( segment, tri, normal, target ) {
 
 }
 
-// Computes the segments of triB's edges that lie inside triA. Both triangles must be coplanar.
-// These segments are the constraint edges needed to split triA by coplanar triB in a constrained
-// triangulation.
-export function getCoplanarIntersectionEdges( triA, triB, normal, target ) {
+// tolerance for considering two triangle normals as parallel
+const COPLANAR_NORMAL_EPSILON = 1e-10;
+
+// tolerance for considering two parallel triangles as lying on the same plane
+const COPLANAR_DISTANCE_EPSILON = 1e-10;
+
+// Returns true if two triangles are coplanar (parallel normals and same plane distance).
+// Works with both ExtendedTriangle (.plane) and regular Triangle (computes normal on the fly).
+export function isTriangleCoplanar( triA, triB ) {
+
+	triA.getNormal( _normalA );
+	triB.getNormal( _normalB );
+
+	const dot = _normalA.dot( _normalB );
+	if ( Math.abs( 1.0 - Math.abs( dot ) ) >= COPLANAR_NORMAL_EPSILON ) {
+
+		return false;
+
+	}
+
+	// project a vertex from each triangle onto the shared normal to compare plane distances
+	const dA = _normalA.dot( triA.a );
+	const dB = _normalA.dot( triB.a );
+
+	return Math.abs( dA - dB ) < COPLANAR_DISTANCE_EPSILON;
+
+}
+
+// Computes the edges of the intersection polygon between two coplanar triangles.
+// The boundary consists of segments from both triangles' edges clipped to the other's interior.
+// Returns the number of segments written into target.
+export function getCoplanarIntersectionEdges( triA, triB, target ) {
 
 	let count = 0;
+
+	// compute each triangle's normal from its own vertices for correct inward edge classification
+	_normalA.crossVectors(
+		_edge.copy( triA.b ).sub( triA.a ),
+		_dir.copy( triA.c ).sub( triA.a )
+	).normalize();
+	_normalB.crossVectors(
+		_edge.copy( triB.b ).sub( triB.a ),
+		_dir.copy( triB.c ).sub( triB.a )
+	).normalize();
+
+	// clip triB's edges against triA
 	const bVerts = [ triB.a, triB.b, triB.c ];
 	for ( let i = 0; i < 3; i ++ ) {
 
-		// the edge vertices
 		_inputSeg.start.copy( bVerts[ i ] );
 		_inputSeg.end.copy( bVerts[ ( i + 1 ) % 3 ] );
 
-		// clip the segment
-		const result = clipSegmentToTriangle( _inputSeg, triA, normal, _tempLine );
+		const result = clipSegmentToTriangle( _inputSeg, triA, _normalA, _tempLine );
 		if ( result !== null ) {
 
-			// expand the list of necessary
+			if ( count >= target.length ) {
+
+				target.push( new Line3() );
+
+			}
+
+			target[ count ].copy( result );
+			count ++;
+
+		}
+
+	}
+
+	// clip triA's edges against triB
+	const aVerts = [ triA.a, triA.b, triA.c ];
+	for ( let i = 0; i < 3; i ++ ) {
+
+		_inputSeg.start.copy( aVerts[ i ] );
+		_inputSeg.end.copy( aVerts[ ( i + 1 ) % 3 ] );
+
+		const result = clipSegmentToTriangle( _inputSeg, triB, _normalB, _tempLine );
+		if ( result !== null ) {
+
 			if ( count >= target.length ) {
 
 				target.push( new Line3() );

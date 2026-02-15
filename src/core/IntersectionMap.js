@@ -53,7 +53,7 @@ export class IntersectionMap {
 
 	getIntersectionEdges( id ) {
 
-		return this.edgeSet.get( id );
+		return this.edgeSet.get( id ) || null;
 
 	}
 

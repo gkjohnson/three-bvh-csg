@@ -137,16 +137,20 @@ function performSplitTriangleOperations(
 
 			splitter.coplanarTriangleUsed = coplanarIndices && coplanarIndices.size > 0;
 			const edges = intersectionMap.getIntersectionEdges( ia );
-			for ( const edge of edges ) {
+			if ( edges ) {
 
-				_cachedEdge.copy( edge );
-				if ( ! invert ) {
+				for ( const edge of edges ) {
 
-					_cachedEdge.applyMatrix4( _matrix );
+					_cachedEdge.copy( edge );
+					if ( ! invert ) {
+
+						_cachedEdge.applyMatrix4( _matrix );
+
+					}
+
+					splitter.addConstraintEdge( _cachedEdge );
 
 				}
-
-				splitter.addConstraintEdge( _cachedEdge );
 
 			}
 

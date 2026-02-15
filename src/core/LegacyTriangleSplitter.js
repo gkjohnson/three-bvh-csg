@@ -1,6 +1,7 @@
 import { Triangle, Line3, Vector3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 import { isTriDegenerate } from './utils/triangleUtils.js';
+import { isTriangleCoplanar } from './utils/intersectionUtils.js';
 
 // NOTE: these epsilons likely should all be the same since they're used to measure the
 // distance from a point to a plane which needs to be done consistently
@@ -69,6 +70,8 @@ export class LegacyTriangleSplitter {
 
 		this.reset();
 
+		this.TRI = tri.clone();
+
 		const { triangles, trianglePool, normal } = this;
 		if ( Array.isArray( tri ) ) {
 
@@ -110,7 +113,10 @@ export class LegacyTriangleSplitter {
 		const { normal, triangles } = this;
 		triangle.getNormal( _triangleNormal ).normalize();
 
-		if ( Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
+		if ( this.TRI.update ) this.TRI.update();
+		if ( triangle.update ) triangle.update();
+
+		if ( isTriangleCoplanar( this.TRI, triangle ) ) {
 
 			this.coplanarTriangleUsed = true;
 
