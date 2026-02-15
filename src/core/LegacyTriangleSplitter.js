@@ -389,10 +389,6 @@ export class LegacyTriangleSplitter {
 
 	}
 
-	triangulate() {
-
-	}
-
 	reset() {
 
 		this.triangles.length = 0;

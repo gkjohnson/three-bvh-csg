@@ -153,6 +153,8 @@ function performSplitTriangleOperations(
 
 			}
 
+			splitter.triangulate();
+
 		} else {
 
 			// split the triangle with the intersecting triangles from B
@@ -184,7 +186,6 @@ function performSplitTriangleOperations(
 
 		}
 
-		splitter.triangulate();
 
 		// cache all the attribute data
 		const { triangles, triangleIndices = [], triangleConnectivity = [] } = splitter;
