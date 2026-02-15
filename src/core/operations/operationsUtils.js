@@ -18,8 +18,6 @@ const _matrix = new Matrix4();
 const _edge = new Line3();
 const _normal = new Vector3();
 const _coplanarEdges = [];
-
-// pooled Line3 instances for caching intersection edges without per-edge allocations
 const _edgePool = new Pool( () => new Line3() );
 
 const JITTER_EPSILON = 1e-8;
@@ -33,8 +31,6 @@ export const COPLANAR_ALIGNED = 2;
 export const INVERT_TRI = 0;
 export const ADD_TRI = 1;
 export const SKIP_TRI = 2;
-
-const FLOATING_COPLANAR_EPSILON = 1e-14;
 
 let _debugContext = null;
 export function setDebugContext( debugData ) {
@@ -124,7 +120,6 @@ export function collectIntersectingTriangles( a, b ) {
 	const aIntersections = new IntersectionMap();
 	const bIntersections = new IntersectionMap();
 
-	// reset the edge pool for this operation
 	_edgePool.clear();
 
 	_matrix
@@ -153,20 +148,19 @@ export function collectIntersectingTriangles( a, b ) {
 					// cache intersection edges in geometry A's local frame
 					if ( coplanarCount > 0 ) {
 
-						// coplanar: all intersection edges are the same for both directions
+						// coplanar
 						const count = getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges );
 						for ( let i = 0; i < count; i ++ ) {
 
-							const ea = _edgePool.getInstance().copy( _coplanarEdges[ i ] );
-							const eb = _edgePool.getInstance().copy( _coplanarEdges[ i ] );
-							aIntersections.addIntersectionEdge( va, ea );
-							bIntersections.addIntersectionEdge( vb, eb );
+							const e = _edgePool.getInstance().copy( _coplanarEdges[ i ] );
+							aIntersections.addIntersectionEdge( va, e );
+							bIntersections.addIntersectionEdge( vb, e );
 
 						}
 
 					} else {
 
-						// non-coplanar: single intersection edge, same for both
+						// non-coplanar
 						const ea = _edgePool.getInstance().copy( _edge );
 						const eb = _edgePool.getInstance().copy( _edge );
 						aIntersections.addIntersectionEdge( va, ea );

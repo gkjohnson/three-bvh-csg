@@ -1,3 +1,4 @@
+// class for getting reusable object instances and releasing them for reuse
 export class Pool {
 
 	constructor( createFn ) {
