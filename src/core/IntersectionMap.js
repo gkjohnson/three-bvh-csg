@@ -19,8 +19,7 @@ export class IntersectionMap {
 
 		}
 
-		const arr = intersectionSet.get( id );
-		arr.push( intersectionId );
+		intersectionSet.get( id ).push( intersectionId );
 
 		if ( coplanar ) {
 
