@@ -33,8 +33,6 @@ export class IntersectionMap {
 
 		}
 
-		return arr.length - 1;
-
 	}
 
 	addIntersectionEdge( id, edge ) {

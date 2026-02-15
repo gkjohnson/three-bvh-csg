@@ -1,6 +1,7 @@
 import { Vector3, Line3 } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 import cdt2d from '../libs/cdt2d.js';
+import { Pool } from './utils/Pool.js';
 
 // relative tolerance factor — multiplied by the max absolute coordinate
 // of the base triangle to get scale-appropriate thresholds
@@ -8,43 +9,6 @@ const RELATIVE_EPSILON = 1e-16;
 
 // tolerance for merging nearby vertices (squared distance)
 const VERTEX_MERGE_EPSILON = 1e-16;
-
-class Pool {
-
-	constructor( createFn ) {
-
-		this.createFn = createFn;
-		this._pool = [];
-		this._index = 0;
-
-	}
-
-	getInstance() {
-
-		if ( this._index >= this._pool.length ) {
-
-			this._pool.push( this.createFn() );
-
-		}
-
-		return this._pool[ this._index ++ ];
-
-	}
-
-	clear() {
-
-		this._index = 0;
-
-	}
-
-	reset() {
-
-		this._pool.length = 0;
-		this._index = 0;
-
-	}
-
-}
 
 const _vec = new Vector3();
 const _vec2 = new Vector3();

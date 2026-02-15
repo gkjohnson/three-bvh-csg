@@ -11,6 +11,7 @@ import {
 } from '../constants.js';
 import { isTriDegenerate } from '../utils/triangleUtils.js';
 import { getCoplanarIntersectionEdges, isTriangleCoplanar } from '../utils/intersectionUtils.js';
+import { Pool } from '../utils/Pool.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
@@ -19,20 +20,7 @@ const _normal = new Vector3();
 const _coplanarEdges = [];
 
 // pooled Line3 instances for caching intersection edges without per-edge allocations
-const _edgePool = [];
-let _edgePoolIndex = 0;
-
-function _getPooledLine() {
-
-	if ( _edgePoolIndex >= _edgePool.length ) {
-
-		_edgePool.push( new Line3() );
-
-	}
-
-	return _edgePool[ _edgePoolIndex ++ ];
-
-}
+const _edgePool = new Pool( () => new Line3() );
 
 const JITTER_EPSILON = 1e-8;
 const OFFSET_EPSILON = 1e-15;
@@ -137,7 +125,7 @@ export function collectIntersectingTriangles( a, b ) {
 	const bIntersections = new IntersectionMap();
 
 	// reset the edge pool for this operation
-	_edgePoolIndex = 0;
+	_edgePool.clear();
 
 	_matrix
 		.copy( a.matrixWorld )
@@ -169,8 +157,8 @@ export function collectIntersectingTriangles( a, b ) {
 						const count = getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges );
 						for ( let i = 0; i < count; i ++ ) {
 
-							const ea = _getPooledLine().copy( _coplanarEdges[ i ] );
-							const eb = _getPooledLine().copy( _coplanarEdges[ i ] );
+							const ea = _edgePool.getInstance().copy( _coplanarEdges[ i ] );
+							const eb = _edgePool.getInstance().copy( _coplanarEdges[ i ] );
 							aIntersections.addIntersectionEdge( va, ea );
 							bIntersections.addIntersectionEdge( vb, eb );
 
@@ -179,8 +167,8 @@ export function collectIntersectingTriangles( a, b ) {
 					} else {
 
 						// non-coplanar: single intersection edge, same for both
-						const ea = _getPooledLine().copy( _edge );
-						const eb = _getPooledLine().copy( _edge );
+						const ea = _edgePool.getInstance().copy( _edge );
+						const eb = _edgePool.getInstance().copy( _edge );
 						aIntersections.addIntersectionEdge( va, ea );
 						bIntersections.addIntersectionEdge( vb, eb );
 
