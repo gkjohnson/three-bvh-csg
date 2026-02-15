@@ -160,7 +160,9 @@ function performSplitTriangleOperations(
 			const intersectingIndices = intersectionSet.get( ia );
 			for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
 
-				const ib3 = 3 * intersectingIndices[ ib ];
+				const index = intersectingIndices[ ib ];
+				const isCoplanar = coplanarIndices && coplanarIndices.has( index );
+				const ib3 = 3 * index;
 				let ib0 = ib3 + 0;
 				let ib1 = ib3 + 1;
 				let ib2 = ib3 + 2;
@@ -176,7 +178,7 @@ function performSplitTriangleOperations(
 				_triB.a.fromBufferAttribute( bPosition, ib0 );
 				_triB.b.fromBufferAttribute( bPosition, ib1 );
 				_triB.c.fromBufferAttribute( bPosition, ib2 );
-				splitter.splitByTriangle( _triB, coplanarIndices && coplanarIndices.has( intersectingIndices[ ib ] ) );
+				splitter.splitByTriangle( _triB, isCoplanar );
 
 			}
 
