@@ -6,14 +6,40 @@ const CLIP_EPSILON = 1e-10;
 // tolerance for treating a denominator as zero (segment parallel to edge)
 const PARALLEL_EPSILON = 1e-15;
 
+// tolerance for considering two triangle normals as parallel
+const COPLANAR_NORMAL_EPSILON = 1e-10;
+
+// tolerance for considering two parallel triangles as lying on the same plane
+const COPLANAR_DISTANCE_EPSILON = 1e-10;
+
 const _tempLine = new Line3();
 const _inputSeg = new Line3();
 const _dir = new Vector3();
-const _edge = new Vector3();
+const _edgeDelta = new Vector3();
 const _edgeNormal = new Vector3();
 const _edgePlane = new Plane();
 const _normalA = new Vector3();
 const _normalB = new Vector3();
+
+// returns true if two triangles are coplanar (parallel normals and same plane distance)
+export function isTriangleCoplanar( triA, triB ) {
+
+	triA.getNormal( _normalA );
+	triB.getNormal( _normalB );
+
+	const dot = _normalA.dot( _normalB );
+	if ( Math.abs( 1.0 - Math.abs( dot ) ) >= COPLANAR_NORMAL_EPSILON ) {
+
+		return false;
+
+	}
+
+	// test if plane constant is within tolerance
+	const dA = _normalA.dot( triA.a );
+	const dB = _normalA.dot( triB.a );
+	return Math.abs( dA - dB ) < COPLANAR_DISTANCE_EPSILON;
+
+}
 
 // Clips a line segment to the interior of a coplanar triangle using the Cyrus–Beck algorithm
 // generalized to 3D half-planes.
@@ -33,8 +59,8 @@ function clipSegmentToTriangle( segment, tri, normal, target ) {
 		const v1 = verts[ ( i + 1 ) % 3 ];
 
 		// build the inward-facing edge plane
-		_edge.subVectors( v1, v0 );
-		_edgeNormal.crossVectors( normal, _edge );
+		_edgeDelta.subVectors( v1, v0 );
+		_edgeNormal.crossVectors( normal, _edgeDelta );
 		_edgePlane.setFromNormalAndCoplanarPoint( _edgeNormal, v0 );
 
 		// signed distance of segment start from the edge plane
@@ -93,34 +119,6 @@ function clipSegmentToTriangle( segment, tri, normal, target ) {
 
 }
 
-// tolerance for considering two triangle normals as parallel
-const COPLANAR_NORMAL_EPSILON = 1e-10;
-
-// tolerance for considering two parallel triangles as lying on the same plane
-const COPLANAR_DISTANCE_EPSILON = 1e-10;
-
-// Returns true if two triangles are coplanar (parallel normals and same plane distance).
-// Works with both ExtendedTriangle (.plane) and regular Triangle (computes normal on the fly).
-export function isTriangleCoplanar( triA, triB ) {
-
-	triA.getNormal( _normalA );
-	triB.getNormal( _normalB );
-
-	const dot = _normalA.dot( _normalB );
-	if ( Math.abs( 1.0 - Math.abs( dot ) ) >= COPLANAR_NORMAL_EPSILON ) {
-
-		return false;
-
-	}
-
-	// project a vertex from each triangle onto the shared normal to compare plane distances
-	const dA = _normalA.dot( triA.a );
-	const dB = _normalA.dot( triB.a );
-
-	return Math.abs( dA - dB ) < COPLANAR_DISTANCE_EPSILON;
-
-}
-
 // Computes the edges of the intersection polygon between two coplanar triangles.
 // The boundary consists of segments from both triangles' edges clipped to the other's interior.
 // Returns the number of segments written into target.
@@ -128,15 +126,8 @@ export function getCoplanarIntersectionEdges( triA, triB, target ) {
 
 	let count = 0;
 
-	// compute each triangle's normal from its own vertices for correct inward edge classification
-	_normalA.crossVectors(
-		_edge.copy( triA.b ).sub( triA.a ),
-		_dir.copy( triA.c ).sub( triA.a )
-	).normalize();
-	_normalB.crossVectors(
-		_edge.copy( triB.b ).sub( triB.a ),
-		_dir.copy( triB.c ).sub( triB.a )
-	).normalize();
+	triA.getNormal( _normalA );
+	triB.getNormal( _normalB );
 
 	// clip triB's edges against triA
 	const bVerts = [ triB.a, triB.b, triB.c ];
