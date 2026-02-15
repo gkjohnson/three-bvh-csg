@@ -1,13 +1,11 @@
 import { Triangle, Line3, Vector3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 import { isTriDegenerate } from './utils/triangleUtils.js';
-import { isTriangleCoplanar } from './utils/intersectionUtils.js';
 
 // NOTE: these epsilons likely should all be the same since they're used to measure the
 // distance from a point to a plane which needs to be done consistently
 const EPSILON = 1e-10;
 const COPLANAR_EPSILON = 1e-10;
-const PARALLEL_EPSILON = 1e-10;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
