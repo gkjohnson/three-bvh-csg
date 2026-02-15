@@ -184,10 +184,6 @@ export class CDTTriangleSplitter {
 		this.baseTri = new ExtendedTriangle();
 		this.baseIndices = new Array( 3 );
 
-		this.coplanarTriangleUsed = false;
-		this.useCleanPSLG = false;
-		this.useConstrainautor = true;
-
 	}
 
 	// initialize the class with a triangle to be split
@@ -367,7 +363,6 @@ export class CDTTriangleSplitter {
 		this.triangleIndices.length = 0;
 		this.triangleConnectivity.length = 0;
 		this.constrainedEdges.length = 0;
-		this.coplanarTriangleUsed = false;
 
 	}
 

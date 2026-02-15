@@ -61,7 +61,6 @@ export class LegacyTriangleSplitter {
 		this.trianglePool = new TrianglePool();
 		this.triangles = [];
 		this.normal = new Vector3();
-		this.coplanarTriangleUsed = false;
 
 	}
 
@@ -69,8 +68,6 @@ export class LegacyTriangleSplitter {
 	initialize( tri ) {
 
 		this.reset();
-
-		this.TRI = tri.clone();
 
 		const { triangles, trianglePool, normal } = this;
 		if ( Array.isArray( tri ) ) {
@@ -108,17 +105,12 @@ export class LegacyTriangleSplitter {
 
 	// Split the current set of triangles by passing a single triangle in. If the triangle is
 	// coplanar it will attempt to split by the triangle edge planes
-	splitByTriangle( triangle ) {
+	splitByTriangle( triangle, isCoplanar ) {
 
 		const { normal, triangles } = this;
 		triangle.getNormal( _triangleNormal ).normalize();
 
-		if ( this.TRI.update ) this.TRI.update();
-		if ( triangle.update ) triangle.update();
-
-		if ( isTriangleCoplanar( this.TRI, triangle ) ) {
-
-			this.coplanarTriangleUsed = true;
+		if ( isCoplanar ) {
 
 			for ( let i = 0, l = triangles.length; i < l; i ++ ) {
 
