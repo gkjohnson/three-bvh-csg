@@ -1,4 +1,4 @@
-import { Matrix4, Matrix3, Triangle, Line3 } from 'three';
+import { Matrix4, Matrix3, Triangle } from 'three';
 import {
 	getHitSideWithCoplanarCheck,
 	getHitSide,
@@ -11,12 +11,12 @@ import { HOLLOW_INTERSECTION, HOLLOW_SUBTRACTION } from '../constants.js';
 import { isTriDegenerate } from '../utils/triangleUtils.js';
 
 const _matrix = new Matrix4();
+const _inverseMatrix = new Matrix4();
 const _normalMatrix = new Matrix3();
 const _triA = new Triangle();
 const _triB = new Triangle();
 const _tri = new Triangle();
 const _barycoordTri = new Triangle();
-const _cachedEdge = new Line3();
 const _actions = [];
 const _builders = [];
 const _traversed = new Set();
@@ -84,7 +84,8 @@ function performSplitTriangleOperations(
 
 	const invertedGeometry = a.matrixWorld.determinant() < 0;
 
-	// transforms into the local frame of matrix b
+	// _matrix transforms from a's local frame into the common frame (origA's local).
+	// When invert (B pass): transforms origB -> origA. When !invert (A pass): identity (a IS origA).
 	_matrix
 		.copy( b.matrixWorld )
 		.invert()
@@ -93,6 +94,10 @@ function performSplitTriangleOperations(
 	_normalMatrix
 		.getNormalMatrix( a.matrixWorld )
 		.multiplyScalar( invertedGeometry ? - 1 : 1 );
+
+	// _inverseMatrix transforms from b's local frame into the common frame (origA's local).
+	// Only needed for the legacy splitter path when !invert to bring splitting tris into origA's frame.
+	_inverseMatrix.copy( _matrix ).invert();
 
 	const groupIndices = a.geometry.groupIndices;
 	const aIndex = a.geometry.index;
@@ -109,7 +114,7 @@ function performSplitTriangleOperations(
 		const ia = splitIds[ i ];
 		const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ ia ] + groupOffset;
 
-		// get the triangle in the geometry B local frame
+		// get the triangle in the common frame (origA's local)
 		const ia3 = 3 * ia;
 		let ia0 = ia3 + 0;
 		let ia1 = ia3 + 1;
@@ -122,9 +127,16 @@ function performSplitTriangleOperations(
 
 		}
 
-		_triA.a.fromBufferAttribute( aPosition, ia0 ).applyMatrix4( _matrix );
-		_triA.b.fromBufferAttribute( aPosition, ia1 ).applyMatrix4( _matrix );
-		_triA.c.fromBufferAttribute( aPosition, ia2 ).applyMatrix4( _matrix );
+		_triA.a.fromBufferAttribute( aPosition, ia0 );
+		_triA.b.fromBufferAttribute( aPosition, ia1 );
+		_triA.c.fromBufferAttribute( aPosition, ia2 );
+		if ( invert ) {
+
+			_triA.a.applyMatrix4( _matrix );
+			_triA.b.applyMatrix4( _matrix );
+			_triA.c.applyMatrix4( _matrix );
+
+		}
 
 		// initialize the splitter with the triangle from geometry A
 		splitter.reset();
@@ -135,19 +147,13 @@ function performSplitTriangleOperations(
 		const usedCoplanar = coplanarIndices && coplanarIndices.size > 0;
 		if ( splitter.addConstraintEdge ) {
 
+			// edges are already in the common frame (origA's local) — no transform needed
 			const edges = intersectionMap.getIntersectionEdges( ia );
 			if ( edges ) {
 
 				for ( const edge of edges ) {
 
-					_cachedEdge.copy( edge );
-					if ( ! invert ) {
-
-						_cachedEdge.applyMatrix4( _matrix );
-
-					}
-
-					splitter.addConstraintEdge( _cachedEdge );
+					splitter.addConstraintEdge( edge );
 
 				}
 
@@ -180,6 +186,16 @@ function performSplitTriangleOperations(
 				_triB.a.fromBufferAttribute( bPosition, ib0 );
 				_triB.b.fromBufferAttribute( bPosition, ib1 );
 				_triB.c.fromBufferAttribute( bPosition, ib2 );
+
+				// transform splitting tris into the common frame when needed
+				if ( ! invert ) {
+
+					_triB.a.applyMatrix4( _inverseMatrix );
+					_triB.b.applyMatrix4( _inverseMatrix );
+					_triB.c.applyMatrix4( _inverseMatrix );
+
+				}
+
 				splitter.splitByTriangle( _triB, isCoplanar );
 
 			}
@@ -207,11 +223,14 @@ function performSplitTriangleOperations(
 			}
 
 			// try to use the side derived from the clipping but if it turns out to be
-			// uncertain then fall back to the raycasting approach
+			// uncertain then fall back to the raycasting approach.
+			// When !invert, sub-triangles are in origA's frame but bBVH expects origB's
+			// frame, so pass _matrix to transform the ray.
 			const clippedTri = triangles[ ib ];
+			const raycastMatrix = invert ? null : _matrix;
 			const hitSide = usedCoplanar ?
-				getHitSideWithCoplanarCheck( clippedTri, bBVH ) :
-				getHitSide( clippedTri, bBVH );
+				getHitSideWithCoplanarCheck( clippedTri, bBVH, raycastMatrix ) :
+				getHitSide( clippedTri, bBVH, raycastMatrix );
 
 			_actions.length = 0;
 			_builders.length = 0;
@@ -325,7 +344,8 @@ function performWholeTriangleOperations(
 
 	const invertedGeometry = a.matrixWorld.determinant() < 0;
 
-	// matrix for transforming into the local frame of geometry b
+	// _matrix transforms from a's local frame into the common frame (origA's local).
+	// When invert (B pass): transforms origB -> origA. When !invert (A pass): identity.
 	_matrix
 		.copy( b.matrixWorld )
 		.invert()
@@ -380,14 +400,21 @@ function performWholeTriangleOperations(
 
 		}
 
-		// get the vertex position in the frame of geometry b so we can
-		// perform hit testing
-		_tri.a.fromBufferAttribute( aPosition, i0 ).applyMatrix4( _matrix );
-		_tri.b.fromBufferAttribute( aPosition, i1 ).applyMatrix4( _matrix );
-		_tri.c.fromBufferAttribute( aPosition, i2 ).applyMatrix4( _matrix );
+		// get the vertex position in the common frame (origA's local) for hit testing
+		_tri.a.fromBufferAttribute( aPosition, i0 );
+		_tri.b.fromBufferAttribute( aPosition, i1 );
+		_tri.c.fromBufferAttribute( aPosition, i2 );
+		if ( invert ) {
 
-		// get the side and decide if we need to cull the triangle based on the operation
-		const hitSide = getHitSide( _tri, bBVH );
+			_tri.a.applyMatrix4( _matrix );
+			_tri.b.applyMatrix4( _matrix );
+			_tri.c.applyMatrix4( _matrix );
+
+		}
+
+		// get the side and decide if we need to cull the triangle based on the operation.
+		// When !invert, pass _matrix to transform the ray into b's BVH frame.
+		const hitSide = getHitSide( _tri, bBVH, invert ? null : _matrix );
 
 		// find all attribute sets to append the triangle to
 		_actions.length = 0;
