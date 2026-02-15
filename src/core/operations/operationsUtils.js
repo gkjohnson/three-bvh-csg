@@ -10,11 +10,16 @@ import {
 	HOLLOW_INTERSECTION,
 } from '../constants.js';
 import { isTriDegenerate } from '../utils/triangleUtils.js';
+import { getCoplanarIntersectionEdges, isTriangleCoplanar } from '../utils/intersectionUtils.js';
+import { Pool } from '../utils/Pool.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
 const _edge = new Line3();
 const _normal = new Vector3();
+const _coplanarEdges = [];
+const _edgePool = new Pool( () => new Line3() );
+
 const JITTER_EPSILON = 1e-8;
 const OFFSET_EPSILON = 1e-15;
 
@@ -26,8 +31,6 @@ export const COPLANAR_ALIGNED = 2;
 export const INVERT_TRI = 0;
 export const ADD_TRI = 1;
 export const SKIP_TRI = 2;
-
-const FLOATING_COPLANAR_EPSILON = 1e-14;
 
 let _debugContext = null;
 export function setDebugContext( debugData ) {
@@ -117,6 +120,8 @@ export function collectIntersectingTriangles( a, b ) {
 	const aIntersections = new IntersectionMap();
 	const bIntersections = new IntersectionMap();
 
+	_edgePool.clear();
+
 	_matrix
 		.copy( a.matrixWorld )
 		.invert()
@@ -131,28 +136,37 @@ export function collectIntersectingTriangles( a, b ) {
 				// due to floating point error it's possible that we can have two overlapping, coplanar triangles
 				// that are a _tiny_ fraction of a value away from each other. If we find that case then check the
 				// distance between triangles and if it's small enough consider them intersecting.
-				let intersected = triangleA.intersectsTriangle( triangleB, _edge, true );
-				if ( ! intersected ) {
-
-					const pa = triangleA.plane;
-					const pb = triangleB.plane;
-					const na = pa.normal;
-					const nb = pb.normal;
-
-					if ( na.dot( nb ) === 1 && Math.abs( pa.constant - pb.constant ) < FLOATING_COPLANAR_EPSILON ) {
-
-						intersected = true;
-
-					}
-
-				}
-
+				let coplanarCount = isTriangleCoplanar( triangleA, triangleB ) ? getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges ) : 0;
+				let intersected = coplanarCount > 0 || triangleA.intersectsTriangle( triangleB, _edge, true );
 				if ( intersected ) {
 
-					let va = a.geometry.boundsTree.resolveTriangleIndex( ia );
-					let vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
-					aIntersections.add( va, vb );
-					bIntersections.add( vb, va );
+					const va = a.geometry.boundsTree.resolveTriangleIndex( ia );
+					const vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
+					aIntersections.add( va, vb, coplanarCount );
+					bIntersections.add( vb, va, coplanarCount );
+
+					// cache intersection edges in geometry A's local frame
+					if ( coplanarCount > 0 ) {
+
+						// coplanar
+						const count = getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges );
+						for ( let i = 0; i < count; i ++ ) {
+
+							const e = _edgePool.getInstance().copy( _coplanarEdges[ i ] );
+							aIntersections.addIntersectionEdge( va, e );
+							bIntersections.addIntersectionEdge( vb, e );
+
+						}
+
+					} else {
+
+						// non-coplanar
+						const ea = _edgePool.getInstance().copy( _edge );
+						const eb = _edgePool.getInstance().copy( _edge );
+						aIntersections.addIntersectionEdge( va, ea );
+						bIntersections.addIntersectionEdge( vb, eb );
+
+					}
 
 					if ( _debugContext ) {
 

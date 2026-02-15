@@ -4,6 +4,7 @@ export class IntersectionMap {
 
 		this.coplanarSet = new Map();
 		this.intersectionSet = new Map();
+		this.edgeSet = new Map();
 		this.ids = [];
 
 	}
@@ -31,6 +32,25 @@ export class IntersectionMap {
 			coplanarSet.get( id ).add( intersectionId );
 
 		}
+
+	}
+
+	addIntersectionEdge( id, edge ) {
+
+		const { edgeSet } = this;
+		if ( ! edgeSet.has( id ) ) {
+
+			edgeSet.set( id, new Set() );
+
+		}
+
+		edgeSet.get( id ).add( edge );
+
+	}
+
+	getIntersectionEdges( id ) {
+
+		return this.edgeSet.get( id ) || null;
 
 	}
 

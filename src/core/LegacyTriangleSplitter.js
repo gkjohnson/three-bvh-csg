@@ -1,12 +1,12 @@
 import { Triangle, Line3, Vector3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 import { isTriDegenerate } from './utils/triangleUtils.js';
+import { Pool } from './utils/Pool.js';
 
 // NOTE: these epsilons likely should all be the same since they're used to measure the
 // distance from a point to a plane which needs to be done consistently
 const EPSILON = 1e-10;
 const COPLANAR_EPSILON = 1e-10;
-const PARALLEL_EPSILON = 1e-10;
 const _edge = new Line3();
 const _foundEdge = new Line3();
 const _vec = new Vector3();
@@ -15,52 +15,14 @@ const _planeNormal = new Vector3();
 const _plane = new Plane();
 const _splittingTriangle = new ExtendedTriangle();
 
-// A pool of triangles to avoid unnecessary triangle creation
-class TrianglePool {
-
-	constructor() {
-
-		this._pool = [];
-		this._index = 0;
-
-	}
-
-	getTriangle() {
-
-		if ( this._index >= this._pool.length ) {
-
-			this._pool.push( new Triangle() );
-
-		}
-
-		return this._pool[ this._index ++ ];
-
-	}
-
-	clear() {
-
-		this._index = 0;
-
-	}
-
-	reset() {
-
-		this._pool.length = 0;
-		this._index = 0;
-
-	}
-
-}
-
 // Utility class for splitting triangles
 export class LegacyTriangleSplitter {
 
 	constructor() {
 
-		this.trianglePool = new TrianglePool();
+		this.trianglePool = new Pool( () => new Triangle() );
 		this.triangles = [];
 		this.normal = new Vector3();
-		this.coplanarTriangleUsed = false;
 
 	}
 
@@ -85,7 +47,7 @@ export class LegacyTriangleSplitter {
 
 				}
 
-				const poolTri = trianglePool.getTriangle();
+				const poolTri = trianglePool.getInstance();
 				poolTri.copy( t );
 				triangles.push( poolTri );
 
@@ -95,7 +57,7 @@ export class LegacyTriangleSplitter {
 
 			tri.getNormal( normal );
 
-			const poolTri = trianglePool.getTriangle();
+			const poolTri = trianglePool.getInstance();
 			poolTri.copy( tri );
 			triangles.push( poolTri );
 
@@ -105,14 +67,12 @@ export class LegacyTriangleSplitter {
 
 	// Split the current set of triangles by passing a single triangle in. If the triangle is
 	// coplanar it will attempt to split by the triangle edge planes
-	splitByTriangle( triangle ) {
+	splitByTriangle( triangle, isCoplanar ) {
 
 		const { normal, triangles } = this;
 		triangle.getNormal( _triangleNormal ).normalize();
 
-		if ( Math.abs( 1.0 - Math.abs( _triangleNormal.dot( normal ) ) ) < PARALLEL_EPSILON ) {
-
-			this.coplanarTriangleUsed = true;
+		if ( isCoplanar ) {
 
 			for ( let i = 0, l = triangles.length; i < l; i ++ ) {
 
@@ -279,7 +239,7 @@ export class LegacyTriangleSplitter {
 
 					}
 
-					const nextTri = trianglePool.getTriangle();
+					const nextTri = trianglePool.getInstance();
 					nextTri.a.copy( arr[ otherVert2 ] );
 					nextTri.b.copy( _foundEdge.end );
 					nextTri.c.copy( _foundEdge.start );
@@ -327,8 +287,8 @@ export class LegacyTriangleSplitter {
 					const nextVert1 = ( singleVert + 1 ) % 3;
 					const nextVert2 = ( singleVert + 2 ) % 3;
 
-					const nextTri1 = trianglePool.getTriangle();
-					const nextTri2 = trianglePool.getTriangle();
+					const nextTri1 = trianglePool.getInstance();
+					const nextTri2 = trianglePool.getInstance();
 
 					// choose the triangle that has the larger areas (shortest split distance)
 					if ( arr[ nextVert1 ].distanceToSquared( _foundEdge.start ) < arr[ nextVert2 ].distanceToSquared( _foundEdge.end ) ) {
@@ -388,10 +348,6 @@ export class LegacyTriangleSplitter {
 			}
 
 		}
-
-	}
-
-	triangulate() {
 
 	}
 

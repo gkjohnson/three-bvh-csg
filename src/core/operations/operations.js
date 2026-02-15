@@ -1,4 +1,4 @@
-import { Matrix4, Matrix3, Triangle } from 'three';
+import { Matrix4, Matrix3, Triangle, Line3 } from 'three';
 import {
 	getHitSideWithCoplanarCheck,
 	getHitSide,
@@ -16,6 +16,7 @@ const _triA = new Triangle();
 const _triB = new Triangle();
 const _tri = new Triangle();
 const _barycoordTri = new Triangle();
+const _cachedEdge = new Line3();
 const _actions = [];
 const _builders = [];
 const _traversed = new Set();
@@ -101,7 +102,6 @@ function performSplitTriangleOperations(
 	const bIndex = b.geometry.index;
 	const bPosition = b.geometry.attributes.position;
 	const splitIds = intersectionMap.ids;
-	const intersectionSet = intersectionMap.intersectionSet;
 
 	// iterate over all split triangle indices
 	for ( let i = 0, l = splitIds.length; i < l; i ++ ) {
@@ -130,31 +130,62 @@ function performSplitTriangleOperations(
 		splitter.reset();
 		splitter.initialize( _triA, ia0, ia1, ia2 );
 
-		// split the triangle with the intersecting triangles from B
-		const intersectingIndices = intersectionSet.get( ia );
-		for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
+		// split the triangle using cached edges from the bvhcast phase
+		const coplanarIndices = intersectionMap.coplanarSet.get( ia );
+		const usedCoplanar = coplanarIndices && coplanarIndices.size > 0;
+		if ( splitter.addConstraintEdge ) {
 
-			const ib3 = 3 * intersectingIndices[ ib ];
-			let ib0 = ib3 + 0;
-			let ib1 = ib3 + 1;
-			let ib2 = ib3 + 2;
+			const edges = intersectionMap.getIntersectionEdges( ia );
+			if ( edges ) {
 
-			if ( bIndex ) {
+				for ( const edge of edges ) {
 
-				ib0 = bIndex.getX( ib0 );
-				ib1 = bIndex.getX( ib1 );
-				ib2 = bIndex.getX( ib2 );
+					_cachedEdge.copy( edge );
+					if ( ! invert ) {
+
+						_cachedEdge.applyMatrix4( _matrix );
+
+					}
+
+					splitter.addConstraintEdge( _cachedEdge );
+
+				}
 
 			}
 
-			_triB.a.fromBufferAttribute( bPosition, ib0 );
-			_triB.b.fromBufferAttribute( bPosition, ib1 );
-			_triB.c.fromBufferAttribute( bPosition, ib2 );
-			splitter.splitByTriangle( _triB );
+			splitter.triangulate();
+
+		} else {
+
+			// split the triangle with the intersecting triangles from B
+			const intersectionSet = intersectionMap.intersectionSet;
+			const intersectingIndices = intersectionSet.get( ia );
+			for ( let ib = 0, l = intersectingIndices.length; ib < l; ib ++ ) {
+
+				const index = intersectingIndices[ ib ];
+				const isCoplanar = coplanarIndices && coplanarIndices.has( index );
+				const ib3 = 3 * index;
+				let ib0 = ib3 + 0;
+				let ib1 = ib3 + 1;
+				let ib2 = ib3 + 2;
+
+				if ( bIndex ) {
+
+					ib0 = bIndex.getX( ib0 );
+					ib1 = bIndex.getX( ib1 );
+					ib2 = bIndex.getX( ib2 );
+
+				}
+
+				_triB.a.fromBufferAttribute( bPosition, ib0 );
+				_triB.b.fromBufferAttribute( bPosition, ib1 );
+				_triB.c.fromBufferAttribute( bPosition, ib2 );
+				splitter.splitByTriangle( _triB, isCoplanar );
+
+			}
 
 		}
 
-		splitter.triangulate();
 
 		// cache all the attribute data
 		const { triangles, triangleIndices = [], triangleConnectivity = [] } = splitter;
@@ -178,7 +209,7 @@ function performSplitTriangleOperations(
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach
 			const clippedTri = triangles[ ib ];
-			const hitSide = splitter.coplanarTriangleUsed ?
+			const hitSide = usedCoplanar ?
 				getHitSideWithCoplanarCheck( clippedTri, bBVH ) :
 				getHitSide( clippedTri, bBVH );
 
