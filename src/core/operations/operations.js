@@ -260,9 +260,6 @@ function performSplitTriangleOperations(
 
 		}
 
-		// console.log( ...splitter.coplanarFlags )
-
-
 		// for all triangles in the split result
 		_traversed.clear();
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
@@ -293,7 +290,6 @@ function performSplitTriangleOperations(
 
 			}
 
-			hitSide = getHitSideWithCoplanarCheck( clippedTri, bBVH, raycastMatrix );
 
 
 			_actions.length = 0;

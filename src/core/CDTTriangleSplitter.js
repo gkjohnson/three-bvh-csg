@@ -232,7 +232,6 @@ export class CDTTriangleSplitter {
 		const { triangles, trianglePool, triangleConnectivity, triangleIndices, linePool, baseTri, constrainedEdges, baseIndices } = this;
 
 		triangles.length = 0;
-		trianglePool.clear();
 
 		// Get the edges into a 2d frame
 		const edges2d = [];
@@ -346,7 +345,6 @@ export class CDTTriangleSplitter {
 			const coplanarTri = coplanarTriangles[ j ];
 			const cn = new Vector3();
 			coplanarTri.getNormal( cn );
-			// console.log( normal.dot( cn ) );
 
 
 		}

@@ -151,24 +151,18 @@ export function collectIntersectingTriangles( a, b ) {
 				// due to floating point error it's possible that we can have two overlapping, coplanar triangles
 				// that are a _tiny_ fraction of a value away from each other. If we find that case then check the
 				// distance between triangles and if it's small enough consider them intersecting.
-				let coplanarCount = isTriangleCoplanar( triangleA, triangleB ) ? getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges ) : 0;
-				let intersected = coplanarCount > 0 || triangleA.intersectsTriangle( triangleB, _edge, true );
+				const coplanarCount = isTriangleCoplanar( triangleA, triangleB ) ? getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges ) : 0;
+				const isCoplanarIntersection = coplanarCount > 2;
+				const intersected = isCoplanarIntersection || triangleA.intersectsTriangle( triangleB, _edge, true );
 				if ( intersected ) {
 
 					const va = a.geometry.boundsTree.resolveTriangleIndex( ia );
 					const vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
-					aIntersections.add( va, vb, coplanarCount );
-					bIntersections.add( vb, va, coplanarCount );
+					aIntersections.add( va, vb, isCoplanarIntersection );
+					bIntersections.add( vb, va, isCoplanarIntersection );
 
 					// cache intersection edges in geometry A's local frame
-					if ( coplanarCount > 0 ) {
-
-						const na = new Vector3();
-						const nb = new Vector3();
-
-						triangleA.getNormal( na );
-						triangleB.getNormal( nb );
-						console.log( na.dot( nb ) );
+					if ( isCoplanarIntersection ) {
 
 						// coplanar
 						const count = getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges );
