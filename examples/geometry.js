@@ -230,6 +230,7 @@ function updateCSG() {
 	}
 
 	csgEvaluator.evaluate( bunnyBrush, finalBrush, params.operation, resultObject );
+	wireframeResult.position.copy( resultObject.position );
 	if ( params.useGroups ) {
 
 		resultObject.material = resultObject.material.map( m => materialMap.get( m ) );
