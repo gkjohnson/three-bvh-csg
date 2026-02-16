@@ -1,6 +1,5 @@
-import { Matrix4, Matrix3, Triangle } from 'three';
+import { Matrix4, Matrix3, Triangle, Vector3 } from 'three';
 import {
-	getHitSideWithCoplanarCheck,
 	getHitSide,
 	collectIntersectingTriangles,
 	getOperationAction,
@@ -11,6 +10,7 @@ import {
 import { getTriCount } from '../utils/geometryUtils.js';
 import { HOLLOW_INTERSECTION, HOLLOW_SUBTRACTION } from '../constants.js';
 import { isTriDegenerate } from '../utils/triangleUtils.js';
+import { Pool } from '../utils/Pool.js';
 
 const _matrix = new Matrix4();
 const _inverseMatrix = new Matrix4();
@@ -23,6 +23,9 @@ const _barycoordTri = new Triangle();
 const _actions = [];
 const _builders = [];
 const _traversed = new Set();
+const _trianglePool = new Pool( () => new Triangle() );
+const _normal = new Vector3();
+const _midpoint = new Vector3();
 
 // runs the given operation against a and b using the splitter and appending data to the
 // geometry builder.
@@ -157,6 +160,7 @@ function performSplitTriangleOperations(
 		// add coplanar triangles from B to the splitter for later classification
 		const coplanarIndices = intersectionMap.coplanarSet.get( ia );
 		const usedCoplanar = coplanarIndices && coplanarIndices.size > 0;
+		const coplanarTris = [];
 		if ( usedCoplanar ) {
 
 			for ( const index of coplanarIndices ) {
@@ -174,20 +178,21 @@ function performSplitTriangleOperations(
 
 				}
 
-				_triB.a.fromBufferAttribute( bPosition, ib0 );
-				_triB.b.fromBufferAttribute( bPosition, ib1 );
-				_triB.c.fromBufferAttribute( bPosition, ib2 );
+				const inst = _trianglePool.getInstance();
+				inst.a.fromBufferAttribute( bPosition, ib0 );
+				inst.b.fromBufferAttribute( bPosition, ib1 );
+				inst.c.fromBufferAttribute( bPosition, ib2 );
 
 				// transform into the common frame when needed
 				if ( ! invert ) {
 
-					_triB.a.applyMatrix4( _inverseMatrix );
-					_triB.b.applyMatrix4( _inverseMatrix );
-					_triB.c.applyMatrix4( _inverseMatrix );
+					inst.a.applyMatrix4( _inverseMatrix );
+					inst.b.applyMatrix4( _inverseMatrix );
+					inst.c.applyMatrix4( _inverseMatrix );
 
 				}
 
-				splitter.addCoplanarTriangle( _triB );
+				coplanarTris.push( inst );
 
 			}
 
@@ -278,22 +283,28 @@ function performSplitTriangleOperations(
 			const clippedTri = triangles[ ib ];
 			const raycastMatrix = invert ? null : _matrix;
 			let hitSide = null;
-			if ( splitter.coplanarFlags && splitter.coplanarFlags[ ib ] !== null ) {
 
-				// TODO: move to constants
-				// TODO: add implementation for both triangles
-				// TODO: check multimaterial example
-				hitSide = splitter.coplanarFlags[ ib ] === 1 ? COPLANAR_ALIGNED : COPLANAR_OPPOSITE;
+			// check against the set of coplanar triangles to see if we can easily determine what to do
+			clippedTri.getMidpoint( _midpoint );
+			for ( let cp = 0, cpl = coplanarTris.length; cp < cpl; cp ++ ) {
+
+				const cpt = coplanarTris[ cp ];
+				if ( cpt.containsPoint( _midpoint ) ) {
+
+					cpt.getNormal( _normal );
+					hitSide = splitter.normal.dot( _normal ) > 0 ? COPLANAR_ALIGNED : COPLANAR_OPPOSITE;
+					break;
+
+				}
 
 			}
 
-			if ( hitSide === null ) {
+			// if the clipped triangle is no coplanar then fall back to raycasting
+			if ( hitSide === null || true ) {
 
 				hitSide = getHitSide( clippedTri, bBVH, raycastMatrix );
 
 			}
-
-
 
 			_actions.length = 0;
 			_builders.length = 0;
