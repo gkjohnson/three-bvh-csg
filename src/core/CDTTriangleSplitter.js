@@ -171,6 +171,8 @@ export class CDTTriangleSplitter {
 		// initialize constrained edges to the triangle boundary
 		constrainedEdges.length = 0;
 
+		// inserting these edges in this order guarantee that indices a, b, c will be given the
+		// indices 0, 1, 2 so we can infer base indices from them later.
 		const e0 = linePool.getInstance();
 		e0.start.copy( baseTri.a );
 		e0.end.copy( baseTri.b );
