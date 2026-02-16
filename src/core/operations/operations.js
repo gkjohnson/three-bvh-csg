@@ -83,19 +83,17 @@ function performSplitTriangleOperations(
 	groupOffset = 0,
 ) {
 
-	// _matrix transforms from a's local frame into the common frame (origA's local).
-	// When invert (B pass): transforms origB -> origA. When !invert (A pass): identity (a IS origA).
+	// transform from a frame -> b frame. When "invert" is true the "b" is the first argument (brush A).
 	_matrix
 		.copy( b.matrixWorld )
 		.invert()
 		.multiply( a.matrixWorld );
 
-	// _inverseMatrix transforms from b's local frame into the common frame (origA's local).
-	// Only needed for the legacy splitter path when !invert to bring splitting tris into origA's frame.
-	_inverseMatrix.copy( _matrix ).invert();
+	_inverseMatrix
+		.copy( _matrix )
+		.invert();
 
-	// _builderMatrix transforms attribute data from a's local frame into the common frame.
-	// A pass: identity (a IS origA). B pass: _matrix (origB -> origA).
+	// matrix for geometry construction to transform vertices in the brush A's frame
 	if ( invert ) {
 
 		_builderMatrix.copy( _matrix );
@@ -126,7 +124,7 @@ function performSplitTriangleOperations(
 		const ia = splitIds[ i ];
 		const groupIndex = groupOffset === - 1 ? 0 : groupIndices[ ia ] + groupOffset;
 
-		// get the triangle in the common frame (origA's local)
+		// get the triangle in the common frame (brush A's local)
 		const ia3 = 3 * ia;
 		let ia0 = ia3 + 0;
 		let ia1 = ia3 + 1;
@@ -159,7 +157,7 @@ function performSplitTriangleOperations(
 		const usedCoplanar = coplanarIndices && coplanarIndices.size > 0;
 		if ( splitter.addConstraintEdge ) {
 
-			// edges are already in the common frame (origA's local) — no transform needed
+			// edges are already in the common frame (brush A's local) — no transform needed
 			const edges = intersectionMap.getIntersectionEdges( ia );
 			if ( edges ) {
 
@@ -236,8 +234,8 @@ function performSplitTriangleOperations(
 
 			// try to use the side derived from the clipping but if it turns out to be
 			// uncertain then fall back to the raycasting approach.
-			// When !invert, sub-triangles are in origA's frame but bBVH expects origB's
-			// frame, so pass _matrix to transform the ray.
+			// If checking the sided ness against brush B's BVH then we need to transform
+			// into the appropriate frame
 			const clippedTri = triangles[ ib ];
 			const raycastMatrix = invert ? null : _matrix;
 			const hitSide = usedCoplanar ?
@@ -354,14 +352,12 @@ function performWholeTriangleOperations(
 	groupOffset = 0,
 ) {
 
-	// _matrix transforms from a's local frame into the common frame (origA's local).
-	// When invert (B pass): transforms origB -> origA. When !invert (A pass): identity.
+	// _matrix transforms from a's local frame into the common frame (brush A's local)
 	_matrix
 		.copy( b.matrixWorld )
 		.invert()
 		.multiply( a.matrixWorld );
 
-	// _builderMatrix transforms attribute data from a's local frame into the common frame.
 	if ( invert ) {
 
 		_builderMatrix.copy( _matrix );
@@ -435,7 +431,7 @@ function performWholeTriangleOperations(
 		}
 
 		// get the side and decide if we need to cull the triangle based on the operation.
-		// When !invert, pass _matrix to transform the ray into b's BVH frame.
+		// When !invert, pass _matrix to transform the ray into brush B's BVH frame.
 		const hitSide = getHitSide( _tri, bBVH, invert ? null : _matrix );
 
 		// find all attribute sets to append the triangle to
