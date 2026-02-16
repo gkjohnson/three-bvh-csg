@@ -12,6 +12,7 @@ import { isTriDegenerate } from '../utils/triangleUtils.js';
 
 const _matrix = new Matrix4();
 const _inverseMatrix = new Matrix4();
+const _builderMatrix = new Matrix4();
 const _normalMatrix = new Matrix3();
 const _triA = new Triangle();
 const _triB = new Triangle();
@@ -82,8 +83,6 @@ function performSplitTriangleOperations(
 	groupOffset = 0,
 ) {
 
-	const invertedGeometry = a.matrixWorld.determinant() < 0;
-
 	// _matrix transforms from a's local frame into the common frame (origA's local).
 	// When invert (B pass): transforms origB -> origA. When !invert (A pass): identity (a IS origA).
 	_matrix
@@ -91,13 +90,26 @@ function performSplitTriangleOperations(
 		.invert()
 		.multiply( a.matrixWorld );
 
-	_normalMatrix
-		.getNormalMatrix( a.matrixWorld )
-		.multiplyScalar( invertedGeometry ? - 1 : 1 );
-
 	// _inverseMatrix transforms from b's local frame into the common frame (origA's local).
 	// Only needed for the legacy splitter path when !invert to bring splitting tris into origA's frame.
 	_inverseMatrix.copy( _matrix ).invert();
+
+	// _builderMatrix transforms attribute data from a's local frame into the common frame.
+	// A pass: identity (a IS origA). B pass: _matrix (origB -> origA).
+	if ( invert ) {
+
+		_builderMatrix.copy( _matrix );
+
+	} else {
+
+		_builderMatrix.identity();
+
+	}
+
+	const invertedGeometry = _builderMatrix.determinant() < 0;
+	_normalMatrix
+		.getNormalMatrix( _builderMatrix )
+		.multiplyScalar( invertedGeometry ? - 1 : 1 );
 
 	const groupIndices = a.geometry.groupIndices;
 	const aIndex = a.geometry.index;
@@ -203,11 +215,11 @@ function performSplitTriangleOperations(
 		}
 
 
-		// cache all the attribute data
+		// cache all the attribute data in origA's local frame
 		const { triangles, triangleIndices = [], triangleConnectivity = [] } = splitter;
 		for ( let i = 0, l = builders.length; i < l; i ++ ) {
 
-			builders[ i ].initInterpolatedAttributeData( a.geometry, a.matrixWorld, _normalMatrix, ia0, ia1, ia2 );
+			builders[ i ].initInterpolatedAttributeData( a.geometry, _builderMatrix, _normalMatrix, ia0, ia1, ia2 );
 
 		}
 
@@ -342,8 +354,6 @@ function performWholeTriangleOperations(
 	groupOffset = 0,
 ) {
 
-	const invertedGeometry = a.matrixWorld.determinant() < 0;
-
 	// _matrix transforms from a's local frame into the common frame (origA's local).
 	// When invert (B pass): transforms origB -> origA. When !invert (A pass): identity.
 	_matrix
@@ -351,8 +361,20 @@ function performWholeTriangleOperations(
 		.invert()
 		.multiply( a.matrixWorld );
 
+	// _builderMatrix transforms attribute data from a's local frame into the common frame.
+	if ( invert ) {
+
+		_builderMatrix.copy( _matrix );
+
+	} else {
+
+		_builderMatrix.identity();
+
+	}
+
+	const invertedGeometry = _builderMatrix.determinant() < 0;
 	_normalMatrix
-		.getNormalMatrix( a.matrixWorld )
+		.getNormalMatrix( _builderMatrix )
 		.multiplyScalar( invertedGeometry ? - 1 : 1 );
 
 	const bBVH = b.geometry.boundsTree;
@@ -474,17 +496,17 @@ function performWholeTriangleOperations(
 						const action = _actions[ k ];
 						const invertTri = action === INVERT_TRI;
 						const invert = invertTri !== invertedGeometry;
-						builder.appendIndexFromGeometry( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, i0, invert );
+						builder.appendIndexFromGeometry( a.geometry, _builderMatrix, _normalMatrix, groupIndex, i0, invert );
 
 						if ( invert ) {
 
-							builder.appendIndexFromGeometry( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, i2, invert );
-							builder.appendIndexFromGeometry( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, i1, invert );
+							builder.appendIndexFromGeometry( a.geometry, _builderMatrix, _normalMatrix, groupIndex, i2, invert );
+							builder.appendIndexFromGeometry( a.geometry, _builderMatrix, _normalMatrix, groupIndex, i1, invert );
 
 						} else {
 
-							builder.appendIndexFromGeometry( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, i1, invert );
-							builder.appendIndexFromGeometry( a.geometry, a.matrixWorld, _normalMatrix, groupIndex, i2, invert );
+							builder.appendIndexFromGeometry( a.geometry, _builderMatrix, _normalMatrix, groupIndex, i1, invert );
+							builder.appendIndexFromGeometry( a.geometry, _builderMatrix, _normalMatrix, groupIndex, i2, invert );
 
 						}
 
