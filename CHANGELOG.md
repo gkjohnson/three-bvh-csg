@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Adjusted minimum three.js, three-mesh-bvh version.
 
+### Fixed
+- Adjusted coplanar detection to be more robust, avoid using raycasting for detection.
+
 ## [0.0.17] - 2025-04-04
 ### Fixed
 - Add hollow operations to types.
