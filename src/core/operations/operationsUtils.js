@@ -1,4 +1,4 @@
-import { Ray, Matrix4, DoubleSide, Vector3, Line3 } from 'three';
+import { Ray, Matrix4, DoubleSide, Line3 } from 'three';
 import { IntersectionMap } from '../IntersectionMap.js';
 import {
 	ADDITION,
@@ -16,12 +16,8 @@ import { Pool } from '../utils/Pool.js';
 const _ray = new Ray();
 const _matrix = new Matrix4();
 const _edge = new Line3();
-const _normal = new Vector3();
 const _coplanarEdges = [];
 const _edgePool = new Pool( () => new Line3() );
-
-const JITTER_EPSILON = 1e-8;
-const OFFSET_EPSILON = 1e-15;
 
 export const BACK_SIDE = - 1;
 export const FRONT_SIDE = 1;
@@ -57,77 +53,6 @@ export function getHitSide( tri, bvh, matrix = null ) {
 
 }
 
-export function getHitSideWithCoplanarCheck( tri, bvh, matrix = null ) {
-
-	// random function that returns [ - 0.5, 0.5 ];
-	function rand() {
-
-		return Math.random() - 0.5;
-
-	}
-
-	// get the ray the check the triangle for
-	tri.getNormal( _normal );
-	_ray.direction.copy( _normal );
-	tri.getMidpoint( _ray.origin );
-
-	if ( matrix ) {
-
-		_ray.origin.applyMatrix4( matrix );
-		_ray.direction.transformDirection( matrix );
-		_normal.transformDirection( matrix );
-
-	}
-
-	const total = 3;
-	let count = 0;
-	let minDistance = Infinity;
-	for ( let i = 0; i < total; i ++ ) {
-
-		// jitter the ray slightly
-		_ray.direction.x += rand() * JITTER_EPSILON;
-		_ray.direction.y += rand() * JITTER_EPSILON;
-		_ray.direction.z += rand() * JITTER_EPSILON;
-
-		// and invert it so we can account for floating point error by checking both directions
-		// to catch coplanar distances
-		_ray.direction.multiplyScalar( - 1 );
-
-		// check if the ray hit the backside
-		const hit = bvh.raycastFirst( _ray, DoubleSide );
-		let hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
-		if ( hitBackSide ) {
-
-			count ++;
-
-		}
-
-		if ( hit !== null ) {
-
-			minDistance = Math.min( minDistance, hit.distance );
-
-		}
-
-		// if we're right up against another face then we're coplanar
-		if ( minDistance <= OFFSET_EPSILON ) {
-
-			return hit.face.normal.dot( _normal ) > 0 ? COPLANAR_ALIGNED : COPLANAR_OPPOSITE;
-
-		}
-
-		// if our current casts meet our requirements then early out
-		if ( count / total > 0.5 || ( i - count + 1 ) / total > 0.5 ) {
-
-			break;
-
-		}
-
-	}
-
-	return count / total > 0.5 ? BACK_SIDE : FRONT_SIDE;
-
-}
-
 // returns the intersected triangles and returns objects mapping triangle indices to
 // the other triangles intersected
 export function collectIntersectingTriangles( a, b ) {
@@ -151,17 +76,18 @@ export function collectIntersectingTriangles( a, b ) {
 				// due to floating point error it's possible that we can have two overlapping, coplanar triangles
 				// that are a _tiny_ fraction of a value away from each other. If we find that case then check the
 				// distance between triangles and if it's small enough consider them intersecting.
-				let coplanarCount = isTriangleCoplanar( triangleA, triangleB ) ? getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges ) : 0;
-				let intersected = coplanarCount > 0 || triangleA.intersectsTriangle( triangleB, _edge, true );
+				const coplanarCount = isTriangleCoplanar( triangleA, triangleB ) ? getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges ) : 0;
+				const isCoplanarIntersection = coplanarCount > 2;
+				const intersected = isCoplanarIntersection || triangleA.intersectsTriangle( triangleB, _edge, true );
 				if ( intersected ) {
 
 					const va = a.geometry.boundsTree.resolveTriangleIndex( ia );
 					const vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
-					aIntersections.add( va, vb, coplanarCount );
-					bIntersections.add( vb, va, coplanarCount );
+					aIntersections.add( va, vb, isCoplanarIntersection );
+					bIntersections.add( vb, va, isCoplanarIntersection );
 
 					// cache intersection edges in geometry A's local frame
-					if ( coplanarCount > 0 ) {
+					if ( isCoplanarIntersection ) {
 
 						// coplanar
 						const count = getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges );

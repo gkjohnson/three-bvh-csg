@@ -165,7 +165,7 @@ function init() {
 			opacity: 0.15,
 			transparent: true,
 		} ) );
-		scene.add( wireframe );
+		group.add( wireframe );
 
 		testCases.push( {
 			label: tc.label,
@@ -387,6 +387,7 @@ function render() {
 		tc.brush1.visible = params.displayBrushes;
 		tc.brush2.visible = params.displayBrushes;
 		tc.wireframe.visible = params.wireframe;
+		tc.brush1.matrix.decompose( tc.wireframe.position, tc.wireframe.quaternion, tc.wireframe.scale );
 
 	}
 

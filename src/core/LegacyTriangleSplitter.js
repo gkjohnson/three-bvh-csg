@@ -69,8 +69,7 @@ export class LegacyTriangleSplitter {
 	// coplanar it will attempt to split by the triangle edge planes
 	splitByTriangle( triangle, isCoplanar ) {
 
-		const { normal, triangles } = this;
-		triangle.getNormal( _triangleNormal ).normalize();
+		const { triangles } = this;
 
 		if ( isCoplanar ) {
 
@@ -91,6 +90,7 @@ export class LegacyTriangleSplitter {
 				const v1 = arr[ nexti ];
 
 				// plane positive direction is toward triangle center
+				triangle.getNormal( _triangleNormal ).normalize();
 				_vec.subVectors( v1, v0 ).normalize();
 				_planeNormal.crossVectors( _triangleNormal, _vec );
 				_plane.setFromNormalAndCoplanarPoint( _planeNormal, v0 );
@@ -355,7 +355,6 @@ export class LegacyTriangleSplitter {
 
 		this.triangles.length = 0;
 		this.trianglePool.clear();
-		this.coplanarTriangleUsed = false;
 
 	}
 
