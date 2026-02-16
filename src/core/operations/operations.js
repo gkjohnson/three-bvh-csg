@@ -5,6 +5,8 @@ import {
 	collectIntersectingTriangles,
 	getOperationAction,
 	SKIP_TRI, INVERT_TRI,
+	COPLANAR_ALIGNED,
+	COPLANAR_OPPOSITE,
 } from './operationsUtils.js';
 import { getTriCount } from '../utils/geometryUtils.js';
 import { HOLLOW_INTERSECTION, HOLLOW_SUBTRACTION } from '../constants.js';
@@ -258,6 +260,9 @@ function performSplitTriangleOperations(
 
 		}
 
+		// console.log( ...splitter.coplanarFlags )
+
+
 		// for all triangles in the split result
 		_traversed.clear();
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
@@ -275,9 +280,21 @@ function performSplitTriangleOperations(
 			// into the appropriate frame
 			const clippedTri = triangles[ ib ];
 			const raycastMatrix = invert ? null : _matrix;
-			const hitSide = usedCoplanar ?
-				getHitSideWithCoplanarCheck( clippedTri, bBVH, raycastMatrix ) :
-				getHitSide( clippedTri, bBVH, raycastMatrix );
+			let hitSide = null;
+			if ( splitter.coplanarFlags && splitter.coplanarFlags[ ib ] !== null ) {
+
+				hitSide = splitter.coplanarFlags[ ib ] === 1 ? COPLANAR_ALIGNED : COPLANAR_OPPOSITE;
+
+			}
+
+			if ( hitSide === null ) {
+
+				hitSide = getHitSide( clippedTri, bBVH, raycastMatrix );
+
+			}
+
+			hitSide = getHitSideWithCoplanarCheck( clippedTri, bBVH, raycastMatrix );
+
 
 			_actions.length = 0;
 			_builders.length = 0;

@@ -12,6 +12,8 @@ const VERTEX_MERGE_EPSILON = 1e-16;
 
 const _vec = new Vector3();
 const _vec2 = new Vector3();
+const _centroid = new Vector3();
+const _coplanarNormal = new Vector3();
 const _paramPool = new Pool( () => ( { param: 0, index: 0 } ) );
 const _vectorPool = new Pool( () => new Vector3() );
 
@@ -141,6 +143,7 @@ export class CDTTriangleSplitter {
 		this.constrainedEdges = [];
 		this.triangleConnectivity = [];
 		this.coplanarTriangles = [];
+		this.coplanarFlags = [];
 
 		this.normal = new Vector3();
 		this.projOrigin = new Vector3();
@@ -201,6 +204,7 @@ export class CDTTriangleSplitter {
 
 		const { coplanarTriangles, trianglePool } = this;
 		const t = trianglePool.getInstance().copy( tri );
+
 		coplanarTriangles.push( t );
 
 	}
@@ -327,6 +331,59 @@ export class CDTTriangleSplitter {
 
 		}
 
+		this._computeCoplanarFlags();
+
+	}
+
+	// Check each output triangle's centroid against the coplanar triangles to classify it
+	_computeCoplanarFlags() {
+
+		const { triangles, coplanarTriangles, coplanarFlags, normal } = this;
+		coplanarFlags.length = 0;
+
+		for ( let j = 0, lj = coplanarTriangles.length; j < lj; j ++ ) {
+
+			const coplanarTri = coplanarTriangles[ j ];
+			const cn = new Vector3();
+			coplanarTri.getNormal( cn );
+			// console.log( normal.dot( cn ) );
+
+
+		}
+
+		// console.log('------')
+		for ( let i = 0, l = triangles.length; i < l; i ++ ) {
+
+			const tri = triangles[ i ];
+			tri.getMidpoint( _centroid );
+
+			let flag = null;
+			const t = [];
+			for ( let j = 0, lj = coplanarTriangles.length; j < lj; j ++ ) {
+
+				const coplanarTri = coplanarTriangles[ j ];
+				const bc = new Vector3();
+				coplanarTri.getBarycoord( _centroid, bc );
+
+
+				if ( coplanarTri.containsPoint( _centroid ) ) {
+
+					// if ( flag !== null ) debugger
+					coplanarTri.getNormal( _coplanarNormal );
+					flag = _coplanarNormal.dot( normal ) > 0 ? 1 : - 1;
+					t.push( coplanarTri, bc );
+
+					// console.log( i, flag, coplanarTri.getArea() )
+					// break;
+
+				}
+
+			}
+
+			coplanarFlags.push( flag );
+
+		}
+
 	}
 
 	reset() {
@@ -338,6 +395,7 @@ export class CDTTriangleSplitter {
 		this.triangleConnectivity.length = 0;
 		this.constrainedEdges.length = 0;
 		this.coplanarTriangles.length = 0;
+		this.coplanarFlags.length = 0;
 
 	}
 

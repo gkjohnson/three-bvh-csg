@@ -163,6 +163,13 @@ export function collectIntersectingTriangles( a, b ) {
 					// cache intersection edges in geometry A's local frame
 					if ( coplanarCount > 0 ) {
 
+						const na = new Vector3();
+						const nb = new Vector3();
+
+						triangleA.getNormal( na );
+						triangleB.getNormal( nb );
+						console.log( na.dot( nb ) );
+
 						// coplanar
 						const count = getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges );
 						for ( let i = 0; i < count; i ++ ) {
