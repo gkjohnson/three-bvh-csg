@@ -39,10 +39,17 @@ export function setDebugContext( debugData ) {
 
 }
 
-export function getHitSide( tri, bvh ) {
+export function getHitSide( tri, bvh, matrix = null ) {
 
 	tri.getMidpoint( _ray.origin );
 	tri.getNormal( _ray.direction );
+
+	if ( matrix ) {
+
+		_ray.origin.applyMatrix4( matrix );
+		_ray.direction.transformDirection( matrix );
+
+	}
 
 	const hit = bvh.raycastFirst( _ray, DoubleSide );
 	const hitBackSide = Boolean( hit && _ray.direction.dot( hit.face.normal ) > 0 );
@@ -50,7 +57,7 @@ export function getHitSide( tri, bvh ) {
 
 }
 
-export function getHitSideWithCoplanarCheck( tri, bvh ) {
+export function getHitSideWithCoplanarCheck( tri, bvh, matrix = null ) {
 
 	// random function that returns [ - 0.5, 0.5 ];
 	function rand() {
@@ -63,6 +70,14 @@ export function getHitSideWithCoplanarCheck( tri, bvh ) {
 	tri.getNormal( _normal );
 	_ray.direction.copy( _normal );
 	tri.getMidpoint( _ray.origin );
+
+	if ( matrix ) {
+
+		_ray.origin.applyMatrix4( matrix );
+		_ray.direction.transformDirection( matrix );
+		_normal.transformDirection( matrix );
+
+	}
 
 	const total = 3;
 	let count = 0;

@@ -124,6 +124,11 @@ export class Evaluator {
 			const targetGeometry = brush.geometry;
 			geometryBuilders[ i ].buildGeometry( targetGeometry, groups );
 
+			// assign brush A's transform to the result so the geometry is in a stable position
+			a.matrixWorld.decompose( brush.position, brush.quaternion, brush.scale );
+			brush.updateMatrix();
+			brush.matrixWorld.copy( a.matrixWorld );
+
 			if ( useGroups ) {
 
 				brush.material = materials;

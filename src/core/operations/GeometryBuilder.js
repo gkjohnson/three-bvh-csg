@@ -83,7 +83,8 @@ export class GeometryBuilder {
 
 		this.attributeData = {};
 		this.groupIndices = [];
-		this.indexMap = new Map();
+		this.forwardIndexMap = new Map();
+		this.invertedIndexMap = new Map();
 		this.interpolatedFields = {};
 
 	}
@@ -185,15 +186,16 @@ export class GeometryBuilder {
 	}
 
 	// push data from the given barycoord onto the geometry
-	appendInterpolatedAttributeData( group, barycoord, index, invert ) {
+	appendInterpolatedAttributeData( group, barycoord, index = null, invert = false ) {
 
-		const { groupIndices, attributeData, interpolatedFields, indexMap } = this;
+		const { groupIndices, attributeData, interpolatedFields, forwardIndexMap, invertedIndexMap } = this;
 		while ( groupIndices.length <= group ) {
 
 			groupIndices.push( new AttributeData( Uint32Array ) );
 
 		}
 
+		const indexMap = invert ? invertedIndexMap : forwardIndexMap;
 		const indexData = groupIndices[ group ];
 		if ( index !== null && indexMap.has( index ) ) {
 
@@ -224,13 +226,14 @@ export class GeometryBuilder {
 	// append the given vertex index from the source geometry to this one
 	appendIndexFromGeometry( geometry, matrix, normalMatrix, group, index, invert = false ) {
 
-		const { groupIndices, attributeData, indexMap } = this;
+		const { groupIndices, attributeData, forwardIndexMap, invertedIndexMap } = this;
 		while ( groupIndices.length <= group ) {
 
 			groupIndices.push( new AttributeData( Uint32Array ) );
 
 		}
 
+		const indexMap = invert ? invertedIndexMap : forwardIndexMap;
 		const indexData = groupIndices[ group ];
 		if ( index !== null && indexMap.has( index ) ) {
 
@@ -367,7 +370,8 @@ export class GeometryBuilder {
 
 	clearIndexMap() {
 
-		this.indexMap.clear();
+		this.forwardIndexMap.clear();
+		this.invertedIndexMap.clear();
 
 	}
 
