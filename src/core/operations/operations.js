@@ -152,9 +152,46 @@ function performSplitTriangleOperations(
 		splitter.reset();
 		splitter.initialize( _triA, ia0, ia1, ia2 );
 
-		// split the triangle using cached edges from the bvhcast phase
+		// add coplanar triangles from B to the splitter for later classification
 		const coplanarIndices = intersectionMap.coplanarSet.get( ia );
 		const usedCoplanar = coplanarIndices && coplanarIndices.size > 0;
+		if ( usedCoplanar ) {
+
+			for ( const index of coplanarIndices ) {
+
+				const ib3 = 3 * index;
+				let ib0 = ib3 + 0;
+				let ib1 = ib3 + 1;
+				let ib2 = ib3 + 2;
+
+				if ( bIndex ) {
+
+					ib0 = bIndex.getX( ib0 );
+					ib1 = bIndex.getX( ib1 );
+					ib2 = bIndex.getX( ib2 );
+
+				}
+
+				_triB.a.fromBufferAttribute( bPosition, ib0 );
+				_triB.b.fromBufferAttribute( bPosition, ib1 );
+				_triB.c.fromBufferAttribute( bPosition, ib2 );
+
+				// transform into the common frame when needed
+				if ( ! invert ) {
+
+					_triB.a.applyMatrix4( _inverseMatrix );
+					_triB.b.applyMatrix4( _inverseMatrix );
+					_triB.c.applyMatrix4( _inverseMatrix );
+
+				}
+
+				splitter.addCoplanarTriangle( _triB );
+
+			}
+
+		}
+
+		// split the triangle using cached edges from the bvhcast phase
 		if ( splitter.addConstraintEdge ) {
 
 			// edges are already in the common frame (brush A's local) — no transform needed

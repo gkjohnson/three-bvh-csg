@@ -140,6 +140,7 @@ export class CDTTriangleSplitter {
 		this.triangleIndices = [];
 		this.constrainedEdges = [];
 		this.triangleConnectivity = [];
+		this.coplanarTriangles = [];
 
 		this.normal = new Vector3();
 		this.projOrigin = new Vector3();
@@ -192,6 +193,15 @@ export class CDTTriangleSplitter {
 		const { constrainedEdges, linePool } = this;
 		const e = linePool.getInstance().copy( edge );
 		constrainedEdges.push( e );
+
+	}
+
+	// Add a coplanar triangle for later classification of sub-triangles
+	addCoplanarTriangle( tri ) {
+
+		const { coplanarTriangles, trianglePool } = this;
+		const t = trianglePool.getInstance().copy( tri );
+		coplanarTriangles.push( t );
 
 	}
 
@@ -327,6 +337,7 @@ export class CDTTriangleSplitter {
 		this.triangleIndices.length = 0;
 		this.triangleConnectivity.length = 0;
 		this.constrainedEdges.length = 0;
+		this.coplanarTriangles.length = 0;
 
 	}
 

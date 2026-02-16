@@ -22,7 +22,17 @@ export class LegacyTriangleSplitter {
 
 		this.trianglePool = new Pool( () => new Triangle() );
 		this.triangles = [];
+		this.coplanarTriangles = [];
 		this.normal = new Vector3();
+
+	}
+
+	// Add a coplanar triangle for later classification of sub-triangles
+	addCoplanarTriangle( tri ) {
+
+		const { coplanarTriangles, trianglePool } = this;
+		const t = trianglePool.getInstance().copy( tri );
+		coplanarTriangles.push( t );
 
 	}
 
@@ -355,6 +365,7 @@ export class LegacyTriangleSplitter {
 
 		this.triangles.length = 0;
 		this.trianglePool.clear();
+		this.coplanarTriangles.length = 0;
 		this.coplanarTriangleUsed = false;
 
 	}
