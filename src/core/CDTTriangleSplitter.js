@@ -29,6 +29,11 @@ function edgesToIndices( edges, outputVertices, outputIndices, epsilonScale ) {
 		getIndex( edge0.start );
 		getIndex( edge0.end );
 
+	}
+
+	for ( let i = 0, l = edges.length; i < l; i ++ ) {
+
+		const edge0 = edges[ i ];
 		for ( let i1 = i + 1; i1 < l; i1 ++ ) {
 
 			const edge1 = edges[ i1 ];
@@ -289,9 +294,10 @@ export class CDTTriangleSplitter {
 			triangleIndices.push( indexKeys );
 			for ( let i = 0; i < 3; i ++ ) {
 
-				// construct a unique index key for this vertex
+				// use the original geometry index for base triangle corners,
+				// otherwise construct a unique index key for constraint edge vertices
 				const p0 = indexList[ i ];
-				indexKeys.push( indexKeyPrefix + p0 );
+				indexKeys.push( p0 < 3 ? baseIndices[ p0 ] : indexKeyPrefix + p0 );
 
 				// find the connected triangles
 				const p1 = indexList[ ( i + 1 ) % 3 ];
