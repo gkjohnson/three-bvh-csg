@@ -1,4 +1,4 @@
-import { Ray, Matrix4, DoubleSide, Vector3, Line3 } from 'three';
+import { Ray, Matrix4, DoubleSide, Line3 } from 'three';
 import { IntersectionMap } from '../IntersectionMap.js';
 import {
 	ADDITION,
@@ -16,12 +16,8 @@ import { Pool } from '../utils/Pool.js';
 const _ray = new Ray();
 const _matrix = new Matrix4();
 const _edge = new Line3();
-const _normal = new Vector3();
 const _coplanarEdges = [];
 const _edgePool = new Pool( () => new Line3() );
-
-const JITTER_EPSILON = 1e-8;
-const OFFSET_EPSILON = 1e-15;
 
 export const BACK_SIDE = - 1;
 export const FRONT_SIDE = 1;

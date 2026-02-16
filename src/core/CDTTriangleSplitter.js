@@ -195,16 +195,6 @@ export class CDTTriangleSplitter {
 
 	}
 
-	// Add a coplanar triangle for later classification of sub-triangles
-	addCoplanarTriangle( tri ) {
-
-		const { coplanarTriangles, trianglePool } = this;
-		const t = trianglePool.getInstance().copy( tri );
-
-		coplanarTriangles.push( t );
-
-	}
-
 	// Project a 3D point onto the 2D frame defined by _projOrigin / _projU / _projV
 	_to2D( point, target ) {
 
@@ -228,6 +218,7 @@ export class CDTTriangleSplitter {
 		const { triangles, trianglePool, triangleConnectivity, triangleIndices, linePool, baseTri, constrainedEdges, baseIndices } = this;
 
 		triangles.length = 0;
+		trianglePool.clear();
 
 		// Get the edges into a 2d frame
 		const edges2d = [];

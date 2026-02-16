@@ -23,9 +23,11 @@ const _barycoordTri = new Triangle();
 const _actions = [];
 const _builders = [];
 const _traversed = new Set();
-const _trianglePool = new Pool( () => new Triangle() );
-const _normal = new Vector3();
 const _midpoint = new Vector3();
+const _normal = new Vector3();
+const _coplanarTrianglePool = new Pool( () => new Triangle() );
+const _coplanarNormal = new Vector3();
+const _coplanarTriangles = [];
 
 // runs the given operation against a and b using the splitter and appending data to the
 // geometry builder.
@@ -158,10 +160,12 @@ function performSplitTriangleOperations(
 		splitter.initialize( _triA, ia0, ia1, ia2 );
 
 		// add coplanar triangles from B to the splitter for later classification
+		_coplanarTriangles.length = 0;
+		_coplanarTrianglePool.clear();
+		_triA.getNormal( _normal );
+
 		const coplanarIndices = intersectionMap.coplanarSet.get( ia );
-		const usedCoplanar = coplanarIndices && coplanarIndices.size > 0;
-		const coplanarTris = [];
-		if ( usedCoplanar ) {
+		if ( coplanarIndices ) {
 
 			for ( const index of coplanarIndices ) {
 
@@ -178,7 +182,7 @@ function performSplitTriangleOperations(
 
 				}
 
-				const inst = _trianglePool.getInstance();
+				const inst = _coplanarTrianglePool.getInstance();
 				inst.a.fromBufferAttribute( bPosition, ib0 );
 				inst.b.fromBufferAttribute( bPosition, ib1 );
 				inst.c.fromBufferAttribute( bPosition, ib2 );
@@ -192,7 +196,7 @@ function performSplitTriangleOperations(
 
 				}
 
-				coplanarTris.push( inst );
+				_coplanarTriangles.push( inst );
 
 			}
 
@@ -286,13 +290,13 @@ function performSplitTriangleOperations(
 
 			// check against the set of coplanar triangles to see if we can easily determine what to do
 			clippedTri.getMidpoint( _midpoint );
-			for ( let cp = 0, cpl = coplanarTris.length; cp < cpl; cp ++ ) {
+			for ( let cp = 0, cpl = _coplanarTriangles.length; cp < cpl; cp ++ ) {
 
-				const cpt = coplanarTris[ cp ];
+				const cpt = _coplanarTriangles[ cp ];
 				if ( cpt.containsPoint( _midpoint ) ) {
 
-					cpt.getNormal( _normal );
-					hitSide = splitter.normal.dot( _normal ) > 0 ? COPLANAR_ALIGNED : COPLANAR_OPPOSITE;
+					cpt.getNormal( _coplanarNormal );
+					hitSide = _normal.dot( _coplanarNormal ) > 0 ? COPLANAR_ALIGNED : COPLANAR_OPPOSITE;
 					break;
 
 				}
@@ -300,7 +304,7 @@ function performSplitTriangleOperations(
 			}
 
 			// if the clipped triangle is no coplanar then fall back to raycasting
-			if ( hitSide === null || true ) {
+			if ( hitSide === null ) {
 
 				hitSide = getHitSide( clippedTri, bBVH, raycastMatrix );
 
