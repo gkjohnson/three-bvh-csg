@@ -280,6 +280,9 @@ function performSplitTriangleOperations(
 			let hitSide = null;
 			if ( splitter.coplanarFlags && splitter.coplanarFlags[ ib ] !== null ) {
 
+				// TODO: move to constants
+				// TODO: add implementation for both triangles
+				// TODO: check multimaterial example
 				hitSide = splitter.coplanarFlags[ ib ] === 1 ? COPLANAR_ALIGNED : COPLANAR_OPPOSITE;
 
 			}
