@@ -342,18 +342,21 @@ function performSplitTriangleOperations(
 					// mark this triangle as traversed
 					_traversed.add( index );
 
+					// TODO: this is being skipped for now due to the connectivity graph not
+					// including small connections due to floating point error. Adding support
+					// for symmetric vertices across half edges may help this.
 					// push the connected triangle ids onto the stack
-					const connected = triangleConnectivity[ index ] || [];
-					for ( let c = 0, l = connected.length; c < l; c ++ ) {
+					// const connected = triangleConnectivity[ index ] || [];
+					// for ( let c = 0, l = connected.length; c < l; c ++ ) {
 
-						const connectedIndex = connected[ c ];
-						if ( triangles[ connectedIndex ] !== null ) {
+					// 	const connectedIndex = connected[ c ];
+					// 	if ( triangles[ connectedIndex ] !== null ) {
 
-							stack.push( connectedIndex );
+					// 		stack.push( connectedIndex );
 
-						}
+					// 	}
 
-					}
+					// }
 
 					// get the triangle indices
 					const indices = triangleIndices[ index ];
