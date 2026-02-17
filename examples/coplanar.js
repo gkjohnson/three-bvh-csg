@@ -54,6 +54,7 @@ const params = {
 	rotation: 0,
 	wireframe: false,
 	displayBrushes: true,
+	useCDTClipping: false,
 };
 
 let renderer, camera, scene, gui;
@@ -162,7 +163,7 @@ function init() {
 		const wireframe = new Mesh( result.geometry, new MeshBasicMaterial( {
 			wireframe: true,
 			color: 0,
-			opacity: 0.15,
+			opacity: 0.35,
 			transparent: true,
 		} ) );
 		group.add( wireframe );
@@ -209,6 +210,11 @@ function init() {
 	} );
 	gui.add( params, 'wireframe' );
 	gui.add( params, 'displayBrushes' );
+	gui.add( params, 'useCDTClipping' ).onChange( () => {
+
+		needsUpdate = true;
+
+	} );
 
 	window.addEventListener( 'resize', function () {
 
@@ -361,12 +367,13 @@ function render() {
 
 	if ( needsUpdate ) {
 
+		csgEvaluator.useCDTClipping = params.useCDTClipping;
+
 		needsUpdate = false;
 		scene.updateMatrixWorld( true );
 		for ( let i = 0; i < testCases.length; i ++ ) {
 
 			const tc = testCases[ i ];
-			const t0 = window.performance.now();
 
 			tc.brush2.position.lerpVectors( tc.posStart, tc.posEnd, params.overlap );
 			tc.brush2.quaternion.slerpQuaternions( tc.rotStart, tc.rotEnd, params.rotation );
