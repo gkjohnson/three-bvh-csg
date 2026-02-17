@@ -359,6 +359,8 @@ export class GeometryBuilder {
 		// TODO: can we have this dispose in the same way that a brush does?
 		// TODO: why are half edges and group indices not removed here?
 		target.boundsTree = null;
+		target.boundingBox = null;
+		target.boundingSphere = null;
 
 		if ( needsDisposal ) {
 
