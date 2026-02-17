@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Evaluator: Added "removeUnusedMaterial" option.
 - Brush: Added ability to call "prepareGeometry" on geometry modification, operation.
 - Ability to run operations on geometry with no index.
+- Evaluator: Add "useCDTClipping" option.
 
 ### Changed
 - Adjusted minimum three.js, three-mesh-bvh version.
@@ -50,7 +51,7 @@ Unpublished
 - Additional small performance improvement of 4-5% to speed up determination of whether a whole triangle is inside the companion mesh or not.
 - Adjust the hash logic for finding sibling edges to be more robust.
 - Support for `HOLLOW_INTERSECTION` and `HOLLOW_SUBTRACTION` to allow for non-manifold clipping results on the first brush.
-- Improve performance by ~10-30% when objects are intersecting by preemtively detecting potential coplanar faces and skipping a slow raycast path for non-coplanar faces. 
+- Improve performance by ~10-30% when objects are intersecting by preemtively detecting potential coplanar faces and skipping a slow raycast path for non-coplanar faces.
 
 ## [0.0.10] - 2023-09-03
 ### Added

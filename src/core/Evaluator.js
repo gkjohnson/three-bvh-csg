@@ -1,4 +1,4 @@
-// import { CDTTriangleSplitter } from './CDTTriangleSplitter.js';
+import { CDTTriangleSplitter } from './CDTTriangleSplitter.js';
 import { LegacyTriangleSplitter } from './LegacyTriangleSplitter.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
@@ -8,6 +8,22 @@ import * as GeometryUtils from './operations/GeometryUtils.js';
 
 // Utility class for performing CSG operations
 export class Evaluator {
+
+	get useCDTClipping() {
+
+		return this.triangleSplitter instanceof CDTTriangleSplitter;
+
+	}
+
+	set useCDTClipping( v ) {
+
+		if ( v !== this.useCDTClipping ) {
+
+			this.triangleSplitter = v ? new CDTTriangleSplitter() : new LegacyTriangleSplitter();
+
+		}
+
+	}
 
 	constructor() {
 

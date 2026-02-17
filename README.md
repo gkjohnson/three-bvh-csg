@@ -129,6 +129,14 @@ A class with the same interface as `THREE.Group` but used to group a list of Ope
 
 ## Evaluator
 
+### useCDTClipping
+
+```js
+useCDTClipping = false : Boolean
+```
+
+An experimental triangle clipping implementation that uses "Constrained Delaunay Triangulation" to triangulate clipped triangles. It cn provide a more robust, simple triangulation at the cost of performance in some cases.
+
 ### .useGroups
 
 ```js
