@@ -1,4 +1,4 @@
-import { CDTTriangleSplitter } from './CDTTriangleSplitter.js';
+import { PolygonSplitter } from './PolygonSplitter.js';
 import { LegacyTriangleSplitter } from './LegacyTriangleSplitter.js';
 import { OperationDebugData } from './debug/OperationDebugData.js';
 import { performOperation } from './operations/operations.js';
@@ -11,7 +11,7 @@ export class Evaluator {
 
 	get useCDTClipping() {
 
-		return this.triangleSplitter instanceof CDTTriangleSplitter;
+		return this.triangleSplitter instanceof PolygonSplitter;
 
 	}
 
@@ -19,7 +19,7 @@ export class Evaluator {
 
 		if ( v !== this.useCDTClipping ) {
 
-			this.triangleSplitter = v ? new CDTTriangleSplitter() : new LegacyTriangleSplitter();
+			this.triangleSplitter = v ? new PolygonSplitter() : new LegacyTriangleSplitter();
 
 		}
 

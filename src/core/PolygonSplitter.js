@@ -133,7 +133,7 @@ function edgesToIndices( edges, outputVertices, outputIndices, epsilonScale ) {
 
 }
 
-export class CDTTriangleSplitter {
+export class PolygonSplitter {
 
 	constructor() {
 
@@ -324,6 +324,58 @@ export class CDTTriangleSplitter {
 			}
 
 		}
+
+	}
+
+	getPolygonRegions() {
+
+		const { triangles, triangleConnectivity } = this;
+		const regions = [];
+		const visited = new Set();
+
+		for ( let i = 0, l = triangles.length; i < l; i ++ ) {
+
+			if ( visited.has( i ) ) continue;
+
+			const region = {
+				triangleIndices: [],
+				midpoint: new Vector3(),
+			};
+
+			// flood-fill connected sub-triangles via non-constraint edges
+			const stack = [ i ];
+			while ( stack.length > 0 ) {
+
+				const idx = stack.pop();
+				if ( visited.has( idx ) ) continue;
+				visited.add( idx );
+
+				region.triangleIndices.push( idx );
+
+				const connected = triangleConnectivity[ idx ];
+				if ( connected ) {
+
+					for ( let c = 0, cl = connected.length; c < cl; c ++ ) {
+
+						if ( ! visited.has( connected[ c ] ) ) {
+
+							stack.push( connected[ c ] );
+
+						}
+
+					}
+
+				}
+
+			}
+
+			// use the first sub-triangle's midpoint as the representative point
+			triangles[ region.triangleIndices[ 0 ] ].getMidpoint( region.midpoint );
+			regions.push( region );
+
+		}
+
+		return regions;
 
 	}
 

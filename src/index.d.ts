@@ -80,6 +80,22 @@ export class LegacyTriangleSplitter {
 
 }
 
+export class PolygonSplitter {
+
+	trianglePool: TrianglePool;
+	triangles: Triangle[];
+	triangleIndices: Array<Array<number | string>>;
+	triangleConnectivity: Array<Array<number>>;
+	normal: Vector3;
+
+	initialize( tri: Triangle, i0?: number, i1?: number, i2?: number ): void;
+	addConstraintEdge( edge: Line3 ): void;
+	triangulate(): void;
+	getPolygonRegions(): Array<{ triangleIndices: number[], midpoint: Vector3 }>;
+	reset(): void;
+
+}
+
 export class HalfEdgeMap {
 
 	constructor( geometry?: BufferGeometry );
