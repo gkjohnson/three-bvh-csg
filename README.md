@@ -129,7 +129,23 @@ A class with the same interface as `THREE.Group` but used to group a list of Ope
 
 ## Evaluator
 
-### useCDTClipping
+### .debug
+
+```js
+debug : OperationDebugData
+```
+
+The debug data object. Set `debug.enabled = true` before calling `evaluate()` to collect intersection edges and triangle data. See `OperationDebugData`.
+
+### .attributes
+
+```js
+attributes = [ 'position', 'uv', 'normal' ] : Array<String>
+```
+
+The set of geometry attributes to transfer to the result geometry during CSG operations.
+
+### .useCDTClipping
 
 ```js
 useCDTClipping = false : Boolean
@@ -206,7 +222,18 @@ In this case, the arguments passed to `evaluate` is the `root` as `brushA`, the 
 
 ## OperationDebugData
 
-This class is used in the constructor of the Evaluator class. When the Evaluator is defined the constructor creates a debug property of type OperationDebugData and it is used to set the debug context, that is `addEdge` and `addIntersectionTriangles` to, for example, an EdgesHelper or a TriangleHelper.
+Debug data class used via `Evaluator.debug`. Enable before calling `evaluate()` to collect intersection information, then read it after the operation completes to visualize results with the helper classes.
+
+```js
+evaluator.debug.enabled = true;
+evaluator.evaluate( brushA, brushB, SUBTRACTION, result );
+
+edgesHelper.setEdges( evaluator.debug.intersectionEdges );
+trisHelper.setTriangles( [
+  ...evaluator.debug.triangleIntersectsA.getTrianglesAsArray(),
+  ...evaluator.debug.triangleIntersectsA.getIntersectionsAsArray()
+] );
+```
 
 ### .enabled
 
@@ -214,15 +241,31 @@ This class is used in the constructor of the Evaluator class. When the Evaluator
 enabled = false : Boolean
 ```
 
-Whether to collect the debug data during CSG operations which has a performance a memory cost.
+Whether to collect the debug data during CSG operations which has a performance and memory cost.
 
 ### .intersectionEdges
 
 ```js
-intersectionEdges = [] : Line3
+intersectionEdges = [] : Array<Line3>
 ```
 
 A list of edges formed by intersecting triangles during the CSG process.
+
+### .triangleIntersectsA
+
+```js
+triangleIntersectsA : TriangleIntersectionSets
+```
+
+Intersection data for geometry A. Use `.getTrianglesAsArray()` to get the triangles involved and `.getIntersectionsAsArray()` to get the triangles they intersect with.
+
+### .triangleIntersectsB
+
+```js
+triangleIntersectsB : TriangleIntersectionSets
+```
+
+Same as above but for geometry B.
 
 <!--
 ## EvaluatorWorker
@@ -255,7 +298,7 @@ Sets the visibility of the grid on the mesh.
 
 ## HalfEdgeMap
 
-TODO
+A data structure encoding half-edge connectivity for an indexed triangle geometry. Maps each triangle edge to its sibling edge on the adjacent triangle, enabling fast traversal of connected triangle regions.
 
 ### constructor
 
@@ -285,7 +328,23 @@ updateFrom( geometry : BufferGeometry ) : void
 
 _extends THREE.InstancedMesh_
 
-Helper class for generating spheres to display.
+Helper class for visualizing points as small spheres.
+
+### constructor
+
+```js
+constructor( count = 1000 : Number, points = [] : Vector3[] )
+```
+
+Creates the helper with a maximum instance count and an optional initial set of points.
+
+### .color
+
+```js
+color : Color
+```
+
+The color of the displayed spheres.
 
 ### .setPoints
 
@@ -293,14 +352,22 @@ Helper class for generating spheres to display.
 setPoints( points : Vector3[] ) : void;
 ```
 
-Sets the points, passed as Vector3, and visualizes them as spheres.
+Sets the points to visualize.
 
 
 ## EdgesHelper
 
 _extends THREE.LineSegments_
 
-Helper class for generating a line to display the provided edges.
+Helper class for displaying a set of edges as line segments.
+
+### .color
+
+```js
+color : Color
+```
+
+The color of the displayed edges.
 
 ### .setEdges
 
@@ -308,18 +375,34 @@ Helper class for generating a line to display the provided edges.
 setEdges( edges : Line3[] ) : void
 ```
 
-Sets the list of lines to be visualized.
+Sets the edges to visualize.
 
-## HalfEdgeMapHelper
+## HalfEdgeHelper
 
 _extends EdgesHelper_
 
-This is a helper class that takes the `HalfEdgeMap` object and visualizes the connectivity between triangles.
+Helper class that visualizes the connectivity between triangles from a `HalfEdgeMap`.
+
+### .straightEdges
+
+```js
+straightEdges = false : Boolean
+```
+
+When `true`, draws straight lines between connected triangle centers. When `false`, draws lines to the shared edge midpoint.
+
+### .displayDisconnectedEdges
+
+```js
+displayDisconnectedEdges = false : Boolean
+```
+
+When `true`, also displays unmatched / disconnected edges.
 
 ### .setHalfEdges
 
 ```js
-setHalfEdges( geometry : Geometry, halfEdges : HalfEdgeMap ) : void
+setHalfEdges( geometry : BufferGeometry, halfEdges : HalfEdgeMap ) : void
 ```
 
 Sets the half edge map to visualize along with the associated geometry.
@@ -328,17 +411,31 @@ Sets the half edge map to visualize along with the associated geometry.
 
 _extends THREE.Group_
 
-Helper class for displaying a set of triangles. In the _Simple CSG_ example is possible to enable/disable the visibility of the triangles helper via `displayTriangleIntersections` checkbox.
+Helper class for displaying a set of triangles as both filled faces and wireframe edges.
 
-The helper is composed of two meshes, one is a mesh with a MeshPhongMaterial and the other is a mesh with a LineBasicMaterial.
+### .color
+
+```js
+color : Color
+```
+
+The color of the displayed triangles and edges.
+
+### .side
+
+```js
+side = DoubleSide : Number
+```
+
+The face culling mode for the triangle mesh. Accepts `THREE.FrontSide`, `THREE.BackSide`, or `THREE.DoubleSide`.
 
 ### .setTriangles
 
 ```js
-setTriangles( triangles:  Triangle[] ) : void
+setTriangles( triangles : Triangle[] ) : void
 ```
 
-Sets the geometry of the mesh and the line with the position of the triangles passed as a parameter of the method.
+Sets the triangles to visualize.
 
 ## Functions
 
