@@ -286,6 +286,7 @@ describe.each( splitters )( '%s', ( _name, SplitterClass ) => {
 
 		it( 'should satisfy invariants for 100 random triangle pairs.', () => {
 
+			let testedCount = 0;
 			const random = mulberry32( 42 );
 			const randomVec = () => new Vector3(
 				( random() - 0.5 ) * 2,
@@ -303,8 +304,11 @@ describe.each( splitters )( '%s', ( _name, SplitterClass ) => {
 
 				const results = splitTriangle( SplitterClass, triA, triB );
 				validateSplitResult( triA, results );
+				testedCount ++;
 
 			}
+
+			expect( testedCount ).toBeGreaterThan( 0 );
 
 		} );
 
