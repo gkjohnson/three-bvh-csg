@@ -101,11 +101,10 @@ export function collectIntersectingTriangles( a, b ) {
 
 					} else {
 
-						// non-coplanar
-						const ea = _edgePool.getInstance().copy( _edge );
-						const eb = _edgePool.getInstance().copy( _edge );
-						aIntersections.addIntersectionEdge( va, ea );
-						bIntersections.addIntersectionEdge( vb, eb );
+						// non-coplanar — share the same edge instance for symmetric splitting
+						const e = _edgePool.getInstance().copy( _edge );
+						aIntersections.addIntersectionEdge( va, e );
+						bIntersections.addIntersectionEdge( vb, e );
 
 					}
 
