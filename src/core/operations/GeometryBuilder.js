@@ -113,11 +113,11 @@ export class GeometryBuilder {
 
 		}
 
-		for ( const key in attributeData.attributes ) {
+		for ( const key in attributeData ) {
 
 			if ( ! relevantAttributes.includes( key ) ) {
 
-				attributeData.delete( key );
+				delete attributeData[ key ];
 
 			}
 
