@@ -42,13 +42,15 @@ function getBoundaryEdge( geometry, triangleIndex, edgeIndex, line = null ) {
 	const nextEdgeIndex = ( edgeIndex + 1 ) % 3;
 	const vertexIndexA = getTriangleVertexIndex( geometry, triangleIndex, edgeIndex );
 	const vertexIndexB = getTriangleVertexIndex( geometry, triangleIndex, nextEdgeIndex );
+	const originalVertexIndices = [ vertexIndexA, vertexIndexB ];
 	const vertexA = line ? line.start.clone() : getTriangleVertex( geometry, triangleIndex, edgeIndex, new Vector3() );
 	const vertexB = line ? line.end.clone() : getTriangleVertex( geometry, triangleIndex, nextEdgeIndex, new Vector3() );
 
 	return {
 		triangleIndex,
 		edgeIndex,
-		vertexIndices: [ vertexIndexA, vertexIndexB ],
+		vertexIndices: line ? null : originalVertexIndices,
+		originalVertexIndices,
 		vertexHashes: [ hashVertex3( vertexA ), hashVertex3( vertexB ) ],
 		vertices: [ vertexA, vertexB ],
 		line: line ? line.clone() : new Line3( vertexA.clone(), vertexB.clone() ),
@@ -103,15 +105,33 @@ class DisjointSet {
 
 	find( value ) {
 
-		const parent = this.parents.get( value );
-		if ( parent === value ) {
+		if ( ! this.parents.has( value ) ) {
 
-			return value;
+			throw new Error( `Cannot find value ${ value } because it has not been added to the disjoint set.` );
 
 		}
 
-		const root = this.find( parent );
-		this.parents.set( value, root );
+		let root = value;
+		while ( this.parents.get( root ) !== root ) {
+
+			root = this.parents.get( root );
+			if ( ! this.parents.has( root ) ) {
+
+				throw new Error( `Cannot find parent ${ root } in the disjoint set.` );
+
+			}
+
+		}
+
+		let current = value;
+		while ( this.parents.get( current ) !== root ) {
+
+			const parent = this.parents.get( current );
+			this.parents.set( current, root );
+			current = parent;
+
+		}
+
 		return root;
 
 	}
@@ -220,14 +240,15 @@ export function getOpenBoundaryEdges( geometry, options = {} ) {
 		matchDisjointEdges = true,
 		useAllAttributes = false,
 	} = options;
+	const effectiveMatchDisjointEdges = useAllAttributes ? false : matchDisjointEdges;
 
 	const halfEdges = new HalfEdgeMap();
-	halfEdges.matchDisjointEdges = matchDisjointEdges;
+	halfEdges.matchDisjointEdges = effectiveMatchDisjointEdges;
 	halfEdges.useAllAttributes = useAllAttributes;
 	halfEdges.useDrawRange = false;
 	halfEdges.updateFrom( geometry );
 
-	if ( matchDisjointEdges ) {
+	if ( effectiveMatchDisjointEdges ) {
 
 		return getDisjointOpenBoundaryEdges( geometry, halfEdges );
 

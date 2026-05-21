@@ -169,7 +169,8 @@ export function computeMeshVolume( mesh : Mesh | BufferGeometry ) : number;
 export interface OpenBoundaryEdge {
 	triangleIndex: number;
 	edgeIndex: number;
-	vertexIndices: [ number, number ];
+	vertexIndices: [ number, number ] | null;
+	originalVertexIndices: [ number, number ];
 	vertexHashes: [ string, string ];
 	vertices: [ Vector3, Vector3 ];
 	line: Line3;
@@ -192,6 +193,10 @@ export interface GeometryDiagnostic {
 
 export interface GeometryDiagnosticOptions {
 	matchDisjointEdges?: boolean;
+	/**
+	 * When true, matching is based on every vertex attribute. Disjoint edge
+	 * matching is disabled so attribute-specific open edges stay distinct.
+	 */
 	useAllAttributes?: boolean;
 }
 

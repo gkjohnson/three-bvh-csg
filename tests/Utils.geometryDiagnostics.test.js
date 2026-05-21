@@ -67,6 +67,8 @@ describe( 'geometryDiagnostics', () => {
 		expect( diagnostic.openEdgeCount ).toBe( 5 );
 		expect( openFragment.line.start.x ).toBe( 1 );
 		expect( openFragment.line.end.x ).toBe( 2 );
+		expect( openFragment.vertexIndices ).toBeNull();
+		expect( openFragment.originalVertexIndices ).toEqual( [ 0, 1 ] );
 
 	} );
 
