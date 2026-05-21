@@ -165,3 +165,47 @@ export class HalfEdgeHelper extends EdgesHelper {
 }
 
 export function computeMeshVolume( mesh : Mesh | BufferGeometry ) : number;
+
+export interface OpenBoundaryEdge {
+	triangleIndex: number;
+	edgeIndex: number;
+	vertexIndices: [ number, number ] | null;
+	originalVertexIndices: [ number, number ];
+	vertexHashes: [ string, string ];
+	vertices: [ Vector3, Vector3 ];
+	line: Line3;
+}
+
+export interface OpenTriangleSet {
+	triangleIndices: number[];
+	edges: OpenBoundaryEdge[];
+	triangles: Triangle[];
+}
+
+export interface GeometryDiagnostic {
+	isSolid: boolean;
+	isWaterTight: boolean;
+	openEdgeCount: number;
+	openTriangleCount: number;
+	openEdges: OpenBoundaryEdge[];
+	openTriangleSets: OpenTriangleSet[];
+}
+
+export interface GeometryDiagnosticOptions {
+	matchDisjointEdges?: boolean;
+	/**
+	 * When true, matching is based on every vertex attribute. Disjoint edge
+	 * matching is disabled so attribute-specific open edges stay distinct.
+	 */
+	useAllAttributes?: boolean;
+}
+
+export function getTriangle( geometry : Mesh | BufferGeometry, triangleIndex : number, target? : Triangle ) : Triangle;
+
+export function getOpenBoundaryEdges( geometry : Mesh | BufferGeometry, options? : GeometryDiagnosticOptions ) : OpenBoundaryEdge[];
+
+export function getOpenTriangleSets( geometry : Mesh | BufferGeometry, options? : GeometryDiagnosticOptions ) : OpenTriangleSet[];
+
+export function getGeometryDiagnostic( geometry : Mesh | BufferGeometry, options? : GeometryDiagnosticOptions ) : GeometryDiagnostic;
+
+export function isWaterTight( geometry : Mesh | BufferGeometry ) : boolean;

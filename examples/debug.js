@@ -10,6 +10,7 @@ import {
 	EdgesHelper,
 	TriangleSetHelper,
 	logTriangleDefinitions,
+	getGeometryDiagnostic,
 	GridMaterial,
 	ADDITION,
 	SUBTRACTION,
@@ -28,6 +29,9 @@ const params = {
 	enableDebugTelemetry: true,
 	displayIntersectionEdges: false,
 	displayTriangleIntersections: false,
+	displayOpenEdges: true,
+	displayOpenTriangleSets: true,
+	logOpenTriangleSets: () => logOpenTriangleSets(),
 	displayBrush1BVH: false,
 	displayBrush2BVH: false,
 
@@ -37,9 +41,10 @@ let renderer, camera, scene, gui, outputContainer;
 let controls;
 let brush1, brush2;
 let resultObject, wireframeResult, light, light2, originalMaterial;
-let edgesHelper, trisHelper;
+let edgesHelper, trisHelper, openEdgesHelper, openTrisHelper;
 let bvhHelper1, bvhHelper2;
 let bunnyGeom;
+let lastDiagnostic = null;
 let needsUpdate = true;
 let csgEvaluator;
 
@@ -170,6 +175,14 @@ async function init() {
 	trisHelper.color.set( 0x00BCD4 );
 	scene.add( trisHelper );
 
+	openEdgesHelper = new EdgesHelper();
+	openEdgesHelper.color.set( 0xffc107 );
+	scene.add( openEdgesHelper );
+
+	openTrisHelper = new TriangleSetHelper();
+	openTrisHelper.color.set( 0xff5722 );
+	scene.add( openTrisHelper );
+
 	bvhHelper1 = new MeshBVHHelper( brush1, 20 );
 	bvhHelper2 = new MeshBVHHelper( brush2, 20 );
 	scene.add( bvhHelper1, bvhHelper2 );
@@ -190,6 +203,9 @@ async function init() {
 	gui.add( params, 'enableDebugTelemetry' ).onChange( () => needsUpdate = true );
 	gui.add( params, 'displayIntersectionEdges' );
 	gui.add( params, 'displayTriangleIntersections' );
+	gui.add( params, 'displayOpenEdges' );
+	gui.add( params, 'displayOpenTriangleSets' );
+	gui.add( params, 'logOpenTriangleSets' );
 	gui.add( params, 'displayBrush1BVH' );
 	gui.add( params, 'displayBrush2BVH' );
 
@@ -203,6 +219,26 @@ async function init() {
 	}, false );
 
 	render();
+
+}
+
+function logOpenTriangleSets() {
+
+	if ( ! lastDiagnostic || lastDiagnostic.openTriangleSets.length === 0 ) {
+
+		console.log( 'No open triangle sets found.' );
+		return;
+
+	}
+
+	lastDiagnostic.openTriangleSets.forEach( ( set, index ) => {
+
+		console.group( `Open triangle set ${ index }` );
+		console.log( `Triangles: ${ set.triangleIndices.join( ', ' ) }` );
+		logTriangleDefinitions( ...set.triangles );
+		console.groupEnd();
+
+	} );
 
 }
 
@@ -228,7 +264,16 @@ function render() {
 		resultObject.material = resultObject.material.map( m => materialMap.get( m ) );
 
 		const deltaTime = window.performance.now() - startTime;
-		outputContainer.innerText = `${ deltaTime.toFixed( 3 ) }ms`;
+		lastDiagnostic = getGeometryDiagnostic( resultObject.geometry );
+		outputContainer.innerText = [
+			`${ deltaTime.toFixed( 3 ) }ms`,
+			`solid: ${ lastDiagnostic.isSolid }`,
+			`open edges: ${ lastDiagnostic.openEdgeCount }`,
+			`open triangle sets: ${ lastDiagnostic.openTriangleSets.length }`,
+		].join( '\n' );
+
+		openEdgesHelper.setEdges( lastDiagnostic.openEdges.map( edge => edge.line ) );
+		openTrisHelper.setTriangles( lastDiagnostic.openTriangleSets.flatMap( set => set.triangles ) );
 
 		if ( enableDebugTelemetry ) {
 
@@ -262,6 +307,8 @@ function render() {
 
 	edgesHelper.visible = enableDebugTelemetry && params.displayIntersectionEdges;
 	trisHelper.visible = enableDebugTelemetry && params.displayTriangleIntersections;
+	openEdgesHelper.visible = params.displayOpenEdges;
+	openTrisHelper.visible = params.displayOpenTriangleSets;
 
 	bvhHelper1.visible = params.displayBrush1BVH;
 	bvhHelper2.visible = params.displayBrush2BVH;
@@ -272,6 +319,3 @@ function render() {
 	renderer.render( scene, camera );
 
 }
-
-
-
