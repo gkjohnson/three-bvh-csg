@@ -5,6 +5,7 @@ import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
 import { GeometryBuilder } from './operations/GeometryBuilder.js';
 import * as GeometryUtils from './operations/GeometryUtils.js';
+import { conformGeometry } from './operations/conformGeometry.js';
 
 // Utility class for performing CSG operations
 export class Evaluator {
@@ -33,6 +34,18 @@ export class Evaluator {
 		this.useGroups = true;
 		this.consolidateGroups = true;
 		this.removeUnusedMaterials = true;
+		// Opt-in watertight post-process for the CDT path: weld seam vertices by position,
+		// conform T-junctions and zipper seam tears into a closed 2-manifold.
+		this.consolidateVertices = false;
+		this.consolidateVerticesTolerance = 2e-4;
+		this.conformTolerance = 2e-4;
+		this.seamRegistryTolerance = 3e-4;
+		// Terminal-only: collapse the straight-edge / coplanar subdivision vertices the CDT
+		// accumulates each cut. Geometry-exact and watertight, but it removes vertices a
+		// SUBSEQUENT boolean would need to match its new seam against — so only enable it on
+		// the final result of an iterated chain, never per intermediate op.
+		this.decimate = false;
+		this.decimateMaxPass = 64;
 		this.debug = new OperationDebugData();
 
 	}
@@ -95,17 +108,23 @@ export class Evaluator {
 
 		}
 
+		// only the CDT splitter supports the seam-welding path
+		const consolidateVertices = this.consolidateVertices && 'consolidateVertices' in triangleSplitter;
+		triangleSplitter.consolidateVertices = consolidateVertices;
+
 		// prepare the attribute data buffer information
 		targetBrushes.forEach( ( brush, i ) => {
 
 			geometryBuilders[ i ].initFromGeometry( a.geometry, attributes );
+			geometryBuilders[ i ].weldSeams = consolidateVertices;
+			geometryBuilders[ i ].weldTolerance = this.consolidateVerticesTolerance;
 			GeometryUtils.trimAttributes( brush.geometry, attributes );
 
 		} );
 
 		// run the operation to fill the list of attribute data
 		debug.init();
-		performOperation( a, b, operations, triangleSplitter, geometryBuilders, { useGroups } );
+		performOperation( a, b, operations, triangleSplitter, geometryBuilders, { useGroups, seamTolerance: consolidateVertices ? this.seamRegistryTolerance : 0 } );
 		debug.complete();
 
 		// get the materials and group ranges
@@ -139,6 +158,12 @@ export class Evaluator {
 
 			const targetGeometry = brush.geometry;
 			geometryBuilders[ i ].buildGeometry( targetGeometry, groups );
+
+			if ( consolidateVertices ) {
+
+				conformGeometry( targetGeometry, { weldTolerance: this.consolidateVerticesTolerance, conformTolerance: this.conformTolerance, decimate: this.decimate === true, decimateMaxPass: this.decimateMaxPass } );
+
+			}
 
 			// assign brush A's transform to the result so the geometry is in a stable position
 			a.matrixWorld.decompose( brush.position, brush.quaternion, brush.scale );

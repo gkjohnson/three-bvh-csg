@@ -1,9 +1,11 @@
 import { areSharedArrayBuffersSupported } from './utils/geometryUtils.js';
 
-function ceilToFourByteStride( byteLength ) {
+function ceilToEightByteStride( byteLength ) {
 
+	// 8-byte alignment so the same buffer can be reinterpreted as any typed array
+	// (including Float64Array, whose byteLength must be a multiple of 8).
 	byteLength = ~ ~ byteLength;
-	return byteLength + 4 - byteLength % 4;
+	return byteLength + 8 - byteLength % 8;
 
 }
 
@@ -52,7 +54,7 @@ export class TypeBackedArray {
 		// ceil to the nearest 4 bytes so we can replace the array with any type using the same buffer
 		const type = this.type;
 		const bufferType = areSharedArrayBuffersSupported() ? SharedArrayBuffer : ArrayBuffer;
-		const newArray = new type( new bufferType( ceilToFourByteStride( size * type.BYTES_PER_ELEMENT ) ) );
+		const newArray = new type( new bufferType( ceilToEightByteStride( size * type.BYTES_PER_ELEMENT ) ) );
 		if ( this.array ) {
 
 			newArray.set( this.array, 0 );

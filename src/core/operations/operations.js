@@ -11,6 +11,7 @@ import { getTriCount } from '../utils/geometryUtils.js';
 import { HOLLOW_INTERSECTION, HOLLOW_SUBTRACTION } from '../constants.js';
 import { isTriDegenerate } from '../utils/triangleUtils.js';
 import { Pool } from '../utils/Pool.js';
+import { resetSeamRegistry, registerSeam } from './seamRegistry.js';
 
 const _matrix = new Matrix4();
 const _inverseMatrix = new Matrix4();
@@ -40,7 +41,9 @@ export function performOperation(
 	options = {},
 ) {
 
-	const { useGroups = true } = options;
+	const { useGroups = true, seamTolerance = 0 } = options;
+	// reset the canonical seam registry; collect registers curve endpoints, split snaps onto them
+	resetSeamRegistry( seamTolerance );
 	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b );
 
 	const resultGroups = [];
@@ -371,6 +374,13 @@ function performSplitTriangleOperations(
 
 					// get the barycentric coordinates relative to the base triangle
 					const tri = triangles[ index ];
+
+					// canonicalize seam vertices: register-or-get so both operands and
+					// adjacent triangles emit identical positions along the intersection curve.
+					const sa = registerSeam( tri.a.x, tri.a.y, tri.a.z ); if ( sa ) tri.a.set( sa[ 0 ], sa[ 1 ], sa[ 2 ] );
+					const sb = registerSeam( tri.b.x, tri.b.y, tri.b.z ); if ( sb ) tri.b.set( sb[ 0 ], sb[ 1 ], sb[ 2 ] );
+					const sc = registerSeam( tri.c.x, tri.c.y, tri.c.z ); if ( sc ) tri.c.set( sc[ 0 ], sc[ 1 ], sc[ 2 ] );
+
 					_triA.getBarycoord( tri.a, _barycoordTri.a );
 					_triA.getBarycoord( tri.b, _barycoordTri.b );
 					_triA.getBarycoord( tri.c, _barycoordTri.c );

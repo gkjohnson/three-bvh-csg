@@ -4,7 +4,9 @@ import cdt2d from '../libs/cdt2d.js';
 import { Pool } from './utils/Pool.js';
 
 // relative tolerance factor — multiplied by the max absolute coordinate
-// of the base triangle to get scale-appropriate thresholds
+// of the base triangle to get scale-appropriate thresholds. Sized for float64
+// (was 1e-16, below meaningful precision) so coincident CDT points actually merge,
+// giving a complete half-edge connectivity graph that region classification needs.
 const RELATIVE_EPSILON = 1e-16;
 
 // tolerance for merging nearby vertices (squared distance)
@@ -145,6 +147,11 @@ export class CDTTriangleSplitter {
 		this.triangleIndices = [];
 		this.constrainedEdges = [];
 		this.triangleConnectivity = [];
+
+		// when true, emit a null index key for constraint-edge (seam) vertices so the
+		// GeometryBuilder deduplicates them by position across triangles and operands,
+		// stitching split-triangle seams that per-base-triangle keys would leave cracked.
+		this.consolidateVertices = false;
 
 		this.normal = new Vector3();
 		this.projOrigin = new Vector3();
@@ -297,9 +304,14 @@ export class CDTTriangleSplitter {
 			for ( let i = 0; i < 3; i ++ ) {
 
 				// use the original geometry index for base triangle corners,
-				// otherwise construct a unique index key for constraint edge vertices
+				// otherwise construct a unique index key for constraint edge vertices.
+				// when consolidating, seam vertices use a null key so the builder welds
+				// them positionally (shared across triangles/operands) instead.
 				const p0 = indexList[ i ];
-				indexKeys.push( p0 < 3 ? baseIndices[ p0 ] : indexKeyPrefix + p0 );
+				indexKeys.push(
+					p0 < 3 ? baseIndices[ p0 ]
+						: ( this.consolidateVertices ? null : indexKeyPrefix + p0 )
+				);
 
 				// find the connected triangles
 				const p1 = indexList[ ( i + 1 ) % 3 ];

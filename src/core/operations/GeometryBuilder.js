@@ -1,6 +1,24 @@
 import { TypeBackedArray } from '../TypeBackedArray.js';
 import { Vector3, Vector4, BufferAttribute } from 'three';
 
+// integer spatial hash + neighbour offsets (own cell first) for the seam weld grid
+function _weldHash( a, b, c ) {
+
+	return ( ( a * 73856093 ) ^ ( b * 19349663 ) ^ ( c * 83492791 ) ) | 0;
+
+}
+
+const _WELD_OFFSETS = ( () => {
+
+	const a = [ 0, 0, 0 ];
+	for ( let dx = - 1; dx <= 1; dx ++ )
+		for ( let dy = - 1; dy <= 1; dy ++ )
+			for ( let dz = - 1; dz <= 1; dz ++ )
+				if ( dx !== 0 || dy !== 0 || dz !== 0 ) a.push( dx, dy, dz );
+	return a;
+
+} )();
+
 const _vec3 = new Vector3();
 const _vec3_0 = new Vector3();
 const _vec3_1 = new Vector3();
@@ -86,6 +104,57 @@ export class GeometryBuilder {
 		this.forwardIndexMap = new Map();
 		this.invertedIndexMap = new Map();
 		this.interpolatedFields = {};
+
+		// positional vertex welding for seam (null-keyed) vertices. When enabled, seam
+		// vertices are deduplicated by quantized position across all triangles and both
+		// operand passes — stitching split-triangle seams into a watertight result.
+		// Persists across clearIndexMap() (pass boundaries) and is reset in clear().
+		this.weldSeams = false;
+		this.weldTolerance = 1e-5;
+		this.weldCells = new Map();
+
+	}
+
+	// Find an already-emitted vertex within weldTolerance of (x,y,z), or -1. Uses an
+	// integer spatial hash (no per-probe string allocation) and probes the own cell first
+	// so the common hit returns after one bucket; collisions are resolved by distance.
+	_findWeldedIndex( x, y, z ) {
+
+		const tol = this.weldTolerance;
+		const tol2 = tol * tol;
+		const cx = Math.floor( x / tol ), cy = Math.floor( y / tol ), cz = Math.floor( z / tol );
+		const cells = this.weldCells;
+		const OFF = _WELD_OFFSETS;
+		for ( let oi = 0; oi < 27; oi ++ ) {
+
+			const bucket = cells.get( _weldHash( cx + OFF[ 3 * oi ], cy + OFF[ 3 * oi + 1 ], cz + OFF[ 3 * oi + 2 ] ) );
+			if ( ! bucket ) continue;
+			for ( let i = 0, l = bucket.length; i < l; i += 4 ) {
+
+				const ex = bucket[ i ] - x, ey = bucket[ i + 1 ] - y, ez = bucket[ i + 2 ] - z;
+				if ( ex * ex + ey * ey + ez * ez < tol2 ) return bucket[ i + 3 ];
+
+			}
+
+		}
+
+		return - 1;
+
+	}
+
+	_registerWeldedIndex( x, y, z, idx ) {
+
+		const tol = this.weldTolerance;
+		const key = _weldHash( Math.floor( x / tol ), Math.floor( y / tol ), Math.floor( z / tol ) );
+		let bucket = this.weldCells.get( key );
+		if ( ! bucket ) {
+
+			bucket = [];
+			this.weldCells.set( key, bucket );
+
+		}
+
+		bucket.push( x, y, z, idx );
 
 	}
 
@@ -185,6 +254,25 @@ export class GeometryBuilder {
 
 	}
 
+	// push the interpolated attribute data for a brand-new vertex at the given barycoord
+	_appendInterpolatedVertex( barycoord, invert ) {
+
+		const { attributeData, interpolatedFields } = this;
+		for ( const key in interpolatedFields ) {
+
+			// handle normals and positions specially because they require transforming
+			const arr = attributeData[ key ];
+			const isDirection = key === 'normal' || key === 'tangent';
+			const invertVector = invert && isDirection;
+			const itemSize = arr.itemSize;
+			const [ v0, v1, v2 ] = interpolatedFields[ key ];
+			getBarycoordValue( v0, v1, v2, barycoord, _vec4, isDirection, invertVector );
+			pushItemSize( _vec4, itemSize, arr );
+
+		}
+
+	}
+
 	// push data from the given barycoord onto the geometry
 	appendInterpolatedAttributeData( group, barycoord, index = null, invert = false ) {
 
@@ -195,8 +283,35 @@ export class GeometryBuilder {
 
 		}
 
-		const indexMap = invert ? invertedIndexMap : forwardIndexMap;
 		const indexData = groupIndices[ group ];
+
+		// seam (null-keyed) vertices: deduplicate by position so coincident vertices
+		// emitted by adjacent split triangles / opposing operands become one vertex.
+		// Welding ignores `invert` on purpose so the two surfaces sharing the
+		// intersection curve stitch together along the seam.
+		if ( this.weldSeams && index === null && interpolatedFields.position ) {
+
+			const [ v0, v1, v2 ] = interpolatedFields.position;
+			getBarycoordValue( v0, v1, v2, barycoord, _vec4, false, false );
+			const x = _vec4.x, y = _vec4.y, z = _vec4.z;
+
+			const found = this._findWeldedIndex( x, y, z );
+			if ( found !== - 1 ) {
+
+				indexData.push( found );
+				return;
+
+			}
+
+			const newIndex = attributeData.position.count;
+			this._appendInterpolatedVertex( barycoord, invert );
+			this._registerWeldedIndex( x, y, z, newIndex );
+			indexData.push( newIndex );
+			return;
+
+		}
+
+		const indexMap = invert ? invertedIndexMap : forwardIndexMap;
 		if ( index !== null && indexMap.has( index ) ) {
 
 			indexData.push( indexMap.get( index ) );
@@ -205,19 +320,7 @@ export class GeometryBuilder {
 
 			indexMap.set( index, attributeData.position.count );
 			indexData.push( attributeData.position.count );
-
-			for ( const key in interpolatedFields ) {
-
-				// handle normals and positions specially because they require transforming
-				const arr = attributeData[ key ];
-				const isDirection = key === 'normal' || key === 'tangent';
-				const invertVector = invert && isDirection;
-				const itemSize = arr.itemSize;
-				const [ v0, v1, v2 ] = interpolatedFields[ key ];
-				getBarycoordValue( v0, v1, v2, barycoord, _vec4, isDirection, invertVector );
-				pushItemSize( _vec4, itemSize, arr );
-
-			}
+			this._appendInterpolatedVertex( barycoord, invert );
 
 		}
 
@@ -395,6 +498,10 @@ export class GeometryBuilder {
 
 		} );
 		this.clearIndexMap();
+
+		// seam-weld grid is global within an evaluate() — reset only on full clear,
+		// NOT in clearIndexMap (which fires at operand-pass boundaries).
+		this.weldCells.clear();
 
 	}
 
