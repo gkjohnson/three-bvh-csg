@@ -23,6 +23,41 @@ describe( 'Evaluator', () => {
 
 	} );
 
+	it( 'should not retain stale attribute keys when attributes list is reduced between calls.', () => {
+
+		// Reuse one Evaluator across two calls whose brushes advertise different attribute
+		// sets. First call uses the default [position, uv, normal] on geometry that has all
+		// three; second call narrows the list to [position, normal] on geometry that lacks
+		// uv. GeometryBuilder.initFromGeometry must drop the stale `uv` key from its
+		// internal attributeData or the next operation will throw "Attribute uv not
+		// available on geometry" from appendIndexFromGeometry.
+
+		const evaluator = new Evaluator();
+
+		const geoWithUV1 = new BoxGeometry();
+		const geoWithUV2 = new BoxGeometry();
+		const brushA1 = new Brush( geoWithUV1 );
+		const brushA2 = new Brush( geoWithUV2 );
+		brushA2.position.set( 0.5, 0.5, 0.5 );
+		brushA1.updateMatrixWorld();
+		brushA2.updateMatrixWorld();
+		evaluator.evaluate( brushA1, brushA2, SUBTRACTION );
+
+		const geoNoUV1 = new BoxGeometry();
+		geoNoUV1.deleteAttribute( 'uv' );
+		const geoNoUV2 = new BoxGeometry();
+		geoNoUV2.deleteAttribute( 'uv' );
+		const brushB1 = new Brush( geoNoUV1 );
+		const brushB2 = new Brush( geoNoUV2 );
+		brushB2.position.set( 0.5, 0.5, 0.5 );
+		brushB1.updateMatrixWorld();
+		brushB2.updateMatrixWorld();
+		evaluator.attributes = [ 'position', 'normal' ];
+
+		expect( () => evaluator.evaluate( brushB1, brushB2, SUBTRACTION ) ).not.toThrow();
+
+	} );
+
 	it( 'should not fail if multiple operations with different buffer types.', () => {
 
 		const geo1 = new SphereGeometry();
