@@ -62,3 +62,11 @@ body:
       placeholder: r
     validations:
       required: true
+  - type: input
+    id: bvh_version
+    attributes:
+      label: three-mesh-bvh Version
+      description: Which version of three-mesh-bvh are you using?
+      placeholder: v
+    validations:
+      required: true
