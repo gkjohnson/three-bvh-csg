@@ -6,11 +6,16 @@ const CLIP_EPSILON = 1e-10;
 // tolerance for treating a denominator as zero (segment parallel to edge)
 const PARALLEL_EPSILON = 1e-15;
 
+// Coplanarity tolerances. These guard a float32 geometry (≈1e-7 relative
+// precision), so doubles-tuned thresholds (1e-10) reject genuinely coplanar
+// faces after a few iterated booleans — the seam is then misclassified as a
+// crossing and left cracked. Sized to absorb float32 noise without merging
+// distinct features (which are orders of magnitude farther apart here).
 // tolerance for considering two triangle normals as parallel
-const COPLANAR_NORMAL_EPSILON = 1e-10;
+const COPLANAR_NORMAL_EPSILON = 1e-6;
 
 // tolerance for considering two parallel triangles as lying on the same plane
-const COPLANAR_DISTANCE_EPSILON = 1e-10;
+const COPLANAR_DISTANCE_EPSILON = 1e-6;
 
 const _tempLine = new Line3();
 const _inputSeg = new Line3();

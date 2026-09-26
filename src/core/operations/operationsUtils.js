@@ -12,6 +12,7 @@ import {
 import { isTriDegenerate } from '../utils/triangleUtils.js';
 import { getCoplanarIntersectionEdges, isTriangleCoplanar } from '../utils/intersectionUtils.js';
 import { Pool } from '../utils/Pool.js';
+import { registerSeam } from './seamRegistry.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
@@ -89,13 +90,15 @@ export function collectIntersectingTriangles( a, b ) {
 					// cache intersection edges in geometry A's local frame
 					if ( isCoplanarIntersection ) {
 
-						// coplanar
-						const count = getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges );
+						// coplanar — reuse the edges already computed for coplanarCount above
+						const count = coplanarCount;
 						for ( let i = 0; i < count; i ++ ) {
 
 							const e = _edgePool.getInstance().copy( _coplanarEdges[ i ] );
 							aIntersections.addIntersectionEdge( va, e );
 							bIntersections.addIntersectionEdge( vb, e );
+							registerSeam( e.start.x, e.start.y, e.start.z );
+							registerSeam( e.end.x, e.end.y, e.end.z );
 
 						}
 
@@ -106,6 +109,8 @@ export function collectIntersectingTriangles( a, b ) {
 						const eb = _edgePool.getInstance().copy( _edge );
 						aIntersections.addIntersectionEdge( va, ea );
 						bIntersections.addIntersectionEdge( vb, eb );
+						registerSeam( _edge.start.x, _edge.start.y, _edge.start.z );
+						registerSeam( _edge.end.x, _edge.end.y, _edge.end.z );
 
 					}
 
