@@ -214,12 +214,12 @@ This class is used in the constructor of the Evaluator class. When the Evaluator
 enabled = false : Boolean
 ```
 
-Whether to collect the debug data during CSG operations which has a performance a memory cost.
+Whether to collect the debug data during CSG operations which has a performance and memory cost.
 
 ### .intersectionEdges
 
 ```js
-intersectionEdges = [] : Line3
+intersectionEdges = [] : Line3[]
 ```
 
 A list of edges formed by intersecting triangles during the CSG process.
@@ -310,7 +310,7 @@ setEdges( edges : Line3[] ) : void
 
 Sets the list of lines to be visualized.
 
-## HalfEdgeMapHelper
+## HalfEdgeHelper
 
 _extends EdgesHelper_
 
@@ -319,7 +319,7 @@ This is a helper class that takes the `HalfEdgeMap` object and visualizes the co
 ### .setHalfEdges
 
 ```js
-setHalfEdges( geometry : Geometry, halfEdges : HalfEdgeMap ) : void
+setHalfEdges( geometry : BufferGeometry, halfEdges : HalfEdgeMap ) : void
 ```
 
 Sets the half edge map to visualize along with the associated geometry.
