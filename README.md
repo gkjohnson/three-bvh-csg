@@ -28,17 +28,17 @@ See projects like [Manifold CAD](https://github.com/elalish/manifold) for CAD op
 
 # Examples
 
-[Simple CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/simple.html)
+[Simple CSG](https://gkjohnson.github.io/three-bvh-csg/simple.html)
 
-[Complex Model CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/geometry.html)
+[Complex Model CSG](https://gkjohnson.github.io/three-bvh-csg/geometry.html)
 
-[Hollow Operations](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/hollow.html)
+[Hollow Operations](https://gkjohnson.github.io/three-bvh-csg/hollow.html)
 
-[Multi Material CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/multimaterial.html)
+[Multi Material CSG](https://gkjohnson.github.io/three-bvh-csg/multimaterial.html)
 
-[Multi Operation CSG](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/multiop.html)
+[Multi Operation CSG](https://gkjohnson.github.io/three-bvh-csg/multiop.html)
 
-[Hierarchical Operations](https://gkjohnson.github.io/three-bvh-csg/examples/bundle/hierarchy.html)
+[Hierarchical Operations](https://gkjohnson.github.io/three-bvh-csg/hierarchy.html)
 
 # Use
 

@@ -55,6 +55,7 @@
     "@vitest/eslint-plugin": "^1.5.0",
     "eslint": "^9.0.0",
     "eslint-config-mdcs": "^5.0.0",
+    "eslint-plugin-jsdoc": "^50.8.0",
     "globals": "^16.5.0",
     "rollup": "^2.70.0",
     "three": "^0.179.0",
