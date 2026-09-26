@@ -145,7 +145,7 @@ debug : OperationDebugData
 
 The debug data object. Set `debug.enabled = true` before calling `evaluate` to collect intersection data.
 
-### useCDTClipping
+### .useCDTClipping
 
 ```js
 useCDTClipping = false : Boolean
