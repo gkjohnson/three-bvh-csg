@@ -129,6 +129,22 @@ A class with the same interface as `THREE.Group` but used to group a list of Ope
 
 ## Evaluator
 
+### .attributes
+
+```js
+attributes = [ 'position', 'uv', 'normal' ] : String[]
+```
+
+The set of geometry attributes to transfer to the result geometry.
+
+### .debug
+
+```js
+debug : OperationDebugData
+```
+
+The debug data object. Set `debug.enabled = true` before calling `evaluate` to collect intersection data.
+
 ### useCDTClipping
 
 ```js
