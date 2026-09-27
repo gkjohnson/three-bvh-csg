@@ -56,7 +56,9 @@ export class Brush extends Mesh {
 		const indexHash = index ? `${ index.uuid }_${ index.count }_${ index.version }` : '-1_-1_-1';
 		const posHash = `${ posAttr.uuid }_${ posAttr.count }_${ posAttr.version }`;
 		const hash = `${ geometry.uuid }_${ indexHash }_${ posHash }`;
-		if ( this._hash === hash ) {
+
+		// the bounds tree is cleared when the geometry is written to as the result of an operation
+		if ( this._hash === hash && geometry.boundsTree ) {
 
 			return;
 
