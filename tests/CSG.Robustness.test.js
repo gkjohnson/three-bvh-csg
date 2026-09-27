@@ -84,8 +84,7 @@ describe( 'CDT clipping', () => {
 
 	} );
 
-	// fails: the cdt2d exterior filter uses parity, dropping regions enclosed by an intersection loop
-	it.fails( 'should keep faces enclosed by an intersection loop.', () => {
+	it( 'should keep faces enclosed by an intersection loop.', () => {
 
 		// the cylinder cuts a closed loop inside a single triangle of the box face
 		const a = new Brush( new BoxGeometry( 10, 1, 10 ) );
