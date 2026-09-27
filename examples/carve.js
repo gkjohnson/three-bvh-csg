@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { Brush, Evaluator, SUBTRACTION } from '..';
+import { Brush, Evaluator, HalfEdgeHelper, SUBTRACTION } from '..';
 import { CARVE_PATH, TOOL_RADIUS, WORKPIECE_MIN, WORKPIECE_MAX } from './carvePath.js';
 
 const SWEEP_COUNT = CARVE_PATH.length - 1;
@@ -12,12 +12,14 @@ const params = {
 	useCDTClipping: true,
 	displayTool: true,
 	autoRotate: true,
+	wireframe: false,
+	displayOpenEdges: false,
 	paused: false,
 	restart: () => restart(),
 };
 
 let renderer, camera, scene, controls, outputContainer;
-let workpieceGeometry, tool, toolPoints, results, resultMesh, path, step;
+let workpieceGeometry, tool, toolPoints, results, resultMesh, wireframeMesh, openEdgesHelper, path, step;
 let minTime, maxTime, totalTime;
 const clock = new THREE.Clock();
 const evaluator = new Evaluator();
@@ -80,10 +82,27 @@ function init() {
 	resultMesh = new THREE.Mesh( undefined, new THREE.MeshStandardMaterial( { roughness: 0.5, flatShading: true } ) );
 	scene.add( resultMesh );
 
+	wireframeMesh = new THREE.Mesh( undefined, new THREE.MeshBasicMaterial( {
+		wireframe: true,
+		color: 0,
+		opacity: 0.15,
+		transparent: true,
+	} ) );
+	scene.add( wireframeMesh );
+
+	// draws the edges without a matching opposite half edge
+	openEdgesHelper = new HalfEdgeHelper();
+	openEdgesHelper.displayDisconnectedEdges = true;
+	openEdgesHelper.color.set( 0xff0000 );
+	openEdgesHelper.material.depthTest = false;
+	scene.add( openEdgesHelper );
+
 	// gui
 	const gui = new GUI();
 	gui.add( params, 'useCDTClipping' ).onChange( restart );
 	gui.add( params, 'displayTool' );
+	gui.add( params, 'wireframe' );
+	gui.add( params, 'displayOpenEdges' ).onChange( () => updateDisplay( results[ step % 2 ] ) );
 	gui.add( params, 'autoRotate' );
 	gui.add( params, 'paused' );
 	gui.add( params, 'restart' );
@@ -160,6 +179,13 @@ function updateDisplay( result ) {
 	const openEdges = geometry.halfEdges.unmatchedEdges;
 
 	resultMesh.geometry = geometry;
+	wireframeMesh.geometry = geometry;
+	if ( params.displayOpenEdges ) {
+
+		openEdgesHelper.setHalfEdges( geometry, geometry.halfEdges );
+
+	}
+
 	outputContainer.innerText =
 		`step        : ${ step } / ${ SWEEP_COUNT }\n` +
 		`triangles   : ${ triangles }\n` +
@@ -184,6 +210,8 @@ function render() {
 	controls.update( clock.getDelta() );
 
 	tool.visible = params.displayTool && step < SWEEP_COUNT;
+	wireframeMesh.visible = params.wireframe;
+	openEdgesHelper.visible = params.displayOpenEdges;
 	renderer.render( scene, camera );
 
 }
