@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>three-bvh-csg - Iterated Carving</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <style type="text/css">
+        html, body {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+			font-family: monospace;
+			background-color: #111111;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+		#info {
+			position: absolute;
+			top: 0;
+			width: 100%;
+			color: white;
+			font-family: monospace;
+			text-align: center;
+			padding: 5px 0;
+		}
+
+		#info a {
+			color: white;
+		}
+
+		#output {
+			color: #aaa;
+			position: absolute;
+			left: 10px;
+			bottom: 10px;
+			white-space: pre;
+		}
+    </style>
+</head>
+<body>
+	<div id="info">
+		Iteratively carving a box with a sphere brush, each subtraction
+		<br/>
+		operating on the result of the previous one.
+		<br/>
+		Tool path from the <a href="https://solidean.com/blog/2026/terrain-carve-benchmark/" target="_blank">Solidean terrain carve benchmark</a>.
+	</div>
+	<div id="output"></div>
+    <script type="module" src="./carve.js"></script>
+</body>
+</html>
