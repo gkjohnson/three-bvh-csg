@@ -58,27 +58,16 @@ describe( 'CDT clipping', () => {
 
 	} );
 
-	it( 'should produce watertight results.', () => {
+	it( 'should produce watertight results at small and large scales.', () => {
 
-		const [ a, b ] = createSpheres( 1 );
-		const evaluator = new Evaluator();
-		evaluator.useCDTClipping = true;
-
-		expect( getUnmatchedEdges( evaluator.evaluate( a, b, SUBTRACTION ).geometry ) ).toBe( 0 );
-		expect( getUnmatchedEdges( evaluator.evaluate( a, b, INTERSECTION ).geometry ) ).toBe( 0 );
-
-	} );
-
-	// fails: seam vertices are computed separately per triangle so they don't match exactly at all scales
-	it.fails( 'should produce watertight results at small and large scales.', () => {
-
-		for ( const scale of [ 0.001, 1000 ] ) {
+		for ( const scale of [ 0.001, 1, 1000 ] ) {
 
 			const [ a, b ] = createSpheres( scale );
 			const evaluator = new Evaluator();
 			evaluator.useCDTClipping = true;
 
 			expect( getUnmatchedEdges( evaluator.evaluate( a, b, SUBTRACTION ).geometry ) ).toBe( 0 );
+			expect( getUnmatchedEdges( evaluator.evaluate( a, b, INTERSECTION ).geometry ) ).toBe( 0 );
 
 		}
 

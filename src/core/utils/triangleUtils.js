@@ -16,11 +16,17 @@ export function isTriDegenerate( tri, eps = EPSILON ) {
 	const angle2 = _AB.angleTo( _CB );				// AB v BC
 	const angle3 = Math.PI - angle1 - angle2;		// 180deg - angle1 - angle2
 
+	// compare the squared edge lengths relative to the longest edge
+	const ab = _AB.lengthSq();
+	const ac = _AC.lengthSq();
+	const cb = _CB.lengthSq();
+	const edgeEpsilon = eps * Math.max( ab, ac, cb );
+
 	return Math.abs( angle1 ) < eps ||
 		Math.abs( angle2 ) < eps ||
 		Math.abs( angle3 ) < eps ||
-		tri.a.distanceToSquared( tri.b ) < eps ||
-		tri.a.distanceToSquared( tri.c ) < eps ||
-		tri.b.distanceToSquared( tri.c ) < eps;
+		ab < edgeEpsilon ||
+		ac < edgeEpsilon ||
+		cb < edgeEpsilon;
 
 }

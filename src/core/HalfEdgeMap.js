@@ -1,11 +1,12 @@
-import { Vector2, Vector3, Vector4 } from 'three';
-import { hashNumber, hashVertex2, hashVertex3, hashVertex4 } from './utils/hashUtils.js';
+import { Vector2, Vector3, Vector4, Box3 } from 'three';
+import { HASH_WIDTH, hashNumber, hashVertex2, hashVertex3, hashVertex4 } from './utils/hashUtils.js';
 import { getTriCount } from './utils/geometryUtils.js';
 import { computeDisjointEdges } from './utils/computeDisjointEdges.js';
 
 const _vec2 = new Vector2();
 const _vec3 = new Vector3();
 const _vec4 = new Vector4();
+const _box = new Box3();
 const _hashes = [ '', '', '' ];
 
 export class HalfEdgeMap {
@@ -76,6 +77,12 @@ export class HalfEdgeMap {
 		const attrKeys = useAllAttributes ? Object.keys( attributes ) : null;
 		const indexAttr = geometry.index;
 		const posAttr = attributes.position;
+
+		// size the position hash grid relative to the geometry bounds
+		_box.setFromBufferAttribute( posAttr );
+		_box.getSize( _vec3 );
+		const extent = Math.max( _vec3.x, _vec3.y, _vec3.z );
+		const positionMultiplier = 1 / ( HASH_WIDTH * ( extent > 0 ? extent : 1 ) );
 
 		// get the potential number of triangles
 		let triCount = getTriCount( geometry );
@@ -185,7 +192,7 @@ export class HalfEdgeMap {
 		function hashPositionAttribute( i ) {
 
 			_vec3.fromBufferAttribute( posAttr, i );
-			return hashVertex3( _vec3 );
+			return hashVertex3( _vec3, positionMultiplier );
 
 		}
 
@@ -195,20 +202,21 @@ export class HalfEdgeMap {
 			for ( let k = 0, l = attrKeys.length; k < l; k ++ ) {
 
 				const attr = attributes[ attrKeys[ k ] ];
+				const multiplier = attr === posAttr ? positionMultiplier : undefined;
 				let str;
 				switch ( attr.itemSize ) {
 
 					case 1:
-						str = hashNumber( attr.getX( i ) );
+						str = hashNumber( attr.getX( i ), multiplier );
 						break;
 					case 2:
-						str = hashVertex2( _vec2.fromBufferAttribute( attr, i ) );
+						str = hashVertex2( _vec2.fromBufferAttribute( attr, i ), multiplier );
 						break;
 					case 3:
-						str = hashVertex3( _vec3.fromBufferAttribute( attr, i ) );
+						str = hashVertex3( _vec3.fromBufferAttribute( attr, i ), multiplier );
 						break;
 					case 4:
-						str = hashVertex4( _vec4.fromBufferAttribute( attr, i ) );
+						str = hashVertex4( _vec4.fromBufferAttribute( attr, i ), multiplier );
 						break;
 
 				}

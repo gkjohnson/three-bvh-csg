@@ -3,11 +3,12 @@ import { ExtendedTriangle } from 'three-mesh-bvh';
 import cdt2d from '../libs/cdt2d.js';
 import { Pool } from './utils/Pool.js';
 
-// relative tolerance factor — multiplied by the max absolute coordinate
-// of the base triangle to get scale-appropriate thresholds
+// relative tolerance for points lying on edges, as a squared distance relative to the base
+// triangle size squared
 const RELATIVE_EPSILON = 1e-16;
 
-// tolerance for merging nearby vertices (squared distance)
+// relative tolerance for merging nearby vertices, as a squared distance relative to the base
+// triangle size squared
 const VERTEX_MERGE_EPSILON = 1e-16;
 
 const _vec = new Vector3();
@@ -296,7 +297,8 @@ export class CDTTriangleSplitter {
 
 		}
 
-		// Precompute scale factor from base triangle for epsilon scaling
+		// Precompute scale factor from base triangle for epsilon scaling, squared since the
+		// tolerances are compared against squared distances
 		let epsilonScale = 0;
 		for ( let i = 0; i < 3; i ++ ) {
 
@@ -304,6 +306,8 @@ export class CDTTriangleSplitter {
 			epsilonScale = Math.max( epsilonScale, Math.abs( v.x ), Math.abs( v.y ) );
 
 		}
+
+		epsilonScale *= epsilonScale;
 
 		// Use custom deduplication and edge splitting
 		const vertices = [];

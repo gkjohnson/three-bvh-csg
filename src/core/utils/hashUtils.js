@@ -1,28 +1,28 @@
-const HASH_WIDTH = 1e-6;
+export const HASH_WIDTH = 1e-6;
 const HASH_HALF_WIDTH = HASH_WIDTH * 0.5;
 const HASH_MULTIPLIER = Math.pow( 10, - Math.log10( HASH_WIDTH ) );
 const HASH_ADDITION = HASH_HALF_WIDTH * HASH_MULTIPLIER;
-export function hashNumber( v ) {
+export function hashNumber( v, multiplier = HASH_MULTIPLIER ) {
 
-	return ~ ~ ( v * HASH_MULTIPLIER + HASH_ADDITION );
-
-}
-
-export function hashVertex2( v ) {
-
-	return `${ hashNumber( v.x ) },${ hashNumber( v.y ) }`;
+	return ~ ~ ( v * multiplier + HASH_ADDITION );
 
 }
 
-export function hashVertex3( v ) {
+export function hashVertex2( v, multiplier = HASH_MULTIPLIER ) {
 
-	return `${ hashNumber( v.x ) },${ hashNumber( v.y ) },${ hashNumber( v.z ) }`;
+	return `${ hashNumber( v.x, multiplier ) },${ hashNumber( v.y, multiplier ) }`;
 
 }
 
-export function hashVertex4( v ) {
+export function hashVertex3( v, multiplier = HASH_MULTIPLIER ) {
 
-	return `${ hashNumber( v.x ) },${ hashNumber( v.y ) },${ hashNumber( v.z ) },${ hashNumber( v.w ) }`;
+	return `${ hashNumber( v.x, multiplier ) },${ hashNumber( v.y, multiplier ) },${ hashNumber( v.z, multiplier ) }`;
+
+}
+
+export function hashVertex4( v, multiplier = HASH_MULTIPLIER ) {
+
+	return `${ hashNumber( v.x, multiplier ) },${ hashNumber( v.y, multiplier ) },${ hashNumber( v.z, multiplier ) },${ hashNumber( v.w, multiplier ) }`;
 
 }
 
