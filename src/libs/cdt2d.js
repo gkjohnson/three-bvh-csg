@@ -1,4 +1,5 @@
-// Auto-generated ESM bundle of cdt2d
+// ESM bundle of cdt2d, originally generated from node_modules/cdt2d with the "build-cdt2d" script.
+// This copy is maintained by hand - local changes are marked inline with a "three-bvh-csg:" comment.
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
