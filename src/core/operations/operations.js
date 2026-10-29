@@ -10,7 +10,10 @@ import {
 import { getTriCount } from '../utils/geometryUtils.js';
 import { HOLLOW_INTERSECTION, HOLLOW_SUBTRACTION } from '../constants.js';
 import { isTriDegenerate } from '../utils/triangleUtils.js';
+import { isFloat32TriangleDegenerate } from '../utils/isFloat32TriangleDegenerate.js';
 import { Pool } from '../utils/Pool.js';
+import { sourceFaceMapper, sameInvertibleFrame } from './SourceFaceProvenance.js';
+import { finiteTriangleContains } from '../utils/finiteTriangleContains.js';
 
 const _matrix = new Matrix4();
 const _inverseMatrix = new Matrix4();
@@ -28,6 +31,8 @@ const _normal = new Vector3();
 const _coplanarTrianglePool = new Pool( () => new Triangle() );
 const _coplanarNormal = new Vector3();
 const _coplanarTriangles = [];
+const _coplanarSupportPlanes = [];
+const _supportMidpoint = new Vector3();
 
 // runs the given operation against a and b using the splitter and appending data to the
 // geometry builder.
@@ -40,16 +45,35 @@ export function performOperation(
 	options = {},
 ) {
 
-	const { useGroups = true } = options;
-	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b );
+	const { useGroups = true, consistentCutSeams = false, sourceFaces = null } = options;
+	if ( consistentCutSeams && ! splitter.addConstraintEdge ) {
+
+		throw new Error( 'consistentCutSeams requires the constrained CDT splitter.' );
+
+	}
+
+	if ( consistentCutSeams && ( ! ( a.geometry.attributes.position.array instanceof Float32Array ) || ! ( b.geometry.attributes.position.array instanceof Float32Array ) ) ) {
+
+		throw new Error( 'consistentCutSeams currently requires Float32 position attributes.' );
+
+	}
+
+	if ( splitter.addConstraintEdge ) {
+
+		splitter.useSharedConstraints = consistentCutSeams;
+		splitter.float32Output = a.geometry.attributes.position.array instanceof Float32Array;
+
+	}
+
+	const { aIntersections, bIntersections } = collectIntersectingTriangles( a, b, consistentCutSeams );
 
 	const resultGroups = [];
 	let resultMaterials = null;
 
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
-	performWholeTriangleOperations( a, b, aIntersections, operations, false, builders, groupOffset );
-	performSplitTriangleOperations( a, b, aIntersections, operations, false, splitter, builders, groupOffset );
+	performWholeTriangleOperations( a, b, aIntersections, operations, false, builders, groupOffset, sourceFaces?.[ 0 ], consistentCutSeams );
+	performSplitTriangleOperations( a, b, aIntersections, operations, false, splitter, builders, groupOffset, sourceFaces?.[ 0 ] );
 
 	// find whether the set of operations contains a non-hollow operations. If it does then we need
 	// to perform the second set of triangle additions
@@ -62,8 +86,8 @@ export function performOperation(
 		builders.forEach( builder => builder.clearIndexMap() );
 
 		groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
-		performWholeTriangleOperations( b, a, bIntersections, operations, true, builders, groupOffset );
-		performSplitTriangleOperations( b, a, bIntersections, operations, true, splitter, builders, groupOffset );
+		performWholeTriangleOperations( b, a, bIntersections, operations, true, builders, groupOffset, sourceFaces?.[ 1 ], consistentCutSeams );
+		performSplitTriangleOperations( b, a, bIntersections, operations, true, splitter, builders, groupOffset, sourceFaces?.[ 1 ] );
 
 	}
 
@@ -88,6 +112,7 @@ function performSplitTriangleOperations(
 	splitter,
 	builders,
 	groupOffset = 0,
+	sourceFaces = null,
 ) {
 
 	// transform from a frame -> b frame. When "invert" is true the "b" is the first argument (brush A).
@@ -95,6 +120,10 @@ function performSplitTriangleOperations(
 		.copy( b.matrixWorld )
 		.invert()
 		.multiply( a.matrixWorld );
+
+	// Identical known frames have an exact identity relative transform. Do not
+	// introduce inverse/multiply noise into source lineage or cut coordinates.
+	if ( sourceFaces && sameInvertibleFrame( a.matrixWorld, b.matrixWorld ) ) _matrix.identity();
 
 	_inverseMatrix
 		.copy( _matrix )
@@ -120,10 +149,19 @@ function performSplitTriangleOperations(
 	const aIndex = a.geometry.index;
 	const aPosition = a.geometry.attributes.position;
 
+	// Coplanar triangles are compared in original A's local frame. Exactly
+	// one operand is transformed into that frame in either emission pass.
+	// Its corner-winding normal gains det(M)'s sign, unlike the material
+	// normal. M and inverse(M) have the same parity. Source-face orientation
+	// is already in the current triangles: do not apply it a second time.
+	const coplanarParity = splitter.useSharedConstraints && _matrix.determinant() < 0 ? - 1 : 1;
+
 	const bBVH = b.geometry.boundsTree;
 	const bIndex = b.geometry.index;
 	const bPosition = b.geometry.attributes.position;
 	const splitIds = intersectionMap.ids;
+	const useCDTClipping = Boolean( splitter.addConstraintEdge );
+	const sourceFace = sourceFaces ? sourceFaceMapper( sourceFaces, _builderMatrix ) : null;
 
 	// iterate over all split triangle indices
 	for ( let i = 0, l = splitIds.length; i < l; i ++ ) {
@@ -161,6 +199,7 @@ function performSplitTriangleOperations(
 
 		// add coplanar triangles from B to the splitter for later classification
 		_coplanarTriangles.length = 0;
+		_coplanarSupportPlanes.length = 0;
 		_coplanarTrianglePool.clear();
 		_triA.getNormal( _normal );
 
@@ -169,6 +208,18 @@ function performSplitTriangleOperations(
 
 			for ( const index of coplanarIndices ) {
 
+				const support = intersectionMap.supportCoplanars?.get( ia )?.get( index );
+				if ( support ) {
+
+					// Same finite construction chart used by clipping, in the common
+					// output frame for BOTH operand emission passes.
+					_coplanarTriangles.push( support.triangle );
+					_coplanarSupportPlanes.push( support.plane );
+					continue;
+
+				}
+
+				_coplanarSupportPlanes.push( null );
 				const ib3 = 3 * index;
 				let ib0 = ib3 + 0;
 				let ib1 = ib3 + 1;
@@ -205,6 +256,13 @@ function performSplitTriangleOperations(
 		// split the triangle using cached edges from the bvhcast phase
 		if ( splitter.addConstraintEdge ) {
 
+			const boundary = intersectionMap.boundaryEdges?.get( ia );
+			if ( boundary ) {
+
+				splitter.setBoundaryEdges( boundary );
+
+			}
+
 			// edges are already in the common frame (brush A's local) — no transform needed
 			const edges = intersectionMap.getIntersectionEdges( ia );
 			if ( edges ) {
@@ -214,6 +272,13 @@ function performSplitTriangleOperations(
 					splitter.addConstraintEdge( edge );
 
 				}
+
+			}
+
+			const boundaryPoints = intersectionMap.boundaryPoints?.get( ia );
+			if ( boundaryPoints ) {
+
+				for ( const point of boundaryPoints ) splitter.addConstraintPoint( point );
 
 			}
 
@@ -269,12 +334,18 @@ function performSplitTriangleOperations(
 
 		}
 
+		// The shared constraint graph separates side-classification regions.
+		// Classify a region using its largest cell, not an independently rounded
+		// ray from every tiny sliver adjacent to the same cut curve.
+		const triangleOrder = splitter.useSharedConstraints ? triangles.map( ( t, i ) => i ).sort( ( i, j ) => triangles[ j ].getArea() - triangles[ i ].getArea() ) : null;
+
 		// for all triangles in the split result
 		_traversed.clear();
 		for ( let ib = 0, l = triangles.length; ib < l; ib ++ ) {
 
+			const seed = triangleOrder ? triangleOrder[ ib ] : ib;
 			// skip the triangle if we've already traversed
-			if ( _traversed.has( ib ) ) {
+			if ( _traversed.has( seed ) ) {
 
 				continue;
 
@@ -284,7 +355,7 @@ function performSplitTriangleOperations(
 			// uncertain then fall back to the raycasting approach.
 			// If checking the sided ness against brush B's BVH then we need to transform
 			// into the appropriate frame
-			const clippedTri = triangles[ ib ];
+			const clippedTri = splitter.classificationTriangles?.[ seed ] || triangles[ seed ];
 			const raycastMatrix = invert ? null : _matrix;
 			let hitSide = null;
 
@@ -293,10 +364,12 @@ function performSplitTriangleOperations(
 			for ( let cp = 0, cpl = _coplanarTriangles.length; cp < cpl; cp ++ ) {
 
 				const cpt = _coplanarTriangles[ cp ];
-				if ( cpt.containsPoint( _midpoint ) ) {
+				const plane = _coplanarSupportPlanes[ cp ];
+				const midpoint = plane ? plane.projectPoint( _midpoint, _supportMidpoint ) : _midpoint;
+				if ( splitter.useSharedConstraints ? finiteTriangleContains( cpt, midpoint ) : cpt.containsPoint( midpoint ) ) {
 
 					cpt.getNormal( _coplanarNormal );
-					hitSide = _normal.dot( _coplanarNormal ) > 0 ? COPLANAR_ALIGNED : COPLANAR_OPPOSITE;
+					hitSide = coplanarParity * _normal.dot( _coplanarNormal ) > 0 ? COPLANAR_ALIGNED : COPLANAR_OPPOSITE;
 					break;
 
 				}
@@ -306,7 +379,7 @@ function performSplitTriangleOperations(
 			// if the clipped triangle is no coplanar then fall back to raycasting
 			if ( hitSide === null ) {
 
-				hitSide = getHitSide( clippedTri, bBVH, raycastMatrix );
+				hitSide = getHitSide( clippedTri, bBVH, raycastMatrix, splitter.useSharedConstraints ? _normal : null );
 
 			}
 
@@ -326,10 +399,10 @@ function performSplitTriangleOperations(
 
 			}
 
-			if ( _builders.length !== 0 ) {
+			if ( _builders.length !== 0 || splitter.useSharedConstraints ) {
 
 				// traverse the connectivity of the triangles to add them to the geometry
-				const stack = [ ib ];
+				const stack = [ seed ];
 				while ( stack.length > 0 ) {
 
 					const index = stack.pop();
@@ -341,6 +414,16 @@ function performSplitTriangleOperations(
 
 					// mark this triangle as traversed
 					_traversed.add( index );
+
+					if ( splitter.useSharedConstraints ) {
+
+						for ( const neighbor of triangleConnectivity[ index ] || [] ) {
+
+							if ( ! _traversed.has( neighbor ) ) stack.push( neighbor );
+
+						}
+
+					}
 
 					// TODO: this is being skipped for now due to the connectivity graph not
 					// including small connections due to floating point error. Adding support
@@ -383,16 +466,18 @@ function performSplitTriangleOperations(
 						const invertTri = action === INVERT_TRI;
 						const invert = invertedGeometry !== invertTri;
 
-						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, t0, invert );
+						if ( sourceFace ) builder.appendSourceFace( groupIndex, sourceFace( ia, invert ) );
+						// Keep PR #259's legacy barycentric output path unchanged.
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, t0, invert, useCDTClipping ? tri.a : null );
 						if ( invert ) {
 
-							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert );
-							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert );
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert, useCDTClipping ? tri.c : null );
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert, useCDTClipping ? tri.b : null );
 
 						} else {
 
-							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert );
-							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert );
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert, useCDTClipping ? tri.b : null );
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert, useCDTClipping ? tri.c : null );
 
 						}
 
@@ -421,6 +506,8 @@ function performWholeTriangleOperations(
 	invert,
 	builders,
 	groupOffset = 0,
+	sourceFaces = null,
+	consistentCutSeams = false,
 ) {
 
 	// _matrix transforms from a's local frame into the common frame (brush A's local)
@@ -428,6 +515,7 @@ function performWholeTriangleOperations(
 		.copy( b.matrixWorld )
 		.invert()
 		.multiply( a.matrixWorld );
+	if ( sourceFaces && sameInvertibleFrame( a.matrixWorld, b.matrixWorld ) ) _matrix.identity();
 
 	if ( invert ) {
 
@@ -452,6 +540,7 @@ function performWholeTriangleOperations(
 
 	const stack = [];
 	const halfEdges = a.geometry.halfEdges;
+	const sourceFace = sourceFaces ? sourceFaceMapper( sourceFaces, _builderMatrix ) : null;
 
 	// iterate over every whole triangle, skipping those that are clipped
 	const traversedSet = new Set( splitTriSet.ids );
@@ -555,7 +644,9 @@ function performWholeTriangleOperations(
 				_tri.a.fromBufferAttribute( aPosition, i0 );
 				_tri.b.fromBufferAttribute( aPosition, i1 );
 				_tri.c.fromBufferAttribute( aPosition, i2 );
-				if ( ! isTriDegenerate( _tri ) ) {
+				// _tri still contains the current operand's Float32 corners,
+				// before the builder transform. Keep the legacy filter off opt-in.
+				if ( ! ( consistentCutSeams ? isFloat32TriangleDegenerate( _tri ) : isTriDegenerate( _tri ) ) ) {
 
 					for ( let k = 0, lk = _builders.length; k < lk; k ++ ) {
 
@@ -563,6 +654,7 @@ function performWholeTriangleOperations(
 						const action = _actions[ k ];
 						const invertTri = action === INVERT_TRI;
 						const invert = invertTri !== invertedGeometry;
+						if ( sourceFace ) builder.appendSourceFace( groupIndex, sourceFace( currId, invert ) );
 						builder.appendIndexFromGeometry( a.geometry, _builderMatrix, _normalMatrix, groupIndex, i0, invert );
 
 						if ( invert ) {

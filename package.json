@@ -14,6 +14,8 @@
     "lint": "eslint . && tsc --noEmit",
     "benchmark": "node ./benchmark/benchmark.js",
     "test": "vitest run",
+    "test:seams": "node --expose-gc --test --test-concurrency=1 tests/*.node.mjs",
+    "benchmark:seams": "node benchmark/consistent-cut-seams.js",
     "build-cdt2d": "esbuild node_modules/cdt2d/cdt2d.js --bundle --format=esm --outfile=src/libs/cdt2d.js --banner:js='// Auto-generated ESM bundle of cdt2d'",
     "prepublishOnly": "npm run build"
   },

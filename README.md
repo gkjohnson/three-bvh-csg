@@ -153,6 +153,22 @@ useCDTClipping = false : Boolean
 
 An experimental triangle clipping implementation that uses "Constrained Delaunay Triangulation" to triangulate clipped triangles. It cn provide a more robust, simple triangulation at the cost of performance in some cases.
 
+### .consistentCutSeams
+
+```js
+consistentCutSeams = false : Boolean
+```
+
+Experimental, explicit opt-in for shared cut identities, consistent source-edge subdivisions, and source-face provenance across repeated Boolean operations. Requires `useCDTClipping = true` and Float32 position attributes. It does not change the default splitter or enable a post-processing repair pass.
+
+```js
+const evaluator = new Evaluator();
+evaluator.useCDTClipping = true;
+evaluator.consistentCutSeams = true;
+```
+
+Keep the original result Brushes when evaluating subsequent operations; cloning or serializing their geometry does not preserve this internal history. This mode has significant preparation, allocation, and classification costs and **does not guarantee valid results for arbitrary geometry or transformed histories**. See [the experimental mode documentation](./docs/consistent-cut-seams.md) for the algorithm, public regression cases, lifecycle constraints, and reproducible benchmarks.
+
 ### .useGroups
 
 ```js

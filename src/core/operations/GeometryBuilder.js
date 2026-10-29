@@ -86,6 +86,7 @@ export class GeometryBuilder {
 		this.forwardIndexMap = new Map();
 		this.invertedIndexMap = new Map();
 		this.interpolatedFields = {};
+		this.sourceFaces = null;
 
 	}
 
@@ -186,7 +187,7 @@ export class GeometryBuilder {
 	}
 
 	// push data from the given barycoord onto the geometry
-	appendInterpolatedAttributeData( group, barycoord, index = null, invert = false ) {
+	appendInterpolatedAttributeData( group, barycoord, index = null, invert = false, position = null ) {
 
 		const { groupIndices, attributeData, interpolatedFields, forwardIndexMap, invertedIndexMap } = this;
 		while ( groupIndices.length <= group ) {
@@ -210,6 +211,16 @@ export class GeometryBuilder {
 
 				// handle normals and positions specially because they require transforming
 				const arr = attributeData[ key ];
+				// The CDT splitter has already constructed this position in the
+				// output frame. Avoid another reconstruction from barycentrics;
+				// other attributes still use the original interpolation below.
+				if ( key === 'position' && position !== null ) {
+
+					arr.push( position.x, position.y, position.z );
+					continue;
+
+				}
+
 				const isDirection = key === 'normal' || key === 'tangent';
 				const invertVector = invert && isDirection;
 				const itemSize = arr.itemSize;
@@ -294,6 +305,34 @@ export class GeometryBuilder {
 			}
 
 		}
+
+	}
+
+	appendSourceFace( group, face ) {
+
+		if ( ! this.sourceFaces ) return;
+		if ( ! this.sourceFaces[ group ] ) this.sourceFaces[ group ] = [];
+		this.sourceFaces[ group ].push( face );
+
+	}
+
+	orderedSourceFaces( groupOrder, sourceFaces ) {
+
+		const result = [];
+		for ( const { index } of groupOrder ) {
+
+			const faces = sourceFaces[ index ] || [];
+			if ( faces.length * 3 !== ( this.groupIndices[ index ]?.count || 0 ) ) {
+
+				throw new Error( 'Source face count does not match emitted triangles.' );
+
+			}
+
+			for ( const face of faces ) result.push( face );
+
+		}
+
+		return result;
 
 	}
 
@@ -382,6 +421,7 @@ export class GeometryBuilder {
 		const { groupIndices, attributeData } = this;
 
 		this.interpolatedFields = {};
+		this.sourceFaces = null;
 
 		for ( const key in attributeData ) {
 

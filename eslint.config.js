@@ -37,6 +37,15 @@ export default [
 		},
 	},
 
+	// Node's public opt-in regression suite uses node:test, not Vitest globals.
+	{
+		name: 'node regression tests',
+		files: [ 'tests/**/*.node.mjs', 'tests/fixtures/**/*.mjs' ],
+		languageOptions: {
+			globals: globals.node,
+		},
+	},
+
 	// ts recommended
 	...tseslint.configs.recommended.map( config => ( {
 		...config,

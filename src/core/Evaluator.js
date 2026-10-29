@@ -5,6 +5,7 @@ import { performOperation } from './operations/operations.js';
 import { Brush } from './Brush.js';
 import { GeometryBuilder } from './operations/GeometryBuilder.js';
 import * as GeometryUtils from './operations/GeometryUtils.js';
+import { prepareSourceFaces, setSourceFaces, clearSourceFaces } from './operations/SourceFaceProvenance.js';
 
 // Utility class for performing CSG operations
 export class Evaluator {
@@ -28,6 +29,8 @@ export class Evaluator {
 	constructor() {
 
 		this.triangleSplitter = new LegacyTriangleSplitter();
+		// Experimental, explicit opt-in. No post-process or fallback.
+		this.consistentCutSeams = false;
 		this.geometryBuilders = [];
 		this.attributes = [ 'position', 'uv', 'normal' ];
 		this.useGroups = true;
@@ -74,9 +77,36 @@ export class Evaluator {
 
 		}
 
+		// Reject unsupported opt-in inputs before allocating builder buffers or
+		// capturing provenance. The ordinary legacy/CDT paths are unchanged.
+		if ( this.consistentCutSeams ) {
+
+			if ( ! this.useCDTClipping ) {
+
+				throw new Error( 'consistentCutSeams requires the constrained CDT splitter.' );
+
+			}
+
+			if ( ! ( a.geometry.attributes.position.array instanceof Float32Array ) || ! ( b.geometry.attributes.position.array instanceof Float32Array ) ) {
+
+				throw new Error( 'consistentCutSeams currently requires Float32 position attributes.' );
+
+			}
+
+		}
+
 		// initialize the geometry fields
-		a.prepareGeometry();
-		b.prepareGeometry();
+		let sourceFaces = null;
+		if ( this.consistentCutSeams ) {
+
+			sourceFaces = [ prepareSourceFaces( a ), prepareSourceFaces( b ) ];
+
+		} else {
+
+			a.prepareGeometry();
+			b.prepareGeometry();
+
+		}
 
 		const {
 			triangleSplitter,
@@ -99,13 +129,33 @@ export class Evaluator {
 		targetBrushes.forEach( ( brush, i ) => {
 
 			geometryBuilders[ i ].initFromGeometry( a.geometry, attributes );
+			geometryBuilders[ i ].sourceFaces = sourceFaces ? [] : null;
 			GeometryUtils.trimAttributes( brush.geometry, attributes );
 
 		} );
 
 		// run the operation to fill the list of attribute data
 		debug.init();
-		performOperation( a, b, operations, triangleSplitter, geometryBuilders, { useGroups } );
+		try {
+
+			performOperation( a, b, operations, triangleSplitter, geometryBuilders, { useGroups, consistentCutSeams: this.consistentCutSeams, sourceFaces } );
+
+		} catch ( error ) {
+
+			geometryBuilders.forEach( builder => builder.sourceFaces = null );
+			throw error;
+
+		}
+
+		// Move history out of reusable builders before material/output handling,
+		// so even a failed target build cannot retain it on the evaluator.
+		const outputSourceFaces = geometryBuilders.map( builder => {
+
+			const faces = builder.sourceFaces;
+			builder.sourceFaces = null;
+			return faces;
+
+		} );
 		debug.complete();
 
 		// get the materials and group ranges
@@ -164,6 +214,18 @@ export class Evaluator {
 			} else {
 
 				brush.material = materials[ 0 ];
+
+			}
+
+			// Seal after final group consolidation and any build-time disposal.
+			const builder = geometryBuilders[ i ];
+			if ( outputSourceFaces[ i ] ) {
+
+				setSourceFaces( targetGeometry, builder.orderedSourceFaces( groups, outputSourceFaces[ i ] ) );
+
+			} else {
+
+				clearSourceFaces( targetGeometry );
 
 			}
 

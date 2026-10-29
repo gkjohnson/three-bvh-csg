@@ -21,6 +21,9 @@ export const HOLLOW_INTERSECTION: CSGOperation;
 
 export class Evaluator {
 
+	/** Experimental provenance-based cut constraints; requires useCDTClipping. */
+	consistentCutSeams: boolean;
+	useCDTClipping: boolean;
 	attributes: string[];
 	useGroups: boolean;
 	consolidateMaterials: boolean;

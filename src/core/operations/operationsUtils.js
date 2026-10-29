@@ -12,6 +12,9 @@ import {
 import { isTriDegenerate } from '../utils/triangleUtils.js';
 import { getCoplanarIntersectionEdges, isTriangleCoplanar } from '../utils/intersectionUtils.js';
 import { Pool } from '../utils/Pool.js';
+import { CutPointRegistry } from './CutPointRegistry.js';
+import { getSourceFaces, sameInvertibleFrame } from './SourceFaceProvenance.js';
+import { sourceSupportOverlay } from './SourceSupportOverlay.js';
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
@@ -35,10 +38,11 @@ export function setDebugContext( debugData ) {
 
 }
 
-export function getHitSide( tri, bvh, matrix = null ) {
+export function getHitSide( tri, bvh, matrix = null, sourceNormal = null ) {
 
 	tri.getMidpoint( _ray.origin );
-	tri.getNormal( _ray.direction );
+	if ( sourceNormal ) _ray.direction.copy( sourceNormal );
+	else tri.getNormal( _ray.direction );
 
 	if ( matrix ) {
 
@@ -55,10 +59,16 @@ export function getHitSide( tri, bvh, matrix = null ) {
 
 // returns the intersected triangles and returns objects mapping triangle indices to
 // the other triangles intersected
-export function collectIntersectingTriangles( a, b ) {
+export function collectIntersectingTriangles( a, b, consistentCutSeams = false ) {
 
 	const aIntersections = new IntersectionMap();
 	const bIntersections = new IntersectionMap();
+	const facesA = consistentCutSeams ? getSourceFaces( a.geometry ) : null;
+	const facesB = consistentCutSeams ? getSourceFaces( b.geometry ) : null;
+	const supportStats = { pairs: 0, maxProjectionDistance: 0, maxHalfUlpRatio: 0 };
+	const endpointFeatures = [];
+	// Disjoint/contained operations have no cut graph and need no extra index.
+	let cutRegistry = null;
 
 	_edgePool.clear();
 
@@ -66,6 +76,7 @@ export function collectIntersectingTriangles( a, b ) {
 		.copy( a.matrixWorld )
 		.invert()
 		.multiply( b.matrixWorld );
+	if ( consistentCutSeams && sameInvertibleFrame( a.matrixWorld, b.matrixWorld ) ) _matrix.identity();
 
 	a.geometry.boundsTree.bvhcast( b.geometry.boundsTree, _matrix, {
 
@@ -76,13 +87,44 @@ export function collectIntersectingTriangles( a, b ) {
 				// due to floating point error it's possible that we can have two overlapping, coplanar triangles
 				// that are a _tiny_ fraction of a value away from each other. If we find that case then check the
 				// distance between triangles and if it's small enough consider them intersecting.
-				const coplanarCount = isTriangleCoplanar( triangleA, triangleB ) ? getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges ) : 0;
-				const isCoplanarIntersection = coplanarCount > 2;
-				const intersected = isCoplanarIntersection || triangleA.intersectsTriangle( triangleB, _edge, true );
+				let va, vb, support = null;
+				if ( facesA && facesB ) {
+
+					va = a.geometry.boundsTree.resolveTriangleIndex( ia );
+					vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
+					support = sourceSupportOverlay( triangleA, triangleB, facesA[ va ], a.matrixWorld, facesB[ vb ], b.matrixWorld );
+
+				}
+
+				const clipA = support ? support.a : triangleA, clipB = support ? support.b : triangleB;
+				const coplanar = Boolean( support ) || isTriangleCoplanar( triangleA, triangleB );
+				const coplanarCount = coplanar ? getCoplanarIntersectionEdges( clipA, clipB, _coplanarEdges, support ? endpointFeatures : null ) : 0;
+				const isCoplanarIntersection = coplanarCount > ( consistentCutSeams ? 0 : 2 );
+				// The BVH triangle predicate does not produce a valid intersection
+				// segment for coplanar contacts. Never consume its placeholder line
+				// (notably (0,0,0)) when clipping yields only an edge or a point.
+				const intersected = consistentCutSeams && coplanar ? coplanarCount > 0 : isCoplanarIntersection || triangleA.intersectsTriangle( triangleB, _edge, true );
 				if ( intersected ) {
 
-					const va = a.geometry.boundsTree.resolveTriangleIndex( ia );
-					const vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
+					if ( consistentCutSeams && ! cutRegistry ) cutRegistry = new CutPointRegistry( a, b );
+
+					if ( va === null || va === undefined ) va = a.geometry.boundsTree.resolveTriangleIndex( ia );
+					if ( vb === null || vb === undefined ) vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
+					if ( support ) {
+
+						supportStats.pairs ++;
+						supportStats.maxProjectionDistance = Math.max( supportStats.maxProjectionDistance, support.maxProjectionDistance );
+						supportStats.maxHalfUlpRatio = Math.max( supportStats.maxHalfUlpRatio, support.maxHalfUlpRatio );
+						for ( const [ map, id, other, triangle ] of [[ aIntersections, va, vb, clipB ], [ bIntersections, vb, va, clipA ]] ) {
+
+							if ( ! map.supportCoplanars ) map.supportCoplanars = new Map();
+							if ( ! map.supportCoplanars.has( id ) ) map.supportCoplanars.set( id, new Map() );
+							map.supportCoplanars.get( id ).set( other, { triangle, plane: support.plane } );
+
+						}
+
+					}
+
 					aIntersections.add( va, vb, isCoplanarIntersection );
 					bIntersections.add( vb, va, isCoplanarIntersection );
 
@@ -90,10 +132,11 @@ export function collectIntersectingTriangles( a, b ) {
 					if ( isCoplanarIntersection ) {
 
 						// coplanar
-						const count = getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges );
+						const count = support ? coplanarCount : getCoplanarIntersectionEdges( triangleA, triangleB, _coplanarEdges );
 						for ( let i = 0; i < count; i ++ ) {
 
-							const e = _edgePool.getInstance().copy( _coplanarEdges[ i ] );
+							const original = _coplanarEdges[ i ];
+							const e = cutRegistry ? new Line3( cutRegistry.register( original.start, va, vb, true, support ? endpointFeatures[ i ][ 0 ] : null ), cutRegistry.register( original.end, va, vb, true, support ? endpointFeatures[ i ][ 1 ] : null ) ) : _edgePool.getInstance().copy( original );
 							aIntersections.addIntersectionEdge( va, e );
 							bIntersections.addIntersectionEdge( vb, e );
 
@@ -102,8 +145,8 @@ export function collectIntersectingTriangles( a, b ) {
 					} else {
 
 						// non-coplanar
-						const ea = _edgePool.getInstance().copy( _edge );
-						const eb = _edgePool.getInstance().copy( _edge );
+						const ea = cutRegistry ? new Line3( cutRegistry.register( _edge.start, va, vb ), cutRegistry.register( _edge.end, va, vb ) ) : _edgePool.getInstance().copy( _edge );
+						const eb = cutRegistry ? new Line3( ea.start, ea.end ) : _edgePool.getInstance().copy( _edge );
 						aIntersections.addIntersectionEdge( va, ea );
 						bIntersections.addIntersectionEdge( vb, eb );
 
@@ -126,7 +169,8 @@ export function collectIntersectingTriangles( a, b ) {
 
 	} );
 
-	return { aIntersections, bIntersections };
+	if ( cutRegistry ) cutRegistry.propagate( aIntersections, bIntersections );
+	return { aIntersections, bIntersections, cutRegistry, supportStats };
 
 }
 
