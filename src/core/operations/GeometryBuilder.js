@@ -186,7 +186,7 @@ export class GeometryBuilder {
 	}
 
 	// push data from the given barycoord onto the geometry
-	appendInterpolatedAttributeData( group, barycoord, index = null, invert = false ) {
+	appendInterpolatedAttributeData( group, barycoord, index = null, invert = false, position = null ) {
 
 		const { groupIndices, attributeData, interpolatedFields, forwardIndexMap, invertedIndexMap } = this;
 		while ( groupIndices.length <= group ) {
@@ -210,6 +210,16 @@ export class GeometryBuilder {
 
 				// handle normals and positions specially because they require transforming
 				const arr = attributeData[ key ];
+				// The CDT splitter has already constructed this position in the
+				// output frame. Avoid another reconstruction from barycentrics;
+				// other attributes still use the original interpolation below.
+				if ( key === 'position' && position !== null ) {
+
+					arr.push( position.x, position.y, position.z );
+					continue;
+
+				}
+
 				const isDirection = key === 'normal' || key === 'tangent';
 				const invertVector = invert && isDirection;
 				const itemSize = arr.itemSize;

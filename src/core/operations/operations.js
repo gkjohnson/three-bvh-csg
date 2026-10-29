@@ -124,6 +124,7 @@ function performSplitTriangleOperations(
 	const bIndex = b.geometry.index;
 	const bPosition = b.geometry.attributes.position;
 	const splitIds = intersectionMap.ids;
+	const useCDTClipping = Boolean( splitter.addConstraintEdge );
 
 	// iterate over all split triangle indices
 	for ( let i = 0, l = splitIds.length; i < l; i ++ ) {
@@ -383,16 +384,17 @@ function performSplitTriangleOperations(
 						const invertTri = action === INVERT_TRI;
 						const invert = invertedGeometry !== invertTri;
 
-						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, t0, invert );
+						// Keep the legacy splitter's barycentric output path unchanged.
+						builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.a, t0, invert, useCDTClipping ? tri.a : null );
 						if ( invert ) {
 
-							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert );
-							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert );
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert, useCDTClipping ? tri.c : null );
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert, useCDTClipping ? tri.b : null );
 
 						} else {
 
-							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert );
-							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert );
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.b, t1, invert, useCDTClipping ? tri.b : null );
+							builder.appendInterpolatedAttributeData( groupIndex, _barycoordTri.c, t2, invert, useCDTClipping ? tri.c : null );
 
 						}
 

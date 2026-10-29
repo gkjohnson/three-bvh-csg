@@ -15,19 +15,20 @@ const _vec2 = new Vector3();
 const _paramPool = new Pool( () => ( { param: 0, index: 0 } ) );
 const _vectorPool = new Pool( () => new Vector3() );
 
-function edgesToIndices( edges, outputVertices, outputIndices, epsilonScale ) {
+function edgesToIndices( edges, sourceEdges, outputVertices, sourceVertices, outputIndices, epsilonScale ) {
 
 	_paramPool.clear();
 
 	outputVertices.length = 0;
+	sourceVertices.length = 0;
 	outputIndices.length = 0;
 
 	// Add edge endpoints and find edge-edge intersection points
 	for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
 		const edge0 = edges[ i ];
-		getIndex( edge0.start );
-		getIndex( edge0.end );
+		getIndex( edge0.start, sourceEdges[ i ].start );
+		getIndex( edge0.end, sourceEdges[ i ].end );
 
 	}
 
@@ -113,7 +114,7 @@ function edgesToIndices( edges, outputVertices, outputIndices, epsilonScale ) {
 
 	}
 
-	function getIndex( v ) {
+	function getIndex( v, source = null ) {
 
 		for ( let i = 0; i < outputVertices.length; i ++ ) {
 
@@ -126,10 +127,66 @@ function edgesToIndices( edges, outputVertices, outputIndices, epsilonScale ) {
 
 		}
 
+		sourceVertices.push( source );
 		outputVertices.push( _vectorPool.getInstance().copy( v ) );
 		return outputVertices.length - 1;
 
 	}
+
+}
+
+// A closed internal constraint is not a hole: retain every cell separated
+// from the exterior by constraints. Adapted from the flood fill in PR #256.
+function removeExteriorCells( cells, halfEdgeMap ) {
+
+	const edgeToCell = new Map();
+	cells.forEach( ( cell, c ) => {
+
+		for ( let e = 0; e < 3; e ++ ) {
+
+			edgeToCell.set( `${ cell[ e ] }_${ cell[ ( e + 1 ) % 3 ] }`, c );
+
+		}
+
+	} );
+
+	const outside = cells.length;
+	const neighbors = Array.from( { length: cells.length + 1 }, () => [] );
+	cells.forEach( ( cell, c ) => {
+
+		for ( let e = 0; e < 3; e ++ ) {
+
+			const p0 = cell[ e ];
+			const p1 = cell[ ( e + 1 ) % 3 ];
+			if ( halfEdgeMap.get( `${ p0 }_${ p1 }` ) !== - 1 ) {
+
+				neighbors[ edgeToCell.get( `${ p1 }_${ p0 }` ) ?? outside ].push( c );
+
+			}
+
+		}
+
+	} );
+
+	const exterior = new Uint8Array( cells.length + 1 );
+	const stack = [ outside ];
+	exterior[ outside ] = 1;
+	while ( stack.length > 0 ) {
+
+		for ( const c of neighbors[ stack.pop() ] ) {
+
+			if ( exterior[ c ] === 0 ) {
+
+				exterior[ c ] = 1;
+				stack.push( c );
+
+			}
+
+		}
+
+	}
+
+	return cells.filter( ( cell, c ) => exterior[ c ] === 0 );
 
 }
 
@@ -250,8 +307,9 @@ export class CDTTriangleSplitter {
 
 		// Use custom deduplication and edge splitting
 		const vertices = [];
+		const sourceVertices = [];
 		const indices = [];
-		edgesToIndices( edges2d, vertices, indices, epsilonScale );
+		edgesToIndices( edges2d, constrainedEdges, vertices, sourceVertices, indices, epsilonScale );
 
 		const cdt2dPoints = [];
 		for ( let i = 0, l = vertices.length; i < l; i ++ ) {
@@ -262,7 +320,7 @@ export class CDTTriangleSplitter {
 		}
 
 		// Run the CDT triangulation
-		const triangulation = cdt2d( cdt2dPoints, indices, { exterior: false } );
+		const allCells = cdt2d( cdt2dPoints, indices );
 
 		// construct the half edge structure, marking the constrained edges as disconnected to
 		// mark the polygon edges
@@ -275,17 +333,34 @@ export class CDTTriangleSplitter {
 
 		}
 
+		const triangulation = removeExteriorCells( allCells, halfEdgeMap );
+
 		// create an index key to construct unique indices across the geometry
 		const indexKeyPrefix = `${ baseIndices[ 0 ] }_${ baseIndices[ 1 ] }_${ baseIndices[ 2 ] }_`;
 		for ( let ti = 0, l = triangulation.length; ti < l; ti ++ ) {
 
 			// covert back to 2d
 			const indexList = triangulation[ ti ];
-			const [ i0, i1, i2 ] = indexList;
 			const tri = trianglePool.getInstance();
-			this._from2D( cdt2dPoints[ i0 ][ 0 ], cdt2dPoints[ i0 ][ 1 ], tri.a );
-			this._from2D( cdt2dPoints[ i1 ][ 0 ], cdt2dPoints[ i1 ][ 1 ], tri.b );
-			this._from2D( cdt2dPoints[ i2 ][ 0 ], cdt2dPoints[ i2 ][ 1 ], tri.c );
+			// Preserve existing 3D endpoints instead of projecting and lifting them
+			// again. Only newly constructed 2D edge crossings need lifting.
+			const corners = [ tri.a, tri.b, tri.c ];
+			for ( let i = 0; i < 3; i ++ ) {
+
+				const index = indexList[ i ];
+				const source = sourceVertices[ index ];
+				if ( source !== null ) {
+
+					corners[ i ].copy( source );
+
+				} else {
+
+					this._from2D( cdt2dPoints[ index ][ 0 ], cdt2dPoints[ index ][ 1 ], corners[ i ] );
+
+				}
+
+			}
+
 			triangles.push( tri );
 
 			// construct the connectivity and custom index list
