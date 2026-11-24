@@ -1,15 +1,16 @@
 import { Line3, Vector3, Plane } from 'three';
 
-// tolerance for considering a clipped segment degenerate (zero-length)
+// tolerance for considering a clipped segment degenerate (zero-length), relative to the edge length
 const CLIP_EPSILON = 1e-10;
 
-// tolerance for treating a denominator as zero (segment parallel to edge)
+// tolerance for treating a segment as parallel to an edge, as the sine of the angle between them
 const PARALLEL_EPSILON = 1e-15;
 
 // tolerance for considering two triangle normals as parallel
 const COPLANAR_NORMAL_EPSILON = 1e-10;
 
-// tolerance for considering two parallel triangles as lying on the same plane
+// tolerance for considering two parallel triangles as lying on the same plane, relative to the
+// largest triangle edge
 const COPLANAR_DISTANCE_EPSILON = 1e-10;
 
 const _tempLine = new Line3();
@@ -20,6 +21,16 @@ const _edgeNormal = new Vector3();
 const _edgePlane = new Plane();
 const _normalA = new Vector3();
 const _normalB = new Vector3();
+
+function getMaxEdgeLength( tri ) {
+
+	return Math.sqrt( Math.max(
+		tri.a.distanceToSquared( tri.b ),
+		tri.b.distanceToSquared( tri.c ),
+		tri.c.distanceToSquared( tri.a ),
+	) );
+
+}
 
 // returns true if two triangles are coplanar (parallel normals and same plane distance)
 export function isTriangleCoplanar( triA, triB ) {
@@ -34,10 +45,10 @@ export function isTriangleCoplanar( triA, triB ) {
 
 	}
 
-	// test if plane constant is within tolerance
+	// test if plane constant is within tolerance, relative to the largest triangle edge
 	const dA = _normalA.dot( triA.a );
 	const dB = _normalA.dot( triB.a );
-	return Math.abs( dA - dB ) < COPLANAR_DISTANCE_EPSILON;
+	return Math.abs( dA - dB ) < COPLANAR_DISTANCE_EPSILON * Math.max( getMaxEdgeLength( triA ), getMaxEdgeLength( triB ) );
 
 }
 
@@ -58,20 +69,22 @@ function clipSegmentToTriangle( segment, tri, normal, target ) {
 		const v0 = verts[ i ];
 		const v1 = verts[ ( i + 1 ) % 3 ];
 
-		// build the inward-facing edge plane
+		// build the inward-facing edge plane. The plane normal is not normalized so distances are
+		// scaled by the edge length.
 		_edgeDelta.subVectors( v1, v0 );
 		_edgeNormal.crossVectors( normal, _edgeDelta );
 		_edgePlane.setFromNormalAndCoplanarPoint( _edgeNormal, v0 );
+		const edgeLengthSq = _edgeDelta.lengthSq();
 
 		// signed distance of segment start from the edge plane
 		const dist = _edgePlane.distanceToPoint( segment.start );
 
 		// rate of change of distance along segment direction
 		const denom = _edgePlane.normal.dot( _dir );
-		if ( Math.abs( denom ) < PARALLEL_EPSILON ) {
+		if ( Math.abs( denom ) < PARALLEL_EPSILON * Math.sqrt( edgeLengthSq ) * _dir.length() ) {
 
 			// segment parallel to edge — entirely inside or outside this half-plane
-			if ( dist < - CLIP_EPSILON ) {
+			if ( dist < - CLIP_EPSILON * edgeLengthSq ) {
 
 				return null;
 
