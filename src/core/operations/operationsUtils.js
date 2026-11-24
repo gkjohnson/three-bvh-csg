@@ -15,6 +15,7 @@ import { getCoplanarIntersectionEdges, isTriangleCoplanar } from '../utils/inter
 import { Pool } from '../utils/Pool.js';
 
 // "bvhcast" passes resolved triangle indices as of three-mesh-bvh v0.10.0, the first version with "REVISION"
+// TODO: remove this once the peer dependency is bumped to three-mesh-bvh v0.10.0
 const RESOLVE_INDICES = ! ( 'REVISION' in MeshBVHLib );
 
 const _ray = new Ray();
