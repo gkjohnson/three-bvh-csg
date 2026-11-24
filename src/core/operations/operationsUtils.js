@@ -1,4 +1,5 @@
 import { Ray, Matrix4, DoubleSide, Line3 } from 'three';
+import * as MeshBVHLib from 'three-mesh-bvh';
 import { IntersectionMap } from '../IntersectionMap.js';
 import {
 	ADDITION,
@@ -12,6 +13,9 @@ import {
 import { isTriDegenerate } from '../utils/triangleUtils.js';
 import { getCoplanarIntersectionEdges, isTriangleCoplanar } from '../utils/intersectionUtils.js';
 import { Pool } from '../utils/Pool.js';
+
+// "bvhcast" passes resolved triangle indices as of three-mesh-bvh v0.10.0, the first version with "REVISION"
+const RESOLVE_INDICES = ! ( 'REVISION' in MeshBVHLib );
 
 const _ray = new Ray();
 const _matrix = new Matrix4();
@@ -81,8 +85,8 @@ export function collectIntersectingTriangles( a, b ) {
 				const intersected = isCoplanarIntersection || triangleA.intersectsTriangle( triangleB, _edge, true );
 				if ( intersected ) {
 
-					const va = a.geometry.boundsTree.resolveTriangleIndex( ia );
-					const vb = b.geometry.boundsTree.resolveTriangleIndex( ib );
+					const va = RESOLVE_INDICES ? a.geometry.boundsTree.resolveTriangleIndex( ia ) : ia;
+					const vb = RESOLVE_INDICES ? b.geometry.boundsTree.resolveTriangleIndex( ib ) : ib;
 					aIntersections.add( va, vb, isCoplanarIntersection );
 					bIntersections.add( vb, va, isCoplanarIntersection );
 
