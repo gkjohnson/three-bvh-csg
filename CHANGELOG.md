@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.0.19] - Unreleased
 ### Fixed
 - Evaluator: Fixed an error when reusing an Evaluator after removing entries from "attributes".
+- Fixed results with three-mesh-bvh v0.10.0, which changed the triangle indices passed by "bvhcast".
 
 ## [0.0.18] - 2026-02-17
 ### Added
